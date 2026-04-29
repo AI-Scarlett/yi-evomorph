@@ -115,7 +115,7 @@ def fetch_models(api_url, api_key):
         import urllib.request
         base = api_url.rstrip("/")
         if base.endswith("/chat/completions"):
-            base = base.rsplit("/", 2)[0]
+            base = base[: -len("/chat/completions")]
         models_url = f"{base}/models"
         headers = {
             "Authorization": f"Bearer {api_key}",
