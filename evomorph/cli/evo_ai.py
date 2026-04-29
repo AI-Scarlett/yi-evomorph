@@ -816,13 +816,14 @@ if HAS_PROMPT_TOOLKIT:
                     )
 
 
-def _get_input_ptk(session, config, current_file):
+def _get_input_ptk(session, config, current_file, work_dir=None):
     model_short = config.get("model", "?")
     if len(model_short) > 16:
         model_short = model_short[:13] + "..."
     provider_short = _get_provider_short(config)
     key_style = "#00ff00 bold" if config.get("api_key") else "#ff0000 bold"
     key_mark = "●" if config.get("api_key") else "○"
+    _work_dir = work_dir or os.getcwd()
 
     prompt_formatted = FormattedText([
         ("bold cyan", "易衍"),
@@ -841,7 +842,7 @@ def _get_input_ptk(session, config, current_file):
         if len(model) > 20:
             model = model[:17] + "..."
         key_status = "Key ✓" if config.get("api_key") else "Key ✗"
-        dir_display = work_dir
+        dir_display = _work_dir
         if len(dir_display) > 30:
             dir_display = "..." + dir_display[-27:]
         return FormattedText([
@@ -1040,7 +1041,7 @@ def shell():
             key_bindings=bindings,
             enable_open_in_editor=True,
         )
-        get_input = lambda: _get_input_ptk(session, config, current_file)
+        get_input = lambda: _get_input_ptk(session, config, current_file, work_dir)
     else:
         get_input = lambda: _get_input_basic(config, current_file)
 
