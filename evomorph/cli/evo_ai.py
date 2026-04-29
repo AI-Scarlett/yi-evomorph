@@ -1037,7 +1037,7 @@ def shell():
             history=history,
             complete_while_typing=True,
             mouse_support=False,
-            prompt_continuation=("   ... ",),
+            prompt_continuation="   ... ",
             key_bindings=bindings,
             enable_open_in_editor=True,
         )
