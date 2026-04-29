@@ -1,0 +1,68 @@
+@evolang "3.0"
+
+@xiangci {
+    "同步之基：锁如山岳，屏障如潮，令百核之争而不乱。"
+}
+
+@locus std.sync.mutex_lock {
+    mut_rate   = 0.01
+    cross_pool = "sync_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷅ LOCK R0
+        ䷒ APPROACH
+        ䷾ SYNC
+    }
+}
+
+@locus std.sync.mutex_unlock {
+    mut_rate   = 0.01
+    cross_pool = "sync_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷧ UNLOCK R0
+        ䷾ SYNC
+    }
+}
+
+@locus std.sync.barrier {
+    mut_rate   = 0.02
+    cross_pool = "sync_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷙ BARRIER R0
+        ䷾ SYNC
+    }
+}
+
+@locus std.sync.fence {
+    mut_rate   = 0.01
+    cross_pool = "sync_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷊ FLUSH
+        ䷙ BARRIER R0
+        ䷾ SYNC
+    }
+}
+
+@locus std.sync.future_wait {
+    mut_rate   = 0.02
+    cross_pool = "sync_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷿ FUTU R0
+        ䷄ WAIT R0
+        ䷾ SYNC
+    }
+}

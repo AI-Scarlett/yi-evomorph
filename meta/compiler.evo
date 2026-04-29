@@ -1,0 +1,55 @@
+@evolang "3.0"
+
+@xiangci {
+    "道枢：进化之进化。编译器自身之基因，随大模型之演进而蜕变。"
+}
+
+@meta_locus 进化之进化 {
+    mut_rate = 0.01
+    fitness  = min_size + max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+        ䷓ CONTEMPLATE R2
+    }
+}
+
+@meta_locus 象辞翻译策略 {
+    mut_rate = 0.02
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷁ RECV R0, env::XIANGCI_TEXT
+        ䷓ CONTEMPLATE R0
+        ䷌ FELLOWSHIP R0, R1
+        ䷀ CREA R2, @translator
+        ䷾ SYNC
+        ䷍ ABUNDANCE R3, R2
+    }
+}
+
+@meta_locus 选择策略 {
+    mut_rate = 0.005
+    fitness  = max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷏ SPECULATE R1
+        ䷾ SYNC
+        ䷗ RETURN
+    }
+}
+
+@meta_locus 交叉策略 {
+    mut_rate = 0.01
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷫ MATE R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷾ SYNC
+    }
+}

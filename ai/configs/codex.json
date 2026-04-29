@@ -1,0 +1,49 @@
+{
+    "model_customizations": {
+        "system_prompt_file": "ai/prompts/system_prompt.md",
+        "supported_languages": ["evomorph"],
+        "file_extensions": [".evo"],
+        "evomorph": {
+            "syntax": "卦象符号 + 助记符 + 操作数",
+            "opcode_scheme": "yao_binary",
+            "compilation": "evolutionary",
+            "runtime": "IChingVM"
+        }
+    },
+    "tools": [
+        {
+            "name": "evomorph_compile",
+            "description": "编译 .evo 源码",
+            "endpoint": "mcp://evomorph/evomorph_compile"
+        },
+        {
+            "name": "evomorph_xiangci",
+            "description": "象辞翻译：自然语言→卦象指令",
+            "endpoint": "mcp://evomorph/evomorph_xiangci"
+        },
+        {
+            "name": "evomorph_evolve",
+            "description": "进化编译",
+            "endpoint": "mcp://evomorph/evomorph_evolve"
+        },
+        {
+            "name": "evomorph_run",
+            "description": "在 IChingVM 上运行",
+            "endpoint": "mcp://evomorph/evomorph_run"
+        },
+        {
+            "name": "evomorph_lookup_hexagram",
+            "description": "查询卦象指令",
+            "endpoint": "mcp://evomorph/evomorph_lookup_hexagram"
+        }
+    ],
+    "mcp_config": {
+        "servers": {
+            "evomorph": {
+                "command": "python3",
+                "args": ["ai/mcp/evomorph_mcp_server.py"],
+                "transport": "stdio"
+            }
+        }
+    }
+}

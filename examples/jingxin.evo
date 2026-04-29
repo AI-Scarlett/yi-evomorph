@@ -1,0 +1,21 @@
+@evolang "3.0"
+
+@xiangci {
+    "诞生一物，名曰'镜心'。用户言语之，它静听；言毕，它便倒映原语，且温柔道别。须运行于苹果与微软的天地。"
+}
+
+@locus 镜心 {
+    mut_rate   = 0.03
+    cross_pool = "io_ops"
+    fitness    = min_latency + min_size
+    env_target = ["ios-18", "win-11"]
+
+    卦序: {
+        ䷁ RECV R0, env::MIC
+        ䷂ ALLOC R1, 0x1000
+        ䷀ CREA R2, @listener
+        ䷾ SYNC
+        ䷍ ABUNDANCE R3, R1
+        ䷴ GRADUAL R3, @farewell
+    }
+}

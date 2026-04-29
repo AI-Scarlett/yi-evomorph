@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evomorph"
+version = "0.0.1"
+description = "易衍·Evomorph — 六十四卦指令集进化编程语言"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = [
+    "prompt_toolkit>=3.0",
+]
+keywords = ["evomorph", "i-ching", "hexagram", "evolutionary", "programming-language", "genetic-algorithm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: Software Development :: Interpreters",
+]
+
+[project.scripts]
+evo-ai = "evomorph.cli.evo_ai:main"
+
+[tool.setuptools.packages.find]
+include = ["evomorph*"]
+
+[tool.setuptools.package-data]
+evomorph = ["prompts/*.md", "stdlib/*.evo"]

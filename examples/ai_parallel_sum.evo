@@ -1,0 +1,25 @@
+@evolang "3.0"
+
+@xiangci {
+    "并行计算1到N的整数之和，适配Linux与鸿蒙平台"
+}
+
+@locus parallel_sum {
+    mut_rate   = 0.02
+    cross_pool = "compute"
+    fitness    = min_latency + 2.0*max_throughput - 0.5*min_energy
+    env_target = ["linux-6.x", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, 0x0100
+        ䷂ ALLOC R1, R0
+        ䷀ CREA R2, R3
+        ䷌ FELLOWSHIP R2, R3
+        ䷬ GATHER R4, R2
+        ䷍ ABUNDANCE R5, R4
+        ䷝ ILLUMINATE R5
+        ䷾ SYNC
+        ䷗ RETURN R5
+    }
+}

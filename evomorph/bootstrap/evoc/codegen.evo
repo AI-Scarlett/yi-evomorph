@@ -1,0 +1,121 @@
+@evolang "3.0"
+
+@xiangci {
+    "代码生成之基：抽象之树化为字节之流，如卦辞之定而万物生。"
+    "道枢自举之三——编译器用自身之语言书写自身之代码生成。"
+}
+
+@locus evoc.codegen.emit_header {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x08
+        ䷍ ABUNDANCE R0, 0x45564F42
+        ䷍ ABUNDANCE R0, 0x0003
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.encode_opcode {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPCODE
+        ䷁ RECV R1, env::MODIFIER
+        ䷂ ALLOC R2, 0x02
+        ䷩ INCREASE R0, R1
+        ䷍ ABUNDANCE R2, R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.encode_operand {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPERAND
+        ䷂ ALLOC R1, 0x04
+        ䷍ ABUNDANCE R1, R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.emit_instruction {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPCODE
+        ䷁ RECV R1, env::MODIFIER
+        ䷁ RECV R2, env::OPERANDS
+        ䷂ ALLOC R3, 0x10
+        ䷩ INCREASE R0, R1
+        ䷍ ABUNDANCE R3, R0
+        ䷌ FELLOWSHIP R2, R3
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.emit_locus {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_NAME
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x10000
+        ䷌ FELLOWSHIP R0, R2
+        ䷉ STEP R1
+        ䷓ CONTEMPLATE R1
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.link_labels {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LABEL_TABLE
+        ䷁ RECV R1, env::RELOC_TABLE
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷰ REPLACE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.full_pass {
+    mut_rate   = 0.02
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::AST
+        ䷂ ALLOC R1, 0x100000
+        ䷌ FELLOWSHIP R0, R1
+        ䷉ STEP R1
+        ䷆ BRANCH R_emit_locus
+        ䷆ BRANCH R_emit_instruction
+        ䷆ BRANCH R_link_labels
+        ䷾ SYNC
+        ䷁ RECV R2, R_bytecode
+    }
+}

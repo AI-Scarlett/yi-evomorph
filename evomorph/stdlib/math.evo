@@ -1,0 +1,72 @@
+@evolang "3.0"
+
+@xiangci {
+    "算术之基：加减乘除，矢量张量，借平台之力而极速。"
+}
+
+@locus std.math.add {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷩ INCREASE R0, R1
+        ䷗ RETURN
+    }
+}
+
+@locus std.math.sub {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷨ REDUCE R0, R1
+        ䷗ RETURN
+    }
+}
+
+@locus std.math.vector_add {
+    mut_rate   = 0.03
+    cross_pool = "math_ops"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷀ CREA R0, @worker
+        ䷌ FELLOWSHIP R0, R1
+        ䷩ INCREASE R2, R3
+        ䷾ SYNC
+        ䷁ RECV R4, R0
+    }
+}
+
+@locus std.math.reduce_sum {
+    mut_rate   = 0.03
+    cross_pool = "math_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷬ GATHER R0, R1
+        ䷩ INCREASE R2, R0
+        ䷾ SYNC
+        ䷗ RETURN
+    }
+}
+
+@locus std.math.simd_transform {
+    mut_rate   = 0.05
+    cross_pool = "math_ops"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷈ PREFETCH R0
+        ䷩ INCREASE R1, R2
+        ䷍ ABUNDANCE R3, R1
+        ䷊ FLUSH
+    }
+}

@@ -1,0 +1,316 @@
+#!/usr/bin/env python3
+import sys
+import os
+import json
+import argparse
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from evomorph.compiler import EvocCompiler
+from evomorph.evolution.engine import (
+    EvolutionEngine, EvolutionConfig, GeneInstruction,
+    SelectionMethod, CrossoverMethod,
+)
+from evomorph.simulator.niche import PlatformSimNiche
+from evomorph.vm.virtual_machine import IChingVM
+from evomorph.sdk.xiangci import XiangciSDK
+from evomorph.hub.repository import EvoHub, LocusPackage
+
+
+def compile_source(args):
+    compiler = EvocCompiler()
+    try:
+        result = compiler.compile_file(args.input, output_format=args.format)
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                if isinstance(result, str):
+                    f.write(result)
+                else:
+                    json.dump(result, f, ensure_ascii=False, indent=2)
+            print(f"✓ 编译完成: {args.output}")
+        else:
+            if isinstance(result, str):
+                print(result)
+            else:
+                print(json.dumps(result, ensure_ascii=False, indent=2))
+    except Exception as e:
+        print(f"✗ 编译错误: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def evolve_source(args):
+    compiler = EvocCompiler()
+    try:
+        ast = compiler.compile_file(args.input, output_format="dict")
+    except Exception as e:
+        print(f"✗ 解析错误: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    loci = ast.get("loci", [])
+    if not loci:
+        print("✗ 未找到基因座", file=sys.stderr)
+        sys.exit(1)
+
+    target_locus = loci[0]
+    if args.locus:
+        for l in loci:
+            if l["name"] == args.locus:
+                target_locus = l
+                break
+
+    seed_genes = []
+    for instr in target_locus.get("instructions", []):
+        gene = GeneInstruction(
+            opcode=instr.get("opcode", 0),
+            modifier=instr.get("modifier", 0),
+            operands=[op.get("value", 0) if isinstance(op, dict) else op
+                      for op in instr.get("operands", [])],
+        )
+        seed_genes.append(gene)
+
+    targets = args.target.split(",") if args.target else target_locus.get("env_targets", ["linux-6.x"])
+    sim = PlatformSimNiche()
+
+    config = EvolutionConfig(
+        population_size=args.population or 64,
+        max_generations=args.generations or target_locus.get("max_generations", 100),
+        mut_rate=target_locus.get("mut_rate", 0.02),
+        env_targets=targets,
+        selection_method=SelectionMethod.TOURNAMENT,
+        crossover_method=CrossoverMethod.SINGLE_POINT,
+    )
+
+    engine = EvolutionEngine(config=config, platform_simulator=sim)
+
+    def progress_callback(stats):
+        if args.verbose:
+            print(f"  代 {stats['generation']:4d} | "
+                  f"最佳适应度: {stats['best_fitness']:10.4f} | "
+                  f"平均: {stats['avg_fitness']:10.4f} | "
+                  f"多样性: {stats['diversity']:.3f}")
+
+    print(f"⟳ 开始进化: {target_locus['name']}")
+    print(f"  种群大小: {config.population_size}")
+    print(f"  最大代数: {config.max_generations}")
+    print(f"  变异率: {config.mut_rate}")
+    print(f"  目标平台: {', '.join(targets)}")
+    print()
+
+    engine.initialize_population(seed_genes)
+    best = engine.evolve(callback=progress_callback)
+
+    if best:
+        print(f"\n✓ 进化完成!")
+        print(f"  最佳适应度: {best.fitness:.4f}")
+        print(f"  最佳个体基因数: {len(best.genes)}")
+        print(f"  起源: {best.origin}")
+
+        if args.output:
+            result = {
+                "locus_name": target_locus["name"],
+                "best_fitness": best.fitness,
+                "best_genes": [
+                    {
+                        "opcode": g.opcode,
+                        "binary": format(g.opcode, "06b"),
+                        "modifier": g.modifier,
+                        "operands": list(g.operands),
+                    }
+                    for g in best.genes
+                ],
+                "evolution_history": engine.get_evolution_history(),
+                "platform_scores": best.platform_scores,
+            }
+            with open(args.output, "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+            print(f"  结果已保存: {args.output}")
+
+        if args.hub:
+            hub = EvoHub()
+            pkg = LocusPackage(
+                name=target_locus["name"],
+                version="1.0.0",
+                genes_data=[{"opcode": g.opcode, "modifier": g.modifier,
+                             "operands": list(g.operands)} for g in best.genes],
+                platform_scores=best.platform_scores,
+                cross_pool=target_locus.get("cross_pool", "default"),
+            )
+            hub.publish(pkg)
+            print(f"  已发布到 evohub: {target_locus['name']}")
+    else:
+        print("✗ 进化失败", file=sys.stderr)
+        sys.exit(1)
+
+
+def run_vm(args):
+    compiler = EvocCompiler()
+    try:
+        ast = compiler.compile_file(args.input, output_format="dict")
+    except Exception as e:
+        print(f"✗ 解析错误: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    vm = IChingVM()
+    loci = ast.get("loci", [])
+    if not loci:
+        print("✗ 未找到基因座", file=sys.stderr)
+        sys.exit(1)
+
+    locus = loci[0]
+    program = []
+    for instr in locus.get("instructions", []):
+        program.append({
+            "opcode": instr.get("opcode", 0),
+            "modifier": instr.get("modifier", 0),
+            "operands": [op.get("value", 0) if isinstance(op, dict) else op
+                         for op in instr.get("operands", [])],
+        })
+
+    vm.load_program(program)
+    vm.register_io_handler(0xFF00, lambda val: print(f"[输出] {val}"))
+    state = vm.run(max_cycles=args.max_cycles or 10000)
+
+    print(f"\n虚拟机状态: {state.name}")
+    state_dump = vm.dump_state()
+    print(f"运行周期: {state_dump['cycle_count']}")
+    print(f"能耗: {state_dump['energy_cost']:.2f}")
+    for name, val in state_dump["registers"].items():
+        if val != 0:
+            print(f"  {name} = {val}")
+
+
+def xiangci_translate(args):
+    sdk = XiangciSDK()
+    text = args.text
+    if not text and args.file:
+        with open(args.file, "r", encoding="utf-8") as f:
+            text = f.read()
+
+    if not text:
+        print("✗ 请提供象辞文本或文件", file=sys.stderr)
+        sys.exit(1)
+
+    targets = args.target.split(",") if args.target else ["linux-6.x"]
+    translation = sdk.translate(text, env_targets=targets)
+
+    print(f"象辞: {translation.original_text}")
+    print(f"基因座: {translation.locus_name}")
+    print(f"置信度: {translation.confidence:.2f}")
+    print(f"使用模型: {translation.model_used}")
+    print(f"指令数: {len(translation.generated_genes)}")
+    print()
+
+    if args.evo_source:
+        source = sdk.export_to_evo_source(translation)
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(source)
+            print(f"✓ 已生成 .evo 源文件: {args.output}")
+        else:
+            print("生成的 .evo 源码:")
+            print(source)
+    else:
+        print("生成的指令:")
+        for gene in translation.generated_genes:
+            print(f"  {gene.get('mnemonic', '???')} (opcode={gene.get('opcode', 0):#04x})")
+
+
+def hub_command(args):
+    hub = EvoHub()
+
+    if args.hub_action == "list":
+        packages = hub.list_packages()
+        if packages:
+            print("evohub 仓库中的包:")
+            for name in packages:
+                print(f"  - {name}")
+        else:
+            print("evohub 仓库为空")
+
+    elif args.hub_action == "pull":
+        pkg = hub.pull(args.package_name)
+        if pkg:
+            print(f"✓ 已拉取: {pkg.name} v{pkg.version}")
+            print(f"  基因数: {len(pkg.genes_data)}")
+            print(f"  交叉池: {pkg.cross_pool}")
+        else:
+            print(f"✗ 未找到包: {args.package_name}")
+
+    elif args.hub_action == "search":
+        results = hub.search(args.query)
+        if results:
+            print(f"搜索结果 ({len(results)}):")
+            for pkg in results:
+                print(f"  - {pkg.name} v{pkg.version}: {pkg.description}")
+        else:
+            print("未找到匹配的包")
+
+    elif args.hub_action == "info":
+        pkg = hub.pull(args.package_name)
+        if pkg:
+            print(f"包名: {pkg.name}")
+            print(f"版本: {pkg.version}")
+            print(f"作者: {pkg.author}")
+            print(f"描述: {pkg.description}")
+            print(f"基因数: {len(pkg.genes_data)}")
+            print(f"平台评分: {pkg.platform_scores}")
+            print(f"校验和: {pkg.checksum}")
+        else:
+            print(f"✗ 未找到包: {args.package_name}")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="evoc",
+        description="易衍·Evomorph 进化编译器 — 六十四卦指令集，自然选择编译",
+    )
+    subparsers = parser.add_subparsers(dest="command", help="子命令")
+
+    compile_parser = subparsers.add_parser("compile", help="编译 .evo 源文件")
+    compile_parser.add_argument("input", help="输入 .evo 文件路径")
+    compile_parser.add_argument("-o", "--output", help="输出文件路径")
+    compile_parser.add_argument("-f", "--format", default="json",
+                                choices=["json", "evb", "dict"],
+                                help="输出格式")
+    compile_parser.set_defaults(func=compile_source)
+
+    evolve_parser = subparsers.add_parser("evolve", help="进化编译 .evo 源文件")
+    evolve_parser.add_argument("input", help="输入 .evo 文件路径")
+    evolve_parser.add_argument("-o", "--output", help="输出结果文件路径")
+    evolve_parser.add_argument("-t", "--target", help="目标平台 (逗号分隔)")
+    evolve_parser.add_argument("-l", "--locus", help="指定基因座名称")
+    evolve_parser.add_argument("-p", "--population", type=int, help="种群大小")
+    evolve_parser.add_argument("-g", "--generations", type=int, help="进化代数")
+    evolve_parser.add_argument("--hub", action="store_true", help="发布到 evohub")
+    evolve_parser.add_argument("-v", "--verbose", action="store_true", help="详细输出")
+    evolve_parser.set_defaults(func=evolve_source)
+
+    run_parser = subparsers.add_parser("run", help="在 IChingVM 上运行")
+    run_parser.add_argument("input", help="输入 .evo 文件路径")
+    run_parser.add_argument("-c", "--max-cycles", type=int, default=10000, help="最大执行周期")
+    run_parser.set_defaults(func=run_vm)
+
+    xiangci_parser = subparsers.add_parser("xiangci", help="象辞翻译")
+    xiangci_parser.add_argument("text", nargs="?", help="象辞文本")
+    xiangci_parser.add_argument("-f", "--file", help="象辞文件路径")
+    xiangci_parser.add_argument("-t", "--target", help="目标平台 (逗号分隔)")
+    xiangci_parser.add_argument("-o", "--output", help="输出文件路径")
+    xiangci_parser.add_argument("--evo-source", action="store_true",
+                                help="生成 .evo 源码")
+    xiangci_parser.set_defaults(func=xiangci_translate)
+
+    hub_parser = subparsers.add_parser("hub", help="evohub 包管理")
+    hub_parser.add_argument("hub_action", choices=["list", "pull", "search", "info"])
+    hub_parser.add_argument("--package-name", help="包名")
+    hub_parser.add_argument("--query", help="搜索查询")
+    hub_parser.set_defaults(func=hub_command)
+
+    args = parser.parse_args()
+    if hasattr(args, "func"):
+        args.func(args)
+    else:
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

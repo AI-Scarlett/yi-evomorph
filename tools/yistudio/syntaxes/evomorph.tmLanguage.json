@@ -1,0 +1,138 @@
+{
+    "scopeName": "source.evomorph",
+    "name": "Evomorph",
+    "patterns": [
+        {
+            "name": "comment.line.double-slash.evomorph",
+            "match": "//.*$",
+            "comment": "行注释"
+        },
+        {
+            "name": "keyword.control.evomorph",
+            "match": "@(evolang|locus|meta_locus|xiangci)\\b",
+            "comment": "易衍顶层关键字"
+        },
+        {
+            "name": "constant.language.hexagram.evomorph",
+            "match": "[䷀䷁䷂䷃䷄䷅䷆䷇䷈䷉䷊䷋䷌䷍䷎䷏䷐䷑䷒䷓䷔䷕䷖䷗䷘䷙䷚䷛䷜䷝䷞䷟䷠䷡䷢䷣䷤䷥䷦䷧䷨䷩䷪䷫䷬䷭䷮䷯䷰䷱䷲䷳䷴䷵䷶䷷䷸䷹䷺䷻䷼䷽䷾䷿]",
+            "comment": "六十四卦符号"
+        },
+        {
+            "name": "keyword.operator.mnemonic.yuan.evomorph",
+            "match": "\\b(CREA|RECV|ALLOC|SPRT|WAIT|LOCK|BRANCH|MERGE|PREFETCH|STEP|FLUSH|HALT|FELLOWSHIP|ABUNDANCE|YIELD|SPECULATE)\\b",
+            "comment": "元·创生 + 亨·交互 助记符"
+        },
+        {
+            "name": "keyword.operator.mnemonic.heng.evomorph",
+            "match": "\\b(FOLLOWING|MUT|APPROACH|CONTEMPLATE|BITE|ADORN|STRIP|RETURN|INTRINSIC|BARRIER|NOURISH|OVERLOAD|TRAP|ILLUMINATE|SENSE|PERSIST)\\b",
+            "comment": "亨·交互 助记符"
+        },
+        {
+            "name": "keyword.operator.mnemonic.li.evomorph",
+            "match": "\\b(RETREAT|THRUST|ADVANCE|OBSCURE|BIND|CONVERT|LAME|UNLOCK|REDUCE|INCREASE|BREAK|MATE|GATHER|PUSH_UP|TRAPPED|WELL)\\b",
+            "comment": "利·转换 助记符"
+        },
+        {
+            "name": "keyword.operator.mnemonic.zhen.evomorph",
+            "match": "\\b(REPLACE|CAST|SHOCK|STILL|GRADUAL|MISMATCH|ABOUND|TRAVEL|PENETRATE|JOY|DISPERSE|THROTTLE|TRUST|MICRO|SYNC|FUTU)\\b",
+            "comment": "贞·终成 助记符"
+        },
+        {
+            "name": "variable.register.evomorph",
+            "match": "\\bR([0-9]|1[0-5])\\b",
+            "comment": "通用寄存器 R0-R15"
+        },
+        {
+            "name": "variable.register.special.evomorph",
+            "match": "\\b(R_FP|R_SP|R_LR|R_A0)\\b",
+            "comment": "特殊寄存器"
+        },
+        {
+            "name": "keyword.modifier.evomorph",
+            "match": "\\.(ASYNC|ATOMIC|PRIV|WEAK|STRONG|VOLATILE)\\b",
+            "comment": "指令修饰符"
+        },
+        {
+            "name": "keyword.other.property.evomorph",
+            "match": "\\b(mut_rate|cross_pool|fitness|env_target|max_generations)\\b",
+            "comment": "基因座属性"
+        },
+        {
+            "name": "keyword.other.fitness.evomorph",
+            "match": "\\b(min_latency|max_throughput|min_energy|min_size)\\b",
+            "comment": "适应度关键词"
+        },
+        {
+            "name": "keyword.other.guaxu.evomorph",
+            "match": "卦序",
+            "comment": "卦序关键字"
+        },
+        {
+            "name": "keyword.operator.arithmetic.evomorph",
+            "match": "[+\\-*/]",
+            "comment": "适应度表达式算术运算符"
+        },
+        {
+            "name": "string.quoted.double.evomorph",
+            "begin": "\"",
+            "end": "\"",
+            "beginCaptures": {"0": {"name": "punctuation.definition.string.begin.evomorph"}},
+            "endCaptures": {"0": {"name": "punctuation.definition.string.end.evomorph"}},
+            "patterns": [
+                {
+                    "name": "constant.character.escape.evomorph",
+                    "match": "\\\\."
+                }
+            ],
+            "comment": "双引号字符串"
+        },
+        {
+            "name": "string.quoted.chinese.evomorph",
+            "begin": "\u201c",
+            "end": "\u201d",
+            "beginCaptures": {"0": {"name": "punctuation.definition.string.begin.evomorph"}},
+            "endCaptures": {"0": {"name": "punctuation.definition.string.end.evomorph"}},
+            "comment": "中文引号字符串（象辞）"
+        },
+        {
+            "name": "constant.numeric.hex.evomorph",
+            "match": "\\b0[xX][0-9a-fA-F]+\\b",
+            "comment": "十六进制数"
+        },
+        {
+            "name": "constant.numeric.binary.evomorph",
+            "match": "\\b0[bB][01]+\\b",
+            "comment": "二进制数"
+        },
+        {
+            "name": "constant.numeric.float.evomorph",
+            "match": "\\b[0-9]+\\.[0-9]+\\b",
+            "comment": "浮点数"
+        },
+        {
+            "name": "constant.numeric.decimal.evomorph",
+            "match": "\\b[0-9]+\\b",
+            "comment": "十进制整数"
+        },
+        {
+            "name": "variable.other.envref.evomorph",
+            "match": "env::[A-Z_]+",
+            "comment": "环境引用"
+        },
+        {
+            "name": "entity.name.label.evomorph",
+            "match": "@[a-zA-Z_][a-zA-Z0-9_]*",
+            "comment": "标签"
+        },
+        {
+            "name": "punctuation.separator.evomorph",
+            "match": "[,=]",
+            "comment": "分隔符"
+        },
+        {
+            "name": "punctuation.section.block.evomorph",
+            "match": "[{}\\[\\]]",
+            "comment": "块定界符"
+        }
+    ]
+}

@@ -1,0 +1,34 @@
+{
+    "project": {
+        "name": "易衍·Evomorph",
+        "language": "evomorph",
+        "version": "3.0.0"
+    },
+    "hermes": {
+        "system_prompt_source": "ai/prompts/system_prompt.md",
+        "rules_files": [".trae/rules/project_rules.md", ".cursorrules"],
+        "mcp_integration": {
+            "server_script": "ai/mcp/evomorph_mcp_server.py",
+            "config": "ai/mcp/mcp_config.json",
+            "available_tools": [
+                "evomorph_compile",
+                "evomorph_xiangci",
+                "evomorph_evolve",
+                "evomorph_run",
+                "evomorph_lookup_hexagram",
+                "evomorph_list_platforms"
+            ]
+        },
+        "file_patterns": {
+            "source": "*.evo",
+            "bytecode": "*.evb",
+            "image": "*.evoi"
+        },
+        "build_commands": {
+            "compile": "python3 tools/evoc compile {input} -f evb -o {output}",
+            "run": "python3 tools/evoc run {input}",
+            "evolve": "python3 tools/evoc evolve {input} -g {generations} -v",
+            "xiangci": "python3 tools/evoc xiangci \"{text}\" --evo-source"
+        }
+    }
+}

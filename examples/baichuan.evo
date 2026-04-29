@@ -1,0 +1,20 @@
+@evolang "3.0"
+
+@xiangci {
+    "百川归海：并行求列表中至大之数，分而治之，聚而反哺。速而省电，适安卓与鸿蒙。"
+}
+
+@locus 百川归海 {
+    mut_rate   = 0.03
+    cross_pool = "divide_conquer"
+    fitness    = min_latency + 2.0*max_throughput - 10.0*min_energy
+    env_target = ["android-14", "harmony-5"]
+
+    卦序: {
+        ䷭ PUSH_UP R1, @work_split
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+        ䷁ RECV R0, R_merge
+        ䷬ GATHER R0, R3
+    }
+}

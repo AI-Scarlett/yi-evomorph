@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "分治求和，适安卓与视窗，务必轻快省电。"
+}
+
+@locus parallel_sum {
+    mut_rate   = 0.02
+    cross_pool = "divide_conquer"
+    fitness    = min_latency + 2.0*max_throughput - 0.5*min_energy
+    env_target = ["android-14", "win-11"]
+
+    卦序: {
+        ䷀ CREA  R0, @worker
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+        ䷁ RECV  R2, R0
+    }
+}

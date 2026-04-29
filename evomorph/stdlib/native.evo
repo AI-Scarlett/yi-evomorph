@@ -1,0 +1,115 @@
+@evolang "3.0"
+
+@xiangci {
+    "原生库加载之基：按名索骥，从映像中取出所需之基因座。"
+    "此为第三阶段之钥——脱离Python，纯.evo加载纯.evo。"
+}
+
+@locus native.loader.open_image {
+    mut_rate   = 0.01
+    cross_pool = "native_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::IMAGE_PATH
+        ䷂ ALLOC R1, 0x100000
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷾ SYNC
+    }
+}
+
+@locus native.loader.read_header {
+    mut_rate   = 0.005
+    cross_pool = "native_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::IMAGE_DATA
+        ䷂ ALLOC R1, 0x100
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷔ BITE 0x45564F42, R1
+        ䷾ SYNC
+    }
+}
+
+@locus native.loader.find_locus {
+    mut_rate   = 0.01
+    cross_pool = "native_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_NAME
+        ䷁ RECV R1, env::SEGMENT_TABLE
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_found
+        ䷾ SYNC
+    }
+}
+
+@locus native.loader.execute {
+    mut_rate   = 0.01
+    cross_pool = "native_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_BYTECODE
+        ䷀ CREA R1, @vm_instance
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+        ䷁ RECV R2, R_execution_result
+    }
+}
+
+@locus native.linker.merge_segments {
+    mut_rate   = 0.01
+    cross_pool = "native_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SEGMENT_A
+        ䷁ RECV R1, env::SEGMENT_B
+        ䷌ FELLOWSHIP R0, R1
+        ䷬ GATHER R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus native.linker.resolve_symbols {
+    mut_rate   = 0.01
+    cross_pool = "native_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SYMBOL_TABLE
+        ䷁ RECV R1, env::RELOC_TABLE
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷰ REPLACE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus native.image.build {
+    mut_rate   = 0.01
+    cross_pool = "native_core"
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MANIFEST
+        ䷁ RECV R1, env::EVB_DATA
+        ䷂ ALLOC R2, 0x100000
+        ䷍ ABUNDANCE R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}

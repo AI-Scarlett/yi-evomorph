@@ -1,0 +1,155 @@
+@evolang "3.0"
+
+@xiangci {
+    "词法分析之基：读源码如读卦象，逐字辨义，化为令牌之流。"
+    "此为道枢自举之始——编译器用自身之语言书写自身之词法。"
+}
+
+@locus evoc.lexer.read_char {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_STREAM
+        ䷂ ALLOC R1, 0x01
+        ䷈ PREFETCH R0
+        ䷍ ABUNDANCE R1, R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.classify {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷆ BRANCH R_classify
+        ䷀ CREA R1, @hexagram_path
+        ䷀ CREA R2, @mnemonic_path
+        ䷀ CREA R3, @register_path
+        ䷀ CREA R4, @number_path
+        ䷀ CREA R5, @string_path
+        ䷀ CREA R6, @identifier_path
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.hexagram_scan {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷓ CONTEMPLATE R0
+        ䷂ ALLOC R1, 0x04
+        ䷕ ADORN R0, R1
+        ䷍ ABUNDANCE R2, R1
+        ䷝ ILLUMINATE R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.mnemonic_scan {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷂ ALLOC R1, 0x10
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.register_scan {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷂ ALLOC R1, 0x04
+        ䷌ FELLOWSHIP R0, R1
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.number_scan {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷂ ALLOC R1, 0x10
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.string_scan {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷂ ALLOC R1, 0x100
+        ䷌ FELLOWSHIP R0, R1
+        ䷕ ADORN R0, R1
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.emit_token {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TOKEN_TYPE
+        ䷁ RECV R1, env::TOKEN_VALUE
+        ䷂ ALLOC R2, 0x08
+        ䷍ ABUNDANCE R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷝ ILLUMINATE R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.full_pass {
+    mut_rate   = 0.02
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_energy + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷂ ALLOC R1, 0x10000
+        ䷌ FELLOWSHIP R0, R1
+        ䷉ STEP R1
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_classify
+        ䷾ SYNC
+        ䷁ RECV R2, R_token_stream
+    }
+}

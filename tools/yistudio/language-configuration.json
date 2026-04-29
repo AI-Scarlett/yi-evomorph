@@ -1,0 +1,46 @@
+{
+    "comments": {
+        "lineComment": "//",
+        "blockComment": ["/*", "*/"]
+    },
+    "brackets": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"]
+    ],
+    "autoClosingPairs": [
+        {"open": "{", "close": "}"},
+        {"open": "[", "close": "]"},
+        {"open": "(", "close": ")"},
+        {"open": "\"", "close": "\"", "notIn": ["string"]},
+        {"open": "\u201c", "close": "\u201d", "notIn": ["string"]}
+    ],
+    "surroundingPairs": [
+        ["{", "}"],
+        ["[", "]"],
+        ["(", ")"],
+        ["\"", "\""],
+        ["\u201c", "\u201d"]
+    ],
+    "indentationRules": {
+        "increaseIndentPattern": "\\{\\s*$",
+        "decreaseIndentPattern": "^\\s*\\}"
+    },
+    "folding": {
+        "markers": {
+            "start": "^\\s*@(locus|meta_locus|xiangci)\\s",
+            "end": "^\\s*\\}"
+        }
+    },
+    "wordPattern": "[\\w\u4e00-\u9fff䷀-\u7fff]+",
+    "onEnterRules": [
+        {
+            "beforeText": "\\{\\s*$",
+            "action": {"indentAction": "indent"}
+        },
+        {
+            "beforeText": "卦序:\\s*\\{\\s*$",
+            "action": {"indentAction": "indent"}
+        }
+    ]
+}

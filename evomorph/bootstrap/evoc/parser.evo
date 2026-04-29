@@ -1,0 +1,135 @@
+@evolang "3.0"
+
+@xiangci {
+    "语法解析之基：令牌之流化为抽象之树，如卦象之有序成辞。"
+    "道枢自举之二——编译器用自身之语言书写自身之语法。"
+}
+
+@locus evoc.parser.read_token {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TOKEN_STREAM
+        ䷈ PREFETCH R0
+        ䷂ ALLOC R1, 0x08
+        ䷍ ABUNDANCE R1, R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.expect {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EXPECTED_TYPE
+        ䷁ RECV R1, env::ACTUAL_TYPE
+        ䷔ BITE R0, R1
+        ䷆ BRANCH R_match
+        ䷛ OVERLOAD R_error
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_locus {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_KW
+        ䷁ RECV R1, env::LOCUS_NAME
+        ䷂ ALLOC R2, 0x100
+        ䷌ FELLOWSHIP R0, R2
+        ䷓ CONTEMPLATE R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_guaxu {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::GUA_XU_KW
+        ䷂ ALLOC R1, 0x1000
+        ䷌ FELLOWSHIP R0, R1
+        ䷉ STEP R1
+        ䷓ CONTEMPLATE R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_instruction {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::HEXAGRAM_OR_MNEMONIC
+        ䷓ CONTEMPLATE R0
+        ䷂ ALLOC R1, 0x08
+        ䷍ ABUNDANCE R1, R0
+        ䷁ RECV R2, env::OPERANDS
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_xiangci {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::XIANGCI_KW
+        ䷂ ALLOC R1, 0x1000
+        ䷌ FELLOWSHIP R0, R1
+        ䷕ ADORN R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_fitness {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::FITNESS_KW
+        ䷂ ALLOC R1, 0x100
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.full_pass {
+    mut_rate   = 0.02
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TOKEN_STREAM
+        ䷂ ALLOC R1, 0x10000
+        ䷌ FELLOWSHIP R0, R1
+        ䷉ STEP R1
+        ䷆ BRANCH R_parse_locus
+        ䷆ BRANCH R_parse_xiangci
+        ䷆ BRANCH R_parse_guaxu
+        ䷾ SYNC
+        ䷁ RECV R2, R_ast
+    }
+}

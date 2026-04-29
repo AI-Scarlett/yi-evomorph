@@ -1,0 +1,40 @@
+@evolang "3.0"
+
+@xiangci {
+    "AI推理服务：接收输入数据，执行模型推理，返回结果，适配服务器与移动端"
+}
+
+@locus ai_inference {
+    mut_rate   = 0.01
+    cross_pool = "ai"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+    max_generations = 200
+
+    卦序: {
+        ䷁ RECV R0, 0x0200
+        ䷂ ALLOC R1, R0
+        ䷃ SPRT R2, 0x01
+        ䷀ CREA R3, R4
+        ䷌ FELLOWSHIP R3, R4
+        ䷏ SPECULATE R5, R0
+        ䷐ FOLLOWING R6, R5
+        ䷱ CAST R7, R6
+        ䷍ ABUNDANCE R8, R7
+        ䷝ ILLUMINATE R8
+        ䷾ SYNC
+        ䷗ RETURN R8
+    }
+}
+
+@meta_locus ai_inference_optimizer {
+    mut_rate = 0.005
+    fitness  = min_size + max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}

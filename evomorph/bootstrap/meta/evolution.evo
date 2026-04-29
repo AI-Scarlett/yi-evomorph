@@ -1,0 +1,117 @@
+@evolang "3.0"
+
+@xiangci {
+    "元基因座：编译器自进化之枢。"
+    "变异算子、适应度评估器、交叉策略——皆可进化。"
+    "此为道枢之核：进化之进化，变易之变易。"
+}
+
+@meta_locus 进化之进化.变异算子 {
+    mut_rate = 0.01
+    fitness  = min_size + max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+        ䷓ CONTEMPLATE R2
+    }
+}
+
+@meta_locus 进化之进化.交叉策略 {
+    mut_rate = 0.01
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷫ MATE R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 进化之进化.选择策略 {
+    mut_rate = 0.005
+    fitness  = max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷏ SPECULATE R1
+        ䷾ SYNC
+        ䷗ RETURN
+    }
+}
+
+@meta_locus 进化之进化.适应度评估 {
+    mut_rate = 0.01
+    fitness  = max_throughput + min_energy
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷔ BITE R_expected, R_actual
+        ䷆ BRANCH R_adjust
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 进化之进化.种群管理 {
+    mut_rate = 0.005
+    fitness  = min_energy + min_size
+
+    卦序: {
+        ䷬ GATHER R0, R1
+        ䷓ CONTEMPLATE R0
+        ䷨ REDUCE R0, R_weak
+        ䷩ INCREASE R0, R_strong
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 进化之进化.收敛检测 {
+    mut_rate = 0.005
+    fitness  = min_latency
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷔ BITE R_threshold, R_variance
+        ䷆ BRANCH R_converged
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 象辞翻译策略.意图识别 {
+    mut_rate = 0.02
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷁ RECV R0, env::XIANGCI_TEXT
+        ䷓ CONTEMPLATE R0
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 象辞翻译策略.指令选择 {
+    mut_rate = 0.02
+    fitness  = max_throughput + min_energy
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷀ CREA R1, @translator
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+        ䷍ ABUNDANCE R2, R1
+    }
+}
+
+@meta_locus 象辞翻译策略.适应度生成 {
+    mut_rate = 0.01
+    fitness  = min_size + max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷂ ALLOC R1, 0x100
+        ䷕ ADORN R0, R1
+        ䷾ SYNC
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "mcpServers": {
+        "evomorph": {
+            "command": "python3",
+            "args": ["/Users/zhouxiaoming/Downloads/evomorph/ai/mcp/evomorph_mcp_server.py"],
+            "transport": "stdio"
+        }
+    }
+}

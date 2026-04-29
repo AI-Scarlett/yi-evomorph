@@ -1,0 +1,66 @@
+@evolang "3.0"
+
+@xiangci {
+    "AI之基：与大模型对话，构造提示词，解析流式响应。"
+}
+
+@locus std.ai.prompt_construct {
+    mut_rate   = 0.02
+    cross_pool = "ai_ops"
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x2000
+        ䷁ RECV R1, env::USER_INPUT
+        ䷕ ADORN R0, R1
+        ䷍ ABUNDANCE R2, R0
+    }
+}
+
+@locus std.ai.stream_parse {
+    mut_rate   = 0.03
+    cross_pool = "ai_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::AI_STREAM
+        ䷂ ALLOC R1, 0x1000
+        ䷌ FELLOWSHIP R0, R1
+        ䷿ FUTU R2
+        ䷾ SYNC
+        ䷁ RECV R3, R2
+    }
+}
+
+@locus std.ai.embedding_lookup {
+    mut_rate   = 0.03
+    cross_pool = "ai_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷈ PREFETCH R0
+        ䷸ PENETRATE R0, R1
+        ䷩ INCREASE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.ai.xiangci_translate {
+    mut_rate   = 0.05
+    cross_pool = "ai_ops"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::XIANGCI_TEXT
+        ䷂ ALLOC R1, 0x4000
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R0
+        ䷀ CREA R2, @translator
+        ䷾ SYNC
+        ䷁ RECV R3, R2
+    }
+}

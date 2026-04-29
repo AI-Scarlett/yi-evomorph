@@ -1,0 +1,14 @@
+@evolang "3.0"
+
+@locus xiangci_0a357c {
+    mut_rate   = 0.03
+    cross_pool = "default"
+    fitness    = "min_energy + min_latency"
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        RECV
+        ALLOC
+        ABUNDANCE
+    }
+}

@@ -1,0 +1,299 @@
+{
+    "name": "yistudio-evomorph",
+    "displayName": "YiStudio - 易衍·Evomorph",
+    "description": "易衍·Evomorph 编程语言完整支持 — 语法高亮、智能补全、悬停提示、诊断、调试、进化编译、AI编程",
+    "version": "3.0.0",
+    "publisher": "evomorph",
+    "engines": {"vscode": "^1.80.0"},
+    "categories": ["Programming Languages", "Debuggers", "Machine Learning", "Snippets"],
+    "keywords": ["evomorph", "易衍", "i-ching", "evolutionary", "hexagram"],
+    "activationEvents": ["onLanguage:evomorph", "onCommand:yistudio.compile", "onCommand:yistudio.run"],
+    "main": "./extension.js",
+    "icon": "icons/evomorph.png",
+    "contributes": {
+        "languages": [
+            {
+                "id": "evomorph",
+                "aliases": ["Evomorph", "易衍", "evo", "易衍·Evomorph"],
+                "extensions": [".evo", ".evb", ".evoi"],
+                "configuration": "./language-configuration.json",
+                "icon": {
+                    "light": "icons/evo-file.svg",
+                    "dark": "icons/evo-file.svg"
+                }
+            }
+        ],
+        "grammars": [
+            {
+                "language": "evomorph",
+                "scopeName": "source.evomorph",
+                "path": "./syntaxes/evomorph.tmLanguage.json"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "evomorph",
+                "path": "./snippets/evomorph.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "yistudio.compile",
+                "title": "易衍: 编译当前文件",
+                "category": "YiStudio",
+                "icon": "$(gear)"
+            },
+            {
+                "command": "yistudio.compileToEVB",
+                "title": "易衍: 编译为 EVB 字节码",
+                "category": "YiStudio"
+            },
+            {
+                "command": "yistudio.evolve",
+                "title": "易衍: 进化编译当前文件",
+                "category": "YiStudio",
+                "icon": "$(sparkle)"
+            },
+            {
+                "command": "yistudio.xiangci",
+                "title": "易衍: 翻译象辞",
+                "category": "YiStudio",
+                "icon": "$(comment)"
+            },
+            {
+                "command": "yistudio.runVM",
+                "title": "易衍: 在虚拟机上运行",
+                "category": "YiStudio",
+                "icon": "$(play)"
+            },
+            {
+                "command": "yistudio.showYao",
+                "title": "易衍: 显示爻位视图",
+                "category": "YiStudio"
+            },
+            {
+                "command": "yistudio.lookupHexagram",
+                "title": "易衍: 查询卦象指令",
+                "category": "YiStudio"
+            },
+            {
+                "command": "yistudio.listPlatforms",
+                "title": "易衍: 列出目标平台",
+                "category": "YiStudio"
+            },
+            {
+                "command": "yistudio.aiGenerate",
+                "title": "易衍: AI 生成代码",
+                "category": "YiStudio",
+                "icon": "$(sparkle)"
+            },
+            {
+                "command": "yistudio.newFile",
+                "title": "易衍: 新建 .evo 文件",
+                "category": "YiStudio"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "when": "resourceLangId == evomorph",
+                    "command": "yistudio.compile",
+                    "group": "evomorph@1"
+                },
+                {
+                    "when": "resourceLangId == evomorph",
+                    "command": "yistudio.runVM",
+                    "group": "evomorph@2"
+                },
+                {
+                    "when": "resourceLangId == evomorph",
+                    "command": "yistudio.evolve",
+                    "group": "evomorph@3"
+                },
+                {
+                    "when": "resourceLangId == evomorph",
+                    "command": "yistudio.xiangci",
+                    "group": "evomorph@4"
+                }
+            ],
+            "editor/title": [
+                {
+                    "when": "resourceLangId == evomorph",
+                    "command": "yistudio.runVM",
+                    "group": "navigation@1"
+                },
+                {
+                    "when": "resourceLangId == evomorph",
+                    "command": "yistudio.evolve",
+                    "group": "navigation@2"
+                }
+            ]
+        },
+        "keybindings": [
+            {
+                "command": "yistudio.compile",
+                "key": "ctrl+shift+b",
+                "when": "resourceLangId == evomorph"
+            },
+            {
+                "command": "yistudio.runVM",
+                "key": "f5",
+                "when": "resourceLangId == evomorph"
+            },
+            {
+                "command": "yistudio.evolve",
+                "key": "ctrl+shift+e",
+                "when": "resourceLangId == evomorph"
+            },
+            {
+                "command": "yistudio.xiangci",
+                "key": "ctrl+shift+x",
+                "when": "resourceLangId == evomorph"
+            }
+        ],
+        "configuration": {
+            "title": "YiStudio — 易衍·Evomorph",
+            "properties": {
+                "yistudio.evoPath": {
+                    "type": "string",
+                    "default": "python3 bin/evo-ai",
+                    "description": "evo-ai CLI 路径",
+                    "scope": "resource"
+                },
+                "yistudio.defaultTarget": {
+                    "type": "string",
+                    "default": "linux-6.x",
+                    "enum": ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"],
+                    "description": "默认目标平台",
+                    "scope": "resource"
+                },
+                "yistudio.populationSize": {
+                    "type": "number",
+                    "default": 64,
+                    "description": "进化种群大小",
+                    "scope": "resource"
+                },
+                "yistudio.maxGenerations": {
+                    "type": "number",
+                    "default": 100,
+                    "description": "最大进化代数",
+                    "scope": "resource"
+                },
+                "yistudio.mutRate": {
+                    "type": "number",
+                    "default": 0.02,
+                    "description": "默认变异率",
+                    "scope": "resource"
+                },
+                "yistudio.enableDiagnostics": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "启用实时诊断（编译检查）",
+                    "scope": "resource"
+                },
+                "yistudio.enableAI": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "启用 AI 辅助编程",
+                    "scope": "resource"
+                },
+                "yistudio.apiKey": {
+                    "type": "string",
+                    "default": "",
+                    "description": "LLM API Key（用于 AI 编程）",
+                    "scope": "machine"
+                },
+                "yistudio.apiModel": {
+                    "type": "string",
+                    "default": "gpt-4o",
+                    "description": "LLM 模型名称",
+                    "scope": "machine"
+                }
+            }
+        },
+        "breakpoints": [
+            {
+                "language": "evomorph"
+            }
+        ],
+        "debuggers": [
+            {
+                "type": "evomorph",
+                "label": "易衍 IChingVM 调试器",
+                "languages": ["evomorph"],
+                "configurationAttributes": {
+                    "launch": {
+                        "required": ["program"],
+                        "properties": {
+                            "program": {
+                                "type": "string",
+                                "description": ".evo 文件路径"
+                            },
+                            "maxCycles": {
+                                "type": "number",
+                                "description": "最大执行周期",
+                                "default": 10000
+                            },
+                            "platform": {
+                                "type": "string",
+                                "description": "目标平台",
+                                "default": "linux-6.x"
+                            }
+                        }
+                    }
+                },
+                "configurationSnippets": [
+                    {
+                        "label": "易衍: 启动 IChingVM",
+                        "description": "在 IChingVM 上运行 .evo 程序",
+                        "body": {
+                            "type": "evomorph",
+                            "request": "launch",
+                            "name": "易衍: 运行 ${1:program}.evo",
+                            "program": "^\"\\${workspaceFolder}/${1:program}.evo\"",
+                            "maxCycles": 10000,
+                            "platform": "linux-6.x"
+                        }
+                    }
+                ]
+            }
+        ],
+        "taskDefinitions": [
+            {
+                "type": "evomorph",
+                "required": ["command"],
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "enum": ["compile", "run", "evolve", "xiangci"],
+                        "description": "易衍命令"
+                    },
+                    "file": {
+                        "type": "string",
+                        "description": ".evo 文件路径"
+                    },
+                    "generations": {
+                        "type": "number",
+                        "description": "进化代数"
+                    }
+                }
+            }
+        ],
+        "problemMatchers": [
+            {
+                "name": "evomorph-compiler",
+                "label": "易衍编译器",
+                "owner": "evomorph",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+):\\s+(error|warning):\\s+(.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "column": 3,
+                    "severity": 4,
+                    "message": 5
+                }
+            }
+        ]
+    }
+}
