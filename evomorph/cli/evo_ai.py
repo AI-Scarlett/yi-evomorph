@@ -751,14 +751,27 @@ def shell():
                 if selected:
                     prov = PROVIDERS[selected]
                     config["api_url"] = f"{prov['base_url']}/chat/completions"
+                    config["model"] = ""
                     save_config(config)
                     print(f"\033[36m✓ 已切换到 {prov['name']}\033[0m")
                     print(f"  API 地址: {prov['base_url']}")
                     if not config.get("api_key"):
                         print("\033[33m  ⚠ 需要设置 API Key，输入 /apikey <your-key>\033[0m")
                     else:
-                        print()
-                        print("\033[33m  💡 输入 /models 拉取该厂商的可用模型，或 /model <名称> 直接指定\033[0m")
+                        print("\033[33m  ⟐ 自动拉取模型列表...\033[0m")
+                        models = fetch_models(config["api_url"], config.get("api_key", ""))
+                        if models:
+                            model_sel = _select_model(models)
+                            if model_sel:
+                                config["model"] = model_sel
+                                save_config(config)
+                                print(f"\033[36m✓ 模型已切换到 {model_sel}\033[0m")
+                                print()
+                                print("\033[33m  💡 下一步: 直接用自然语言描述你想写的程序\033[0m")
+                            else:
+                                print("\033[33m  模型未选择，输入 /models 选择模型\033[0m")
+                        else:
+                            print("\033[33m  拉取失败，输入 /model <名称> 手动设置\033[0m")
                 else:
                     print("\033[33m已取消\033[0m")
             else:
@@ -785,14 +798,33 @@ def shell():
             if arg in PROVIDERS:
                 prov = PROVIDERS[arg]
                 config["api_url"] = f"{prov['base_url']}/chat/completions"
+                config["model"] = ""
                 save_config(config)
                 print(f"\033[36m✓ 已切换到 {prov['name']}\033[0m")
                 print(f"  API 地址: {prov['base_url']}")
                 if not config.get("api_key"):
                     print("\033[33m  ⚠ 需要设置 API Key，输入 /apikey <your-key>\033[0m")
                 else:
-                    print()
-                    print("\033[33m  💡 输入 /models 拉取该厂商的可用模型，或 /model <名称> 直接指定\033[0m")
+                    print("\033[33m  ⟐ 自动拉取模型列表...\033[0m")
+                    models = fetch_models(config["api_url"], config.get("api_key", ""))
+                    if models:
+                        if HAS_PROMPT_TOOLKIT:
+                            model_sel = _select_model(models)
+                            if model_sel:
+                                config["model"] = model_sel
+                                save_config(config)
+                                print(f"\033[36m✓ 模型已切换到 {model_sel}\033[0m")
+                                print()
+                                print("\033[33m  💡 下一步: 直接用自然语言描述你想写的程序\033[0m")
+                            else:
+                                print("\033[33m  模型未选择，输入 /models 选择模型\033[0m")
+                        else:
+                            print(f"\033[36m可用模型 ({len(models)} 个):\033[0m")
+                            for m in models:
+                                print(f"  \033[33m{m}\033[0m")
+                            print(f"  使用 \033[33m/model <模型名>\033[0m 切换")
+                    else:
+                        print("\033[33m  拉取失败，输入 /model <名称> 手动设置\033[0m")
             else:
                 print(f"\033[31m未知厂商: {arg}\033[0m")
                 print("输入 \033[33m/providers\033[0m 查看所有厂商")
