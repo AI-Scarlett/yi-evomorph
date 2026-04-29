@@ -2,9 +2,11 @@ import json
 import os
 import sys
 import re
+import subprocess
 import threading
+import time
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -58,13 +60,18 @@ PROVIDERS = {
 }
 
 try:
-    from rich.console import Console
+    from rich.console import Console, Group
     from rich.markdown import Markdown
     from rich.syntax import Syntax
     from rich.panel import Panel
     from rich.text import Text
     from rich.live import Live
     from rich.spinner import Spinner
+    from rich.tree import Tree
+    from rich.table import Table
+    from rich.columns import Columns
+    from rich.rule import Rule
+    from rich.padding import Padding
     HAS_RICH = True
     console = Console()
 except ImportError:
@@ -129,6 +136,185 @@ def _spinner_stop(live):
         live.stop()
 
 
+def _spinner_update(live, message):
+    if live and HAS_RICH:
+        spinner = Spinner("dots", text=f"  {message}...", style="cyan")
+        live.update(spinner)
+
+
+def _extract_files_from_output(llm_output: str) -> List[Dict[str, str]]:
+    files = []
+    patterns = [
+        (r'(?:创建|新建|写入|生成|保存到?|修改|编辑|更新|打开|删除)\s*[`"\']?([^\s`"，。；\n]+\.\w+)[`"\']?', '修改'),
+        (r'(?:file|create|write|save|modify|edit|update|open|delete)\s*[`"\']?([^\s`"，。；\n]+\.\w+)[`"\']?', '修改'),
+        (r'([/\w\-\.]+\.\w+)\s*(?:已|was|has been)', '修改'),
+        (r'`([^\s`]+\.\w+)`', '修改'),
+        (r'(?:以及|和|、|,)\s*([^\s`"，。；\n]+\.\w+)', '修改'),
+    ]
+    seen = set()
+    for pattern, action in patterns:
+        for match in re.finditer(pattern, llm_output, re.IGNORECASE):
+            filepath = match.group(1).strip()
+            if filepath and filepath not in seen and len(filepath) < 200 and '.' in filepath:
+                seen.add(filepath)
+                files.append({"path": filepath, "action": action})
+    return files
+
+
+def _detect_task_type(llm_output: str) -> str:
+    lower = llm_output.lower()
+    if any(kw in lower for kw in ["创建", "新建", "create", "generate", "写", "编写"]):
+        return "create"
+    if any(kw in lower for kw in ["修改", "更新", "编辑", "modify", "update", "edit", "fix", "修复", "bug"]):
+        return "modify"
+    if any(kw in lower for kw in ["删除", "移除", "delete", "remove"]):
+        return "delete"
+    if any(kw in lower for kw in ["分析", "解释", "explain", "analyze", "review"]):
+        return "analyze"
+    if any(kw in lower for kw in ["编译", "compile", "运行", "run", "执行", "execute"]):
+        return "execute"
+    return "general"
+
+
+def _generate_natural_summary(llm_output: str, evo_code: str, saved_file: str = None, elapsed: float = 0) -> str:
+    task_type = _detect_task_type(llm_output)
+    files = _extract_files_from_output(llm_output)
+    lines = llm_output.strip().split("\n")
+    non_empty = [l for l in lines if l.strip() and not l.strip().startswith("```")]
+
+    summary_parts = []
+
+    task_labels = {
+        "create": "代码生成",
+        "modify": "代码修改",
+        "delete": "代码删除",
+        "analyze": "代码分析",
+        "execute": "编译/运行",
+        "general": "任务处理",
+    }
+    task_label = task_labels.get(task_type, "任务处理")
+
+    if evo_code and evo_code.startswith("@evolang"):
+        loci_names = re.findall(r'@locus\s+(\w+)', evo_code)
+        xiangci_match = re.findall(r'@xiangci\s*\{[^"]*"([^"]+)"', evo_code)
+        xiangci = xiangci_match[0] if xiangci_match else ""
+        summary_parts.append(f"✅ {task_label}完成")
+        if loci_names:
+            summary_parts.append(f"基因座: {', '.join(loci_names)}")
+        if xiangci:
+            summary_parts.append(f"象辞: {xiangci}")
+    else:
+        summary_parts.append(f"✅ {task_label}完成")
+
+    if saved_file:
+        summary_parts.append(f"已保存到: {saved_file}")
+    elif files:
+        file_names = [f["path"] for f in files[:5]]
+        summary_parts.append(f"涉及文件: {', '.join(file_names)}")
+
+    if elapsed > 0:
+        summary_parts.append(f"耗时: {elapsed:.1f}s")
+
+    key_info = ""
+    for line in non_empty:
+        stripped = line.strip()
+        if stripped and not stripped.startswith("#") and not stripped.startswith("//") and len(stripped) > 10:
+            key_info = stripped[:80]
+            break
+
+    result = " | ".join(summary_parts)
+    if key_info and task_type == "analyze":
+        result += f"\n💡 {key_info}"
+
+    return result
+
+
+def _generate_summary(llm_output, evo_code, saved_file=None):
+    return _generate_natural_summary(llm_output, evo_code, saved_file)
+
+
+def _show_result(llm_output, evo_code, saved_file=None, elapsed=0):
+    summary = _generate_natural_summary(llm_output, evo_code, saved_file, elapsed)
+    files = _extract_files_from_output(llm_output)
+    task_type = _detect_task_type(llm_output)
+
+    if HAS_RICH:
+        console.print()
+        console.rule(style="dim")
+
+        if evo_code and evo_code.startswith("@evolang"):
+            loci_names = re.findall(r'@locus\s+(\w+)', evo_code)
+            xiangci_match = re.findall(r'@xiangci\s*\{[^"]*"([^"]+)"', evo_code)
+            xiangci = xiangci_match[0] if xiangci_match else ""
+
+            tree = Tree("📋 [bold green]完成[/bold green]")
+            if saved_file:
+                tree.add(f"[bold cyan]{saved_file}[/bold cyan]")
+            for name in loci_names:
+                tree.add(f"[green]@locus[/green] {name}")
+            if xiangci:
+                tree.add(f"[yellow]象辞:[/yellow] {xiangci}")
+            console.print(tree)
+        else:
+            if files:
+                tree = Tree("📋 [bold green]完成[/bold green]")
+                for f in files[:8]:
+                    icon = "📝" if f["action"] == "修改" else "📄"
+                    tree.add(f"{icon} [cyan]{f['path']}[/cyan]")
+                console.print(tree)
+            elif task_type == "analyze":
+                non_code = re.sub(r'```[\s\S]*?```', '', llm_output).strip()
+                if non_code:
+                    md_text = non_code[:500]
+                    console.print(Markdown(md_text))
+                else:
+                    console.print(f"[green]✅ 分析完成[/green]")
+            else:
+                non_code = re.sub(r'```[\s\S]*?```', '', llm_output).strip()
+                first_para = non_code.split("\n\n")[0] if non_code else summary
+                if len(first_para) > 300:
+                    first_para = first_para[:300] + "..."
+                console.print(Markdown(first_para))
+
+        if elapsed > 0:
+            console.print(f"[dim]⏱ {elapsed:.1f}s[/dim]")
+
+        hint_parts = []
+        if evo_code and evo_code.startswith("@evolang"):
+            hint_parts = ["/compile", "/run", "/evolve", "/save", "/view"]
+        else:
+            hint_parts = ["/save", "/view"]
+        console.print(f"[dim]  {'  '.join(hint_parts)}[/dim]")
+
+        console.rule(style="dim")
+        console.print()
+    else:
+        print()
+        print(f"  {summary}")
+        if files:
+            for f in files[:5]:
+                print(f"    {f['path']}")
+        if evo_code and evo_code.startswith("@evolang"):
+            print("  /compile 编译  /run 运行  /evolve 进化  /save 保存  /view 查看")
+        print()
+
+
+def _git_run(args, cwd=None):
+    try:
+        result = subprocess.run(
+            ["git"] + args,
+            capture_output=True, text=True, timeout=30,
+            cwd=cwd or os.getcwd(),
+        )
+        return result.stdout.strip() or result.stderr.strip() or "(无输出)"
+    except FileNotFoundError:
+        return "错误: git 未安装"
+    except subprocess.TimeoutExpired:
+        return "错误: git 命令超时"
+    except Exception as e:
+        return f"错误: {e}"
+
+
 def fetch_models(api_url, api_key):
     if not api_key:
         return None
@@ -168,7 +354,7 @@ def load_system_prompt() -> str:
     return "你是易衍·Evomorph 编程语言专家。请根据用户需求生成 .evo 源代码。"
 
 
-def call_llm(config: Dict[str, Any], messages: List[Dict[str, str]]) -> str:
+def call_llm(config: Dict[str, Any], messages: List[Dict[str, str]], progress_callback=None) -> Tuple[str, float]:
     api_key = config.get("api_key", "")
     api_url = config.get("api_url", "https://api.openai.com/v1/chat/completions")
     model = config.get("model", "gpt-4o")
@@ -176,9 +362,11 @@ def call_llm(config: Dict[str, Any], messages: List[Dict[str, str]]) -> str:
     temperature = config.get("temperature", 0.7)
 
     if not api_key:
-        return _local_fallback(messages[-1]["content"], config)
+        return _local_fallback(messages[-1]["content"], config), 0.0
 
-    result_holder = {"content": "", "error": None, "done": False}
+    start_time = time.time()
+    result_holder = {"content": "", "error": None, "done": False, "cancelled": False}
+    phase_holder = {"phase": "thinking", "chars": 0}
 
     def _stream():
         try:
@@ -240,7 +428,11 @@ def call_llm(config: Dict[str, Any], messages: List[Dict[str, str]]) -> str:
                             content = delta.get("content", "")
                             if content:
                                 full_content.append(content)
-                                print(content, end="", flush=True)
+                                phase_holder["chars"] += len(content)
+                                if phase_holder["phase"] == "thinking" and phase_holder["chars"] > 50:
+                                    phase_holder["phase"] = "generating"
+                                if progress_callback:
+                                    progress_callback(phase_holder["phase"], phase_holder["chars"])
                         except (json.JSONDecodeError, IndexError, KeyError):
                             pass
             conn.close()
@@ -253,10 +445,6 @@ def call_llm(config: Dict[str, Any], messages: List[Dict[str, str]]) -> str:
     t = threading.Thread(target=_stream, daemon=True)
     t.start()
 
-    print()
-    _print("  按 Ctrl+C 可随时打断", style="dim")
-    print()
-
     try:
         while t.is_alive():
             t.join(timeout=0.1)
@@ -265,16 +453,16 @@ def call_llm(config: Dict[str, Any], messages: List[Dict[str, str]]) -> str:
         _print("\n⏹ 已打断生成", style="yellow")
         t.join(timeout=2)
 
-    print()
+    elapsed = time.time() - start_time
 
     if result_holder.get("error"):
         _print(f"[LLM 调用失败] {result_holder['error']}", style="bold red")
-        return _local_fallback(messages[-1]["content"], config)
+        return _local_fallback(messages[-1]["content"], config), elapsed
 
     if result_holder["content"]:
-        return result_holder["content"]
+        return result_holder["content"], elapsed
 
-    return _local_fallback(messages[-1]["content"], config)
+    return _local_fallback(messages[-1]["content"], config), elapsed
 
 
 def _local_fallback(user_text: str, config: Dict[str, Any]) -> str:
@@ -419,6 +607,8 @@ SLASH_COMMANDS = {
     "/new": "新建文件",
     "/open": "打开文件",
     "/save": "保存代码",
+    "/view": "查看当前代码",
+    "/git": "Git 操作",
     "/history": "对话历史",
     "/clear": "清空对话",
     "/config": "查看配置",
@@ -517,43 +707,19 @@ def _get_provider_short(config):
     return ""
 
 
-def _build_prompt_str(config, current_file=None):
-    model_short = config.get("model", "?")
-    if len(model_short) > 16:
-        model_short = model_short[:13] + "..."
-    provider_short = _get_provider_short(config)
-    key_mark = "●" if config.get("api_key") else "○"
-    prompt = "易衍"
-    if current_file:
-        prompt += f" [{current_file}]"
-    if provider_short:
-        prompt += f" {provider_short}"
-    prompt += f" {model_short}{key_mark}> "
-    return prompt
-
-
 def print_banner():
     if HAS_RICH:
         banner = Text()
         banner.append("  易衍 · Evomorph ", style="bold cyan")
         banner.append("v0.0.1", style="dim")
-        banner.append("\n  六十四卦指令集 · 进化编程 · AI 驱动", style="dim")
         console.print()
-        console.print(Panel(banner, border_style="cyan", padding=(1, 2)))
-        console.print()
-        console.print("  直接输入自然语言 → AI 生成 .evo 代码", style="green")
-        console.print("  输入 / → 弹出命令菜单，上下键选择", style="green")
-        console.print("  按 Ctrl+C → 随时打断 AI 生成", style="green")
+        console.print(Panel(banner, border_style="cyan", padding=(0, 2)))
+        console.print("  自然语言编程  │  / 命令菜单  │  Ctrl+C 打断", style="dim")
         console.print()
     else:
         print()
-        print("\033[36m  ╔═══════════════════════════════════════════════════════╗")
-        print("  ║   易衍 · Evomorph  v0.0.1                            ║")
-        print("  ║   六十四卦指令集 · 进化编程 · AI 驱动                  ║")
-        print("  ╚═══════════════════════════════════════════════════════╝\033[0m")
-        print()
-        print("\033[32m  直接输入自然语言 → AI 生成 .evo 代码\033[0m")
-        print("\033[32m  输入 / → 弹出命令菜单，上下键选择\033[0m")
+        print("\033[36m  易衍 · Evomorph  v0.0.1\033[0m")
+        print("  自然语言编程  │  / 命令菜单  │  Ctrl+C 打断")
         print()
 
 
@@ -575,6 +741,15 @@ if HAS_PROMPT_TOOLKIT:
                                 start_position=-len(text),
                                 display=f"/provider {k}",
                                 display_meta=v["name"],
+                            )
+                elif cmd == "/git":
+                    for sub in ["status", "add", "commit", "push", "pull", "diff", "log", "branch", "stash", "remote"]:
+                        if sub.startswith(partial):
+                            yield Completion(
+                                f"/git {sub}",
+                                start_position=-len(text),
+                                display=f"/git {sub}",
+                                display_meta=f"git {sub}",
                             )
                 return
             for cmd, desc in SLASH_COMMANDS.items():
@@ -606,8 +781,26 @@ def _get_input_ptk(session, config, current_file):
     prompt_formatted.append((key_style, key_mark))
     prompt_formatted.append(("bold", " ❯ "))
 
+    def _bottom_toolbar():
+        provider = _get_provider_short(config) or "自定义"
+        model = config.get("model", "?")
+        if len(model) > 20:
+            model = model[:17] + "..."
+        key_status = "Key ✓" if config.get("api_key") else "Key ✗"
+        file_info = current_file or "无文件"
+        return FormattedText([
+            ("bold", f" {provider}"),
+            ("", f" │ {model}"),
+            ("bold green" if config.get("api_key") else "bold red", f" │ {key_status}"),
+            ("dim", f" │ {file_info}"),
+            ("dim", " │ /help 帮助  Ctrl+C 打断"),
+        ])
+
     try:
-        user_input = session.prompt(prompt_formatted).strip()
+        user_input = session.prompt(
+            prompt_formatted,
+            bottom_toolbar=_bottom_toolbar,
+        ).strip()
     except KeyboardInterrupt:
         return None
     except EOFError:
@@ -616,7 +809,12 @@ def _get_input_ptk(session, config, current_file):
 
 
 def _get_input_basic(config, current_file):
-    prompt_str = _build_prompt_str(config, current_file)
+    model_short = config.get("model", "?")
+    if len(model_short) > 16:
+        model_short = model_short[:13] + "..."
+    provider_short = _get_provider_short(config)
+    key_mark = "●" if config.get("api_key") else "○"
+    prompt_str = f"易衍 {provider_short} {model_short}{key_mark} ❯ "
     colored = f"\033[36m{prompt_str}\033[0m"
     try:
         user_input = input(colored).strip()
@@ -710,6 +908,49 @@ def _handle_provider_switch(config, prov_key):
             _print("  拉取失败，输入 /model <名称> 手动设置", style="yellow")
 
 
+def _handle_natural_language(user_input, config, conversation, last_evo_code, current_file):
+    local_ctx = _read_local_context(user_input)
+    if local_ctx:
+        enriched = f"{user_input}\n\n以下是本地文件内容供参考:\n{local_ctx}"
+        conversation.append({"role": "user", "content": enriched})
+    else:
+        conversation.append({"role": "user", "content": user_input})
+
+    if HAS_RICH:
+        spinner = Spinner("dots", text="  ⟐ 思考中...", style="cyan")
+        live = Live(spinner, console=console, transient=True)
+        live.start()
+
+        def _progress_cb(phase, chars):
+            if phase == "thinking":
+                _spinner_update(live, "⟐ 思考中")
+            elif phase == "generating":
+                _spinner_update(live, f"⟐ 生成中 ({chars} 字)")
+
+        if local_ctx:
+            _print("  📎 已读取本地文件加入上下文", style="dim")
+
+        llm_output, elapsed = call_llm(config, conversation, progress_callback=_progress_cb)
+        live.stop()
+    else:
+        print("  ⟐ 思考中...")
+        if local_ctx:
+            print("  已读取本地文件加入上下文")
+        llm_output, elapsed = call_llm(config, conversation)
+
+    evo_code = extract_evo_code(llm_output)
+    if evo_code.startswith("@evolang"):
+        last_evo_code = evo_code
+
+    _show_result(llm_output, evo_code, current_file, elapsed)
+
+    conversation.append({"role": "assistant", "content": llm_output})
+    if len(conversation) > 30:
+        conversation = [conversation[0]] + conversation[-20:]
+
+    return last_evo_code
+
+
 def shell():
     config = load_config()
     system_prompt = load_system_prompt()
@@ -725,6 +966,8 @@ def shell():
             completer=EvoCompleter(),
             history=history,
             complete_while_typing=True,
+            mouse_support=False,
+            prompt_continuation=("   ... ",),
         )
         get_input = lambda: _get_input_ptk(session, config, current_file)
     else:
@@ -734,7 +977,7 @@ def shell():
 
     if not config.get("api_key"):
         _print("  ⚠ 未配置 API Key，使用本地模板模式", style="yellow")
-        _print("  输入 /apikey <your-key> 配置，或 /models 查看可用模型", style="dim")
+        _print("  输入 /apikey <your-key> 配置", style="dim")
         _print()
 
     while True:
@@ -754,64 +997,8 @@ def shell():
             if re.match(r'[A-Za-z]', rest) and ("/" in user_input[1:] or Path(user_input).exists()):
                 is_path_input = True
 
-        if is_path_input:
-            local_ctx = _read_local_context(user_input)
-            if local_ctx:
-                enriched = f"请阅读以下路径的文件内容：{user_input}\n\n以下是本地文件内容供参考:\n{local_ctx}"
-                conversation.append({"role": "user", "content": enriched})
-            else:
-                conversation.append({"role": "user", "content": user_input})
-
-            spinner = _spinner_start("⟐ 思考中")
-            if local_ctx:
-                _print("  已读取本地文件加入上下文", style="dim")
-            llm_output = call_llm(config, conversation)
-            _spinner_stop(spinner)
-
-            evo_code = extract_evo_code(llm_output)
-            if evo_code.startswith("@evolang"):
-                last_evo_code = evo_code
-                _print()
-                _print_code(evo_code)
-                _print()
-                _print("  💡 /compile 编译  /run 运行  /evolve 进化  /save xxx 保存", style="dim")
-            else:
-                if evo_code and not evo_code.startswith("@evolang"):
-                    last_evo_code = evo_code
-
-            conversation.append({"role": "assistant", "content": llm_output})
-            if len(conversation) > 30:
-                conversation = [conversation[0]] + conversation[-20:]
-            continue
-
-        if not user_input.startswith("/"):
-            local_ctx = _read_local_context(user_input)
-            if local_ctx:
-                enriched = f"{user_input}\n\n以下是本地文件内容供参考:\n{local_ctx}"
-                conversation.append({"role": "user", "content": enriched})
-            else:
-                conversation.append({"role": "user", "content": user_input})
-
-            spinner = _spinner_start("⟐ 思考中")
-            if local_ctx:
-                _print("  已读取本地文件加入上下文", style="dim")
-            llm_output = call_llm(config, conversation)
-            _spinner_stop(spinner)
-
-            evo_code = extract_evo_code(llm_output)
-            if evo_code.startswith("@evolang"):
-                last_evo_code = evo_code
-                _print()
-                _print_code(evo_code)
-                _print()
-                _print("  💡 /compile 编译  /run 运行  /evolve 进化  /save xxx 保存", style="dim")
-            else:
-                if evo_code and not evo_code.startswith("@evolang"):
-                    last_evo_code = evo_code
-
-            conversation.append({"role": "assistant", "content": llm_output})
-            if len(conversation) > 30:
-                conversation = [conversation[0]] + conversation[-20:]
+        if is_path_input or not user_input.startswith("/"):
+            last_evo_code = _handle_natural_language(user_input, config, conversation, last_evo_code, current_file)
             continue
 
         cleaned = user_input
@@ -831,44 +1018,43 @@ def shell():
             if close:
                 _print(f"  你是否想输入: {', '.join(close)}", style="yellow")
             else:
-                _print("  输入 /help 查看所有命令，或直接输入自然语言让 AI 生成代码", style="dim")
+                _print("  输入 /help 查看所有命令", style="dim")
             continue
 
         elif cmd == "/help":
             _print_markdown("""
 ## 易衍·Evomorph 命令
 
-**不带 / 的文字** → 直接发给 AI，生成 .evo 代码
-**输入 /** → 弹出命令菜单，上下键选择
+**自然语言** → AI 生成 .evo 代码
+**/** → 弹出命令菜单
 
 ### 厂商与模型
-- `/provider <名称>` — 切换厂商（如 /provider deepseek）
-- `/providers` — 列出所有厂商
-- `/models` — 从厂商 API 拉取可用模型
-- `/model <名称>` — 切换模型
-- `/custom` — 自定义大模型（URL + Key + 模型ID）
+- `/provider <名称>` / `/providers` — 切换/列出厂商
+- `/models` / `/model <名称>` — 拉取/切换模型
+- `/custom` — 自定义大模型
 - `/apikey <key>` — 设置 API Key
-- `/status` — 查看配置状态
+- `/status` — 查看配置
 
 ### 编译运行
-- `/compile [文件]` — 编译代码
-- `/run [文件]` — 运行代码
-- `/evolve [文件]` — 进化编译优化
-
-### 查询
-- `/lookup <卦名>` — 查询卦象指令
-- `/platforms` — 列出可用目标平台
+- `/compile` / `/run` / `/evolve` — 编译/运行/进化
 
 ### 文件
-- `/new [名称]` — 新建 .evo 文件
-- `/open <文件>` — 打开 .evo 文件
-- `/save [文件]` — 保存代码到文件
+- `/new` / `/open` / `/save` / `/view` — 新建/打开/保存/查看
+
+### Git
+- `/git status` — 查看状态（分支/变更/远程）
+- `/git add [文件]` — 暂存变更
+- `/git commit [消息]` — 提交
+- `/git push` / `/git pull` — 推送/拉取
+- `/git diff` — 查看差异
+- `/git log` — 查看日志
+- `/git branch [名称]` — 查看/切换分支
+- `/git branch new <名>` — 创建新分支
+- `/git stash` / `/git stash pop` — 暂存/恢复
+- `/git remote` — 查看远程仓库
 
 ### 其他
-- `/history` — 查看对话历史
-- `/clear` — 清空对话历史
-- `/config` — 查看完整配置
-- `/quit` — 退出
+- `/history` / `/clear` / `/config` / `/quit`
 """)
 
         elif cmd == "/quit":
@@ -879,6 +1065,136 @@ def shell():
             conversation = [{"role": "system", "content": system_prompt}]
             last_evo_code = None
             _print("✓ 对话已清空", style="green")
+
+        elif cmd == "/view":
+            if last_evo_code:
+                _print_code(last_evo_code)
+            else:
+                _print("没有可查看的代码", style="yellow")
+
+        elif cmd == "/git":
+            git_sub = arg.split(None, 1)
+            git_cmd = git_sub[0] if git_sub else ""
+            git_arg = git_sub[1] if len(git_sub) > 1 else ""
+
+            if not git_cmd:
+                git_cmd = "status"
+
+            if git_cmd == "status":
+                branch = _git_run(["rev-parse", "--abbrev-ref", "HEAD"])
+                short = _git_run(["status", "--short"])
+                remote = _git_run(["remote", "-v"])
+                ahead = _git_run(["rev-list", "--count", "@{upstream}..HEAD"])
+                behind = _git_run(["rev-list", "--count", "HEAD..@{upstream}"])
+
+                if HAS_RICH:
+                    table = Table(title="Git Status", show_header=False, border_style="cyan", padding=(0, 2))
+                    table.add_column("Key", style="bold")
+                    table.add_column("Value")
+                    table.add_row("分支", f"[cyan]{branch}[/cyan]")
+                    if ahead and ahead != "0" and "错误" not in ahead:
+                        table.add_row("领先", f"[green]{ahead} commits[/green]")
+                    if behind and behind != "0" and "错误" not in behind:
+                        table.add_row("落后", f"[yellow]{behind} commits[/yellow]")
+                    if short:
+                        table.add_row("变更", short.replace("\n", "\n"))
+                    else:
+                        table.add_row("变更", "[green]工作区干净[/green]")
+                    if remote and "错误" not in remote:
+                        remote_line = remote.split("\n")[0].split("\t")[1] if remote else ""
+                        table.add_row("远程", f"[dim]{remote_line}[/dim]")
+                    console.print(table)
+                else:
+                    _print(f"分支: {branch}")
+                    if short:
+                        _print(short)
+                    else:
+                        _print("工作区干净")
+
+            elif git_cmd == "add":
+                target = git_arg or "."
+                result = _git_run(["add", target])
+                _print(f"✓ 已暂存 {target}", style="green")
+
+            elif git_cmd == "commit":
+                msg = git_arg or f"update: {current_file or 'evomorph'}"
+                result = _git_run(["commit", "-m", msg])
+                if "错误" in result or "nothing" in result.lower():
+                    _print(f"⚠ {result}", style="yellow")
+                else:
+                    short_hash = _git_run(["rev-parse", "--short", "HEAD"])
+                    _print(f"✓ 已提交 [{short_hash}] {msg}", style="bold green")
+
+            elif git_cmd == "push":
+                branch = _git_run(["rev-parse", "--abbrev-ref", "HEAD"])
+                _print("⟐ 推送中...", style="cyan")
+                result = _git_run(["push", "origin", branch])
+                if "错误" in result:
+                    _print(f"✗ 推送失败: {result}", style="bold red")
+                else:
+                    _print(f"✓ 已推送到 origin/{branch}", style="bold green")
+
+            elif git_cmd == "pull":
+                _print("⟐ 拉取中...", style="cyan")
+                result = _git_run(["pull"])
+                if "错误" in result:
+                    _print(f"✗ 拉取失败: {result}", style="bold red")
+                else:
+                    _print(f"✓ 已拉取最新代码", style="bold green")
+
+            elif git_cmd == "diff":
+                result = _git_run(["diff", "--stat"])
+                if result and "错误" not in result:
+                    _print_panel(result, title="Git Diff", style="yellow")
+                else:
+                    _print("没有未暂存的变更", style="dim")
+
+            elif git_cmd == "log":
+                result = _git_run(["log", "--oneline", "-10"])
+                if HAS_RICH:
+                    _print_panel(result, title="Git Log (最近10条)", style="cyan")
+                else:
+                    _print(result)
+
+            elif git_cmd == "branch":
+                if git_arg == "new" or git_arg.startswith("-c "):
+                    new_name = git_arg.replace("new", "").replace("-c", "").strip()
+                    if new_name:
+                        result = _git_run(["checkout", "-b", new_name])
+                        _print(f"✓ 已创建并切换到分支 {new_name}", style="bold green")
+                    else:
+                        _print("用法: /git branch new <分支名>", style="yellow")
+                elif git_arg:
+                    result = _git_run(["checkout", git_arg])
+                    if "错误" in result:
+                        _print(f"✗ 切换失败: {result}", style="bold red")
+                    else:
+                        _print(f"✓ 已切换到分支 {git_arg}", style="bold green")
+                else:
+                    branches = _git_run(["branch", "-a"])
+                    if HAS_RICH:
+                        _print_panel(branches, title="Git Branches", style="cyan")
+                    else:
+                        _print(branches)
+
+            elif git_cmd == "stash":
+                if git_arg == "pop":
+                    result = _git_run(["stash", "pop"])
+                    _print(f"✓ {result}", style="green")
+                elif git_arg == "list":
+                    result = _git_run(["stash", "list"])
+                    _print(result or "无暂存", style="dim")
+                else:
+                    result = _git_run(["stash"])
+                    _print(f"✓ {result}", style="green")
+
+            elif git_cmd == "remote":
+                result = _git_run(["remote", "-v"])
+                _print(result, style="dim")
+
+            else:
+                _print(f"未知 git 命令: {git_cmd}", style="bold red")
+                _print("  可用: status/add/commit/push/pull/diff/log/branch/stash/remote", style="dim")
 
         elif cmd == "/models":
             api_key = config.get("api_key", "")
@@ -903,16 +1219,12 @@ def shell():
                     for m in models:
                         marker = " ← 当前" if m == cur else ""
                         _print(f"  {m}{marker}")
-                    _print("  使用 /model <模型名> 切换", style="yellow")
             else:
-                _print("拉取失败，请检查 API Key 和网络连接", style="bold red")
-                _print("  也可以手动设置: /model <模型名>", style="yellow")
+                _print("拉取失败，请检查 API Key 和网络", style="bold red")
 
         elif cmd == "/model":
             if not arg:
-                cur = config.get("model", "未设置")
-                _print(f"当前模型: {cur}", style="green")
-                _print("使用 /model <模型名> 切换，或 /models 拉取可用模型", style="dim")
+                _print(f"当前模型: {config.get('model', '未设置')}", style="green")
                 continue
             config["model"] = arg
             save_config(config)
@@ -931,13 +1243,10 @@ def shell():
                 for key, prov in PROVIDERS.items():
                     marker = " ← 当前" if prov["base_url"] in cur_url else ""
                     _print(f"  {key:18s} {prov['name']}{marker}")
-                _print("  使用 /provider <名称> 切换厂商", style="yellow")
 
         elif cmd == "/provider":
             if not arg:
-                cur_prov = _get_provider_short(config) or "自定义"
-                _print(f"当前厂商: {cur_prov}", style="green")
-                _print("使用 /provider <名称> 切换，或 /providers 查看所有厂商", style="dim")
+                _print(f"当前厂商: {_get_provider_short(config) or '自定义'}", style="green")
                 continue
             _handle_provider_switch(config, arg)
 
@@ -954,19 +1263,16 @@ def shell():
                     save_config(config)
                     key_masked = key[:4] + "..." + key[-4:] if len(key) > 8 else "***"
                     _print("✓ 自定义模型已配置", style="bold green")
-                    _print(f"  API URL: {url}", style="dim")
-                    _print(f"  API Key: {key_masked}", style="dim")
-                    _print(f"  模型 ID: {model_id}", style="dim")
+                    _print(f"  URL: {url}  Key: {key_masked}  模型: {model_id}", style="dim")
                 else:
-                    _print("用法: /custom <API_URL> <API_KEY> <模型ID>", style="bold red")
-                    _print("  /custom https://api.deepseek.com/v1 sk-xxx deepseek-chat", style="dim")
+                    _print("用法: /custom <URL> <KEY> <模型ID>", style="bold red")
                 continue
 
-            _print_panel("自定义大模型配置\n\n请依次输入 API URL、API Key、模型 ID", title="自定义大模型", style="cyan")
+            _print_panel("请依次输入 API URL、API Key、模型 ID", title="自定义大模型", style="cyan")
             try:
-                url = input("  API URL (如 https://api.deepseek.com/v1): ").strip()
-                key = input("  API Key (如 sk-xxx): ").strip()
-                model_id = input("  模型 ID (如 deepseek-chat): ").strip()
+                url = input("  API URL: ").strip()
+                key = input("  API Key: ").strip()
+                model_id = input("  模型 ID: ").strip()
             except (EOFError, KeyboardInterrupt):
                 _print("\n已取消", style="yellow")
                 continue
@@ -982,26 +1288,17 @@ def shell():
             config["api_key"] = key
             config["model"] = model_id
             save_config(config)
-            key_masked = key[:4] + "..." + key[-4:] if len(key) > 8 else "***"
             _print("✓ 自定义模型已配置", style="bold green")
-            _print(f"  API URL: {url}", style="dim")
-            _print(f"  API Key: {key_masked}", style="dim")
-            _print(f"  模型 ID: {model_id}", style="dim")
 
         elif cmd == "/apikey":
             if not arg:
                 cur = config.get("api_key", "")
-                if cur:
-                    _print(f"当前 API Key: {cur[:8]}...{cur[-4:]}", style="green")
-                else:
-                    _print("未设置 API Key", style="yellow")
-                _print("使用 /apikey <your-key> 设置", style="dim")
+                _print(f"当前 API Key: {cur[:8]}...{cur[-4:]}" if cur else "未设置", style="green")
                 continue
             config["api_key"] = arg
             save_config(config)
             masked = arg[:4] + "..." + arg[-4:] if len(arg) > 8 else "***"
             _print(f"✓ API Key 已设置 ({masked})", style="bold green")
-            _print(f"  当前模型: {config.get('model', '未设置')}", style="dim")
 
         elif cmd == "/status":
             model_name = config.get("model", "未设置")
@@ -1012,32 +1309,26 @@ def shell():
                     provider_name = v["name"]
                     break
             api_key = config.get("api_key", "")
-            api_url = config.get("api_url", "未设置")
-
-            status_lines = []
-            status_lines.append(f"厂商:     {provider_name or '自定义'}")
-            status_lines.append(f"模型:     {model_name}")
-            if api_key:
-                status_lines.append(f"API Key:  已配置 ({api_key[:4]}...{api_key[-4:]})")
-            else:
-                status_lines.append("API Key:  未配置")
-            status_lines.append(f"API 地址: {api_url}")
-            status_lines.append(f"目标平台: {', '.join(config.get('default_platforms', ['linux-6.x']))}")
-
-            _print_panel("\n".join(status_lines), title="易衍·Evomorph 配置状态", style="cyan" if api_key else "yellow")
+            status_lines = [
+                f"厂商:     {provider_name or '自定义'}",
+                f"模型:     {model_name}",
+                f"API Key:  已配置 ({api_key[:4]}...{api_key[-4:]})" if api_key else "API Key:  未配置",
+                f"API 地址: {config.get('api_url', '未设置')}",
+                f"目标平台: {', '.join(config.get('default_platforms', ['linux-6.x']))}",
+            ]
+            _print_panel("\n".join(status_lines), title="配置状态", style="cyan" if api_key else "yellow")
 
         elif cmd == "/history":
             for i, msg in enumerate(conversation[1:], 1):
-                role = msg["role"]
-                content = msg["content"][:80].replace("\n", " ")
-                _print(f"  [{i}] {role}: {content}...", style="dim")
+                content = msg["content"][:60].replace("\n", " ")
+                _print(f"  [{i}] {msg['role']}: {content}...", style="dim")
 
         elif cmd == "/platforms":
             _print(do_list_platforms())
 
         elif cmd == "/lookup":
             if not arg:
-                _print("用法: /lookup <助记符/拼音/符号>", style="yellow")
+                _print("用法: /lookup <卦名>", style="yellow")
                 continue
             _print(do_lookup(arg))
 
@@ -1055,10 +1346,6 @@ def shell():
                     config[key] = value
                     save_config(config)
                     _print(f"✓ {key} 已更新", style="green")
-                else:
-                    _print(f"未知配置项: {key}", style="bold red")
-            else:
-                _print("用法: /config 或 /config set <key> <value>", style="yellow")
 
         elif cmd == "/new":
             filename = arg or "untitled.evo"
@@ -1082,7 +1369,6 @@ def shell():
             current_file = arg
             last_evo_code = source
             _print(f"✓ 已打开 {arg}", style="bold green")
-            _print_code(source)
 
         elif cmd == "/save":
             if not last_evo_code:
@@ -1106,13 +1392,11 @@ def shell():
             if not source and last_evo_code:
                 source = last_evo_code
             if not source:
-                _print("没有可编译的代码，请先生成或打开文件", style="bold red")
+                _print("没有可编译的代码", style="bold red")
                 continue
             try:
                 result = do_compile(source, "json")
-                _print(result[:600], style="dim")
-                if len(result) > 600:
-                    _print("...", style="dim")
+                _print(result[:400], style="dim")
                 _print("✓ 编译通过", style="bold green")
             except Exception as e:
                 _print(f"✗ 编译失败: {e}", style="bold red")
@@ -1128,7 +1412,7 @@ def shell():
             if not source and last_evo_code:
                 source = last_evo_code
             if not source:
-                _print("没有可运行的代码，请先生成或打开文件", style="bold red")
+                _print("没有可运行的代码", style="bold red")
                 continue
             try:
                 result = do_run(source)
@@ -1148,7 +1432,7 @@ def shell():
             if not source and last_evo_code:
                 source = last_evo_code
             if not source:
-                _print("没有可进化的代码，请先生成或打开文件", style="bold red")
+                _print("没有可进化的代码", style="bold red")
                 continue
             try:
                 platforms = config.get("default_platforms", ["linux-6.x"])
@@ -1169,7 +1453,7 @@ def main():
         prog="evo-ai",
         description="易衍·Evomorph AI 编程环境",
     )
-    parser.add_argument("command", nargs="?", help="单次命令（不进入交互模式）")
+    parser.add_argument("command", nargs="?", help="单次命令")
     parser.add_argument("args", nargs="*", help="命令参数")
 
     if len(sys.argv) > 1:
@@ -1182,8 +1466,7 @@ def main():
             if source_path.exists():
                 source = source_path.read_text(encoding="utf-8")
                 try:
-                    result = do_compile(source, "json")
-                    print(result)
+                    print(do_compile(source, "json"))
                 except Exception as e:
                     print(f"编译失败: {e}", file=sys.stderr)
                     sys.exit(1)
@@ -1211,22 +1494,12 @@ def main():
             print(do_list_platforms())
         elif cmd == "config":
             config = load_config()
-            if cmd_args and cmd_args[0] == "set" and len(cmd_args) >= 3:
-                key, value = cmd_args[1], cmd_args[2]
-                if key in config:
-                    config[key] = value
-                    save_config(config)
-                    print(f"✓ {key} 已更新")
-            else:
-                safe = {k: (v[:8] + "..." if k == "api_key" and v else v) for k, v in config.items()}
-                print(json.dumps(safe, ensure_ascii=False, indent=2))
-        elif cmd == "help" or cmd == "--help" or cmd == "-h":
+            safe = {k: (v[:8] + "..." if k == "api_key" and v else v) for k, v in config.items()}
+            print(json.dumps(safe, ensure_ascii=False, indent=2))
+        elif cmd in ("help", "--help", "-h"):
             parser.print_help()
-            print()
-            print("不带参数直接运行 evo-ai 进入交互式环境")
         else:
             print(f"未知命令: {cmd}")
-            print("直接运行 evo-ai 进入交互式环境，或使用: compile/run/evolve/lookup/platforms/config")
             sys.exit(1)
     else:
         shell()
