@@ -83,6 +83,8 @@ try:
     from prompt_toolkit.formatted_text import FormattedText
     from prompt_toolkit.history import FileHistory
     from prompt_toolkit.shortcuts import radiolist_dialog
+    from prompt_toolkit.key_binding import KeyBindings
+    from prompt_toolkit.filters import Condition
     HAS_PROMPT_TOOLKIT = True
 except ImportError:
     HAS_PROMPT_TOOLKIT = False
@@ -814,7 +816,7 @@ def _get_input_ptk(session, config, current_file):
             ("", f" │ {model}"),
             ("bold green" if config.get("api_key") else "bold red", f" │ {key_status}"),
             ("dim", f" │ {file_info}"),
-            ("dim", " │ /help 帮助  Ctrl+C 打断"),
+            ("dim", " │ ⌘Z撤销 ⌘Y重做 Ctrl+C打断"),
         ])
 
     try:
@@ -983,12 +985,26 @@ def shell():
 
     if HAS_PROMPT_TOOLKIT:
         history = FileHistory(str(CONFIG_DIR / "history"))
+        bindings = KeyBindings()
+
+        @bindings.add('c-z')
+        def _undo(event):
+            event.app.current_buffer.undo()
+
+        @bindings.add('c-y')
+        def _redo(event):
+            buf = event.app.current_buffer
+            if hasattr(buf, 'redo'):
+                buf.redo()
+
         session = PromptSession(
             completer=EvoCompleter(),
             history=history,
             complete_while_typing=True,
             mouse_support=False,
             prompt_continuation=("   ... ",),
+            key_bindings=bindings,
+            enable_open_in_editor=True,
         )
         get_input = lambda: _get_input_ptk(session, config, current_file)
     else:
