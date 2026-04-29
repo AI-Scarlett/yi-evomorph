@@ -371,10 +371,39 @@ def save_config(config: Dict[str, Any]):
         json.dump(config, f, ensure_ascii=False, indent=2)
 
 
-def load_system_prompt() -> str:
+def _build_project_context(work_dir=None):
+    cwd = work_dir or os.getcwd()
+    ctx_lines = [f"\n## 运行时环境", f"- 当前工作目录: {cwd}"]
+
+    git_dir = _git_run(["rev-parse", "--show-toplevel"]) if _git_run(["rev-parse", "--is-inside-work-tree"]) != "错误: git 未安装" else ""
+    if git_dir and "错误" not in git_dir:
+        ctx_lines.append(f"- Git 仓库根目录: {git_dir}")
+
+    cwd_path = Path(cwd)
+    if cwd_path.exists():
+        top_items = []
+        for item in sorted(cwd_path.iterdir()):
+            if item.name.startswith(".") and item.name not in (".env", ".env.local"):
+                continue
+            if item.is_dir():
+                top_items.append(f"  📁 {item.name}/")
+            else:
+                top_items.append(f"  📄 {item.name}")
+        if top_items:
+            ctx_lines.append(f"- 目录结构 ({cwd}):")
+            ctx_lines.extend(top_items[:30])
+
+    ctx_lines.append("\n**重要**: 回答关于文件路径的问题时，必须基于上面的工作目录信息，不要编造路径。如果不确定，请先说明。")
+    return "\n".join(ctx_lines)
+
+
+def load_system_prompt(work_dir=None) -> str:
+    base = ""
     if SYSTEM_PROMPT_PATH.exists():
-        return SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
-    return "你是易衍·Evomorph 编程语言专家。请根据用户需求生成 .evo 源代码。"
+        base = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
+    else:
+        base = "你是易衍·Evomorph 编程语言专家。请根据用户需求生成 .evo 源代码。"
+    return base + _build_project_context(work_dir)
 
 
 def call_llm(config: Dict[str, Any], messages: List[Dict[str, str]], progress_callback=None) -> Tuple[str, float]:
@@ -631,6 +660,8 @@ SLASH_COMMANDS = {
     "/open": "打开文件",
     "/save": "保存代码",
     "/view": "查看当前代码",
+    "/cd": "切换工作目录",
+    "/pwd": "显示当前目录",
     "/git": "Git 操作",
     "/history": "对话历史",
     "/clear": "清空对话",
@@ -810,12 +841,14 @@ def _get_input_ptk(session, config, current_file):
         if len(model) > 20:
             model = model[:17] + "..."
         key_status = "Key ✓" if config.get("api_key") else "Key ✗"
-        file_info = current_file or "无文件"
+        dir_display = work_dir
+        if len(dir_display) > 30:
+            dir_display = "..." + dir_display[-27:]
         return FormattedText([
             ("bold", f" {provider}"),
             ("", f" │ {model}"),
             ("bold green" if config.get("api_key") else "bold red", f" │ {key_status}"),
-            ("dim", f" │ {file_info}"),
+            ("dim", f" │ 📂{dir_display}"),
             ("dim", " │ ⌘Z撤销 ⌘Y重做 Ctrl+C打断"),
         ])
 
@@ -976,7 +1009,8 @@ def _handle_natural_language(user_input, config, conversation, last_evo_code, cu
 
 def shell():
     config = load_config()
-    system_prompt = load_system_prompt()
+    work_dir = os.getcwd()
+    system_prompt = load_system_prompt(work_dir)
     conversation = [{"role": "system", "content": system_prompt}]
     last_evo_code = None
     current_file = None
@@ -1077,6 +1111,8 @@ def shell():
 
 ### 文件
 - `/new` / `/open` / `/save` / `/view` — 新建/打开/保存/查看
+- `/cd <目录>` — 切换工作目录
+- `/pwd` — 显示当前目录
 
 ### Git
 - `/git status` — 查看状态（分支/变更/远程）
@@ -1099,9 +1135,36 @@ def shell():
             break
 
         elif cmd == "/clear":
+            system_prompt = load_system_prompt(work_dir)
             conversation = [{"role": "system", "content": system_prompt}]
             last_evo_code = None
             _print("✓ 对话已清空", style="green")
+
+        elif cmd == "/pwd":
+            _print(f"当前工作目录: {work_dir}", style="cyan")
+            if current_file:
+                _print(f"当前文件: {current_file}", style="dim")
+
+        elif cmd == "/cd":
+            if not arg:
+                _print(f"当前工作目录: {work_dir}", style="cyan")
+                _print("用法: /cd <目录路径>", style="dim")
+                continue
+            target = os.path.expanduser(arg)
+            if not os.path.isabs(target):
+                target = os.path.join(work_dir, target)
+            target = os.path.normpath(target)
+            if not Path(target).exists():
+                _print(f"目录不存在: {target}", style="bold red")
+                continue
+            if not Path(target).is_dir():
+                _print(f"不是目录: {target}", style="bold red")
+                continue
+            work_dir = target
+            os.chdir(work_dir)
+            system_prompt = load_system_prompt(work_dir)
+            conversation[0] = {"role": "system", "content": system_prompt}
+            _print(f"✓ 已切换到 {work_dir}", style="bold green")
 
         elif cmd == "/view":
             if last_evo_code:
