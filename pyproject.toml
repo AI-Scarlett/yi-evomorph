@@ -11,6 +11,7 @@ license = {text = "MIT"}
 requires-python = ">=3.9"
 dependencies = [
     "prompt_toolkit>=3.0",
+    "rich>=13.0",
 ]
 keywords = ["evomorph", "i-ching", "hexagram", "evolutionary", "programming-language", "genetic-algorithm"]
 classifiers = [
