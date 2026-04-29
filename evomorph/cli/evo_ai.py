@@ -235,6 +235,129 @@ def _generate_summary(llm_output, evo_code, saved_file=None):
     return _generate_natural_summary(llm_output, evo_code, saved_file)
 
 
+def _extract_tool_actions(llm_output: str) -> List[Dict[str, Any]]:
+    actions = []
+
+    bash_blocks = re.findall(r'```(?:bash|shell|sh|zsh)\s*\n(.*?)```', llm_output, re.DOTALL)
+    for i, code in enumerate(bash_blocks):
+        code = code.strip()
+        if not code:
+            continue
+        dangerous = any(kw in code for kw in ['rm -rf /', 'mkfs', 'dd if=', '> /dev/', 'chmod 777 /'])
+        if dangerous:
+            actions.append({"type": "shell", "code": code, "index": i, "dangerous": True})
+        else:
+            actions.append({"type": "shell", "code": code, "index": i, "dangerous": False})
+
+    file_writes = re.findall(
+        r'(?:创建|写入|保存|生成)\s*(?:文件|到)?\s*[`"\']?([^\s`"，。；\n]+\.\w+)[`"\']?\s*(?:，|,|\n|：|:).*?```(?:\w+)?\s*\n(.*?)```',
+        llm_output, re.DOTALL | re.IGNORECASE
+    )
+    for filepath, content in file_writes:
+        if any(a.get("filepath") == filepath for a in actions):
+            continue
+        actions.append({"type": "write_file", "filepath": filepath.strip(), "content": content.strip()})
+
+    return actions
+
+
+def _execute_tool_actions(actions: List[Dict[str, Any]], work_dir: str) -> str:
+    if not actions:
+        return ""
+
+    results = []
+
+    if HAS_RICH:
+        console.print()
+        console.print("[bold yellow]🔧 检测到可执行操作:[/bold yellow]")
+        for i, action in enumerate(actions):
+            if action["type"] == "shell":
+                danger_mark = " [bold red]⚠ 危险[/bold red]" if action.get("dangerous") else ""
+                console.print(f"  [{i+1}] 🖥️ Shell{danger_mark}: {action['code'][:80]}...")
+            elif action["type"] == "write_file":
+                console.print(f"  [{i+1}] 📝 写入文件: {action['filepath']}")
+
+        console.print()
+        console.print("[dim]  y=全部执行  n=跳过  数字=执行指定项[/dim]")
+    else:
+        print()
+        print("  🔧 检测到可执行操作:")
+        for i, action in enumerate(actions):
+            if action["type"] == "shell":
+                print(f"  [{i+1}] Shell: {action['code'][:60]}...")
+            elif action["type"] == "write_file":
+                print(f"  [{i+1}] 写入文件: {action['filepath']}")
+        print("  y=全部执行  n=跳过  数字=执行指定项")
+
+    try:
+        choice = input("  执行? [y/N] ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return ""
+
+    if choice in ('n', 'no', ''):
+        _print("  已跳过", style="dim")
+        return ""
+
+    execute_indices = set(range(len(actions)))
+    if choice not in ('y', 'yes', 'all', 'a'):
+        try:
+            execute_indices = {int(x.strip()) - 1 for x in choice.split(',') if x.strip().isdigit()}
+        except (ValueError, IndexError):
+            _print("  已跳过", style="dim")
+            return ""
+
+    for i in execute_indices:
+        if i < 0 or i >= len(actions):
+            continue
+        action = actions[i]
+
+        if action["type"] == "shell":
+            if action.get("dangerous"):
+                _print(f"  ⚠ 跳过危险命令: {action['code'][:50]}...", style="bold red")
+                results.append(f"跳过危险命令: {action['code'][:50]}")
+                continue
+
+            _print(f"  ⟐ 执行: {action['code'][:60]}...", style="cyan")
+            try:
+                proc = subprocess.run(
+                    action["code"],
+                    shell=True,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    cwd=work_dir,
+                )
+                output = proc.stdout.strip() or proc.stderr.strip() or "(无输出)"
+                if proc.returncode == 0:
+                    _print(f"  ✓ {output[:100]}", style="green")
+                    results.append(f"Shell 执行成功:\n{output[:500]}")
+                else:
+                    _print(f"  ✗ 退出码 {proc.returncode}: {output[:100]}", style="bold red")
+                    results.append(f"Shell 执行失败 (exit {proc.returncode}):\n{output[:500]}")
+            except subprocess.TimeoutExpired:
+                _print("  ✗ 执行超时 (60s)", style="bold red")
+                results.append("Shell 执行超时")
+            except Exception as e:
+                _print(f"  ✗ 执行错误: {e}", style="bold red")
+                results.append(f"Shell 执行错误: {e}")
+
+        elif action["type"] == "write_file":
+            filepath = action["filepath"]
+            if not os.path.isabs(filepath):
+                filepath = os.path.join(work_dir, filepath)
+            try:
+                Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+                Path(filepath).write_text(action["content"], encoding="utf-8")
+                _print(f"  ✓ 已写入 {filepath}", style="green")
+                results.append(f"文件已写入: {filepath}")
+            except Exception as e:
+                _print(f"  ✗ 写入失败: {e}", style="bold red")
+                results.append(f"文件写入失败: {e}")
+
+    return "\n".join(results)
+
+
 def _show_result(llm_output, evo_code, saved_file=None, elapsed=0):
     files = _extract_files_from_output(llm_output)
     task_type = _detect_task_type(llm_output)
@@ -965,7 +1088,8 @@ def _handle_provider_switch(config, prov_key):
             _print("  拉取失败，输入 /model <名称> 手动设置", style="yellow")
 
 
-def _handle_natural_language(user_input, config, conversation, last_evo_code, current_file):
+def _handle_natural_language(user_input, config, conversation, last_evo_code, current_file, work_dir=None):
+    _work_dir = work_dir or os.getcwd()
     local_ctx = _read_local_context(user_input)
     if local_ctx:
         enriched = f"{user_input}\n\n以下是本地文件内容供参考:\n{local_ctx}"
@@ -1002,8 +1126,38 @@ def _handle_natural_language(user_input, config, conversation, last_evo_code, cu
     _show_result(llm_output, evo_code, current_file, elapsed)
 
     conversation.append({"role": "assistant", "content": llm_output})
-    if len(conversation) > 30:
-        conversation = [conversation[0]] + conversation[-20:]
+
+    tool_actions = _extract_tool_actions(llm_output)
+    if tool_actions:
+        exec_result = _execute_tool_actions(tool_actions, _work_dir)
+        if exec_result:
+            conversation.append({"role": "user", "content": f"以下是工具执行的结果:\n{exec_result}\n\n请根据执行结果继续操作或回复用户。"})
+
+            if HAS_RICH:
+                spinner2 = Spinner("dots", text="  ⟐ 处理执行结果...", style="cyan")
+                live2 = Live(spinner2, console=console, transient=True)
+                live2.start()
+                followup, elapsed2 = call_llm(config, conversation)
+                live2.stop()
+            else:
+                print("  ⟐ 处理执行结果...")
+                followup, elapsed2 = call_llm(config, conversation)
+
+            conversation.append({"role": "assistant", "content": followup})
+
+            followup_evo = extract_evo_code(followup)
+            if followup_evo.startswith("@evolang"):
+                last_evo_code = followup_evo
+
+            text_without_code = re.sub(r'```[\s\S]*?```', '', followup).strip()
+            if text_without_code:
+                if HAS_RICH:
+                    console.print(Markdown(text_without_code[:800]))
+                else:
+                    print(text_without_code[:800])
+
+    if len(conversation) > 40:
+        conversation = [conversation[0]] + conversation[-30:]
 
     return last_evo_code
 
@@ -1070,7 +1224,7 @@ def shell():
                 is_path_input = True
 
         if is_path_input or not user_input.startswith("/"):
-            last_evo_code = _handle_natural_language(user_input, config, conversation, last_evo_code, current_file)
+            last_evo_code = _handle_natural_language(user_input, config, conversation, last_evo_code, current_file, work_dir)
             continue
 
         cleaned = user_input
