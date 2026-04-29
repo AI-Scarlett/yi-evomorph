@@ -237,6 +237,7 @@ def _generate_summary(llm_output, evo_code, saved_file=None):
 
 def _extract_tool_actions(llm_output: str) -> List[Dict[str, Any]]:
     actions = []
+    seen_filepaths = set()
 
     bash_blocks = re.findall(r'```(?:bash|shell|sh|zsh)\s*\n(.*?)```', llm_output, re.DOTALL)
     for i, code in enumerate(bash_blocks):
@@ -244,19 +245,65 @@ def _extract_tool_actions(llm_output: str) -> List[Dict[str, Any]]:
         if not code:
             continue
         dangerous = any(kw in code for kw in ['rm -rf /', 'mkfs', 'dd if=', '> /dev/', 'chmod 777 /'])
-        if dangerous:
-            actions.append({"type": "shell", "code": code, "index": i, "dangerous": True})
-        else:
-            actions.append({"type": "shell", "code": code, "index": i, "dangerous": False})
+        actions.append({"type": "shell", "code": code, "index": i, "dangerous": dangerous})
 
-    file_writes = re.findall(
-        r'(?:创建|写入|保存|生成)\s*(?:文件|到)?\s*[`"\']?([^\s`"，。；\n]+\.\w+)[`"\']?\s*(?:，|,|\n|：|:).*?```(?:\w+)?\s*\n(.*?)```',
-        llm_output, re.DOTALL | re.IGNORECASE
-    )
-    for filepath, content in file_writes:
-        if any(a.get("filepath") == filepath for a in actions):
+    all_code_blocks = list(re.finditer(
+        r'```(\w+(?::\S*)?)\s*\n(.*?)```', llm_output, re.DOTALL
+    ))
+
+    for match in all_code_blocks:
+        lang = match.group(1).lower()
+        content = match.group(2).strip()
+        if not content:
             continue
-        actions.append({"type": "write_file", "filepath": filepath.strip(), "content": content.strip()})
+
+        if lang in ('bash', 'shell', 'sh', 'zsh'):
+            continue
+
+        block_start = match.start()
+        text_before = llm_output[:block_start]
+        lines_before = text_before.split('\n')
+        context_lines = lines_before[-5:] if len(lines_before) >= 5 else lines_before
+        context_text = '\n'.join(context_lines)
+
+        filepath = None
+
+        colon_match = re.search(r'```(\w+):([^\s`]+\.\w+)\s*$', text_before.split('\n')[-1] if text_before else '')
+        if colon_match:
+            filepath = colon_match.group(2)
+
+        if not filepath:
+            file_patterns = [
+                r'(?:文件|创建|写入|保存|生成|修改|编辑|更新|新建)\s*(?:文件|到|为)?\s*[`"\']?([^\s`"，。；\n]+\.\w+)[`"\']?',
+                r'([^\s`"，。；\n]+\.\w+)\s*[：:]\s*$',
+                r'`([^\s`]+\.\w+)`\s*[：:]\s*$',
+                r'([^\s`"，。；\n]+\.\w+)\s*(?:的内容|代码|如下)',
+            ]
+            for pattern in file_patterns:
+                m = re.search(pattern, context_text, re.IGNORECASE)
+                if m:
+                    candidate = m.group(1).strip()
+                    if '.' in candidate and len(candidate) < 200:
+                        filepath = candidate
+                        break
+
+        if not filepath:
+            if lang in ('python', 'py'):
+                import_match = re.search(r'^(?:from|import)\s+\w+', content, re.MULTILINE)
+                if import_match or len(content.split('\n')) > 5:
+                    first_comment = re.search(r'#\s*(\w+\.py)', content)
+                    if first_comment:
+                        filepath = first_comment.group(1)
+            elif lang in ('typescript', 'ts', 'tsx', 'jsx', 'javascript', 'js'):
+                if len(content.split('\n')) > 5:
+                    pass
+            elif lang in ('json', 'yaml', 'yml', 'toml', 'ini', 'cfg', 'env'):
+                if len(content.split('\n')) > 2:
+                    pass
+
+        if filepath and filepath not in seen_filepaths:
+            seen_filepaths.add(filepath)
+            actions.append({"type": "write_file", "filepath": filepath, "content": content})
 
     return actions
 
