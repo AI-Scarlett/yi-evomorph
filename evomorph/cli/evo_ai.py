@@ -234,7 +234,6 @@ def _generate_summary(llm_output, evo_code, saved_file=None):
 
 
 def _show_result(llm_output, evo_code, saved_file=None, elapsed=0):
-    summary = _generate_natural_summary(llm_output, evo_code, saved_file, elapsed)
     files = _extract_files_from_output(llm_output)
     task_type = _detect_task_type(llm_output)
 
@@ -247,34 +246,52 @@ def _show_result(llm_output, evo_code, saved_file=None, elapsed=0):
             xiangci_match = re.findall(r'@xiangci\s*\{[^"]*"([^"]+)"', evo_code)
             xiangci = xiangci_match[0] if xiangci_match else ""
 
-            tree = Tree("📋 [bold green]完成[/bold green]")
+            tree = Tree("📋 [bold green]Evomorph 代码生成完成[/bold green]")
             if saved_file:
                 tree.add(f"[bold cyan]{saved_file}[/bold cyan]")
+            else:
+                tree.add("[dim](未保存，/save 保存)[/dim]")
             for name in loci_names:
                 tree.add(f"[green]@locus[/green] {name}")
             if xiangci:
                 tree.add(f"[yellow]象辞:[/yellow] {xiangci}")
             console.print(tree)
+
+            text_parts = re.sub(r'```[\s\S]*?```', '', llm_output).strip()
+            if text_parts:
+                console.print(Markdown(text_parts[:600]))
         else:
-            if files:
+            code_blocks = re.findall(r'```(\w*)\s*\n(.*?)```', llm_output, re.DOTALL)
+            text_without_code = re.sub(r'```[\s\S]*?```', '', llm_output).strip()
+
+            if code_blocks:
+                tree = Tree("📋 [bold green]完成[/bold green]")
+                if files:
+                    for f in files[:8]:
+                        icon = "📝" if f["action"] == "修改" else "📄"
+                        tree.add(f"{icon} [cyan]{f['path']}[/cyan]")
+                for lang, code in code_blocks:
+                    first_line = code.strip().split("\n")[0][:60] if code.strip() else ""
+                    lang_label = f" ({lang})" if lang else ""
+                    tree.add(f"[green]代码块{lang_label}[/green] {first_line}")
+                console.print(tree)
+
+                if text_without_code:
+                    console.print(Markdown(text_without_code[:800]))
+            elif files:
                 tree = Tree("📋 [bold green]完成[/bold green]")
                 for f in files[:8]:
                     icon = "📝" if f["action"] == "修改" else "📄"
                     tree.add(f"{icon} [cyan]{f['path']}[/cyan]")
                 console.print(tree)
-            elif task_type == "analyze":
-                non_code = re.sub(r'```[\s\S]*?```', '', llm_output).strip()
-                if non_code:
-                    md_text = non_code[:500]
-                    console.print(Markdown(md_text))
-                else:
-                    console.print(f"[green]✅ 分析完成[/green]")
+
+                if text_without_code:
+                    console.print(Markdown(text_without_code[:800]))
             else:
-                non_code = re.sub(r'```[\s\S]*?```', '', llm_output).strip()
-                first_para = non_code.split("\n\n")[0] if non_code else summary
-                if len(first_para) > 300:
-                    first_para = first_para[:300] + "..."
-                console.print(Markdown(first_para))
+                if text_without_code:
+                    console.print(Markdown(text_without_code[:1200]))
+                else:
+                    console.print(Markdown(llm_output[:1200]))
 
         if elapsed > 0:
             console.print(f"[dim]⏱ {elapsed:.1f}s[/dim]")
@@ -290,12 +307,16 @@ def _show_result(llm_output, evo_code, saved_file=None, elapsed=0):
         console.print()
     else:
         print()
-        print(f"  {summary}")
+        text_without_code = re.sub(r'```[\s\S]*?```', '', llm_output).strip()
+        if text_without_code:
+            print(text_without_code[:800])
         if files:
             for f in files[:5]:
                 print(f"    {f['path']}")
         if evo_code and evo_code.startswith("@evolang"):
             print("  /compile 编译  /run 运行  /evolve 进化  /save 保存  /view 查看")
+        if elapsed > 0:
+            print(f"  ⏱ {elapsed:.1f}s")
         print()
 
 
