@@ -1,0 +1,550 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·静态分析器自举实现：以卦象之理，洞察代码之隐。
+    "元·亨·利·贞四象限对应分析四大类：元为控制流分析，亨为数据流分析，利为转换分析，贞为终成分析。
+    "此实现涵盖：控制流图构建、到达定义分析、活跃变量分析、未初始化变量检测、死代码分析、内存访问分析、并发分析。
+}
+
+@locus std.analysis.cfg_node_create {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::NODE_ID
+        ䷁ RECV R1, env::BLOCK_NAME
+        ䷁ RECV R2, env::INSTRUCTIONS
+        ䷂ ALLOC R3, 0x40
+        ䷍ ABUNDANCE R3, R0
+        ䷍ ABUNDANCE R3, R1
+        ䷍ ABUNDANCE R3, R2
+        ䷗ RETURN R3
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.cfg_create {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x100
+        ䷀ CREA R1, R0
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.analysis.cfg_add_node {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::CFG_NODE
+        ䷓ CONTEMPLATE R0
+        ䷍ ABUNDANCE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.cfg_add_edge {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::FROM_ID
+        ䷁ RECV R2, env::TO_ID
+        ䷓ CONTEMPLATE R0
+        ䷍ ABUNDANCE R0, R1
+        ䷍ ABUNDANCE R0, R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.cfg_get_node {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::NODE_ID
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_search_node
+        ䷗ RETURN R_NULL
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.cfg_reachable_nodes {
+    mut_rate   = 0.01
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::START_ID
+        ䷂ ALLOC R2, 0x80
+        ䷀ CREA R3, R0
+        ䷌ FELLOWSHIP R1, R2
+        ䷉ STEP R2
+        ䷆ BRANCH R_bfs_loop
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.cfg_unreachable_nodes {
+    mut_rate   = 0.01
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_get_all_nodes
+        ䷆ BRANCH R_get_reachable
+        ䷨ REDUCE R1, R0
+        ䷗ RETURN R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.cfg_compute_dominators {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷂ ALLOC R1, 0x100
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_init_dominators
+        ䷏ SPECULATE R2
+        ䷆ BRANCH R_iterate_dominators
+        ䷗ RETURN R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.cfg_identify_loops {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷂ ALLOC R1, 0x80
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_compute_dominators
+        ䷆ BRANCH R_find_back_edges
+        ䷆ BRANCH R_compute_loop_bodies
+        ䷗ RETURN R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.cfg_constructor_init {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x08
+        ䷍ ABUNDANCE R0, 0x00
+        ䷗ RETURN R0
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.cfg_build_from_instructions {
+    mut_rate   = 0.03
+    cross_pool = "analysis_system"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INSTRUCTIONS
+        ䷂ ALLOC R1, 0x100
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_find_leaders
+        ䷆ BRANCH R_split_basic_blocks
+        ䷆ BRANCH R_build_edges
+        ䷗ RETURN R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.dataflow_init {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷂ ALLOC R1, 0x80
+        ䷍ ABUNDANCE R1, R0
+        ䷗ RETURN R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.dataflow_run_forward {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INITIAL_IN
+        ䷁ RECV R1, env::TRANSFER_FUNC
+        ䷁ RECV R2, env::MEET_FUNC
+        ䷂ ALLOC R3, 0x80
+        ䷂ ALLOC R4, 0x80
+        ䷌ FELLOWSHIP R0, R3
+        ䷏ SPECULATE R5
+        ䷆ BRANCH R_forward_loop
+        ䷗ RETURN R3
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.dataflow_run_backward {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INITIAL_OUT
+        ䷁ RECV R1, env::TRANSFER_FUNC
+        ䷁ RECV R2, env::MEET_FUNC
+        ䷂ ALLOC R3, 0x80
+        ䷂ ALLOC R4, 0x80
+        ䷌ FELLOWSHIP R0, R4
+        ䷏ SPECULATE R5
+        ䷆ BRANCH R_backward_loop
+        ䷗ RETURN R3
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.reaching_defs_init {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷍ ABUNDANCE R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.reaching_defs_collect {
+    mut_rate   = 0.01
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INSTRUCTIONS
+        ䷂ ALLOC R1, 0x80
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_iterate_instrs
+        ䷆ BRANCH R_get_defined_vars
+        ䷗ RETURN R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.reaching_defs_analyze {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷂ ALLOC R3, 0x80
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R_run_forward_analysis
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.live_vars_init {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷍ ABUNDANCE R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.live_vars_analyze {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R_run_backward_analysis
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.uninitialized_init {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷍ ABUNDANCE R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.uninitialized_collect_vars {
+    mut_rate   = 0.01
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INSTRUCTIONS
+        ䷂ ALLOC R1, 0x40
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_iterate_instrs
+        ䷆ BRANCH R_collect_registers
+        ䷗ RETURN R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.uninitialized_analyze {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R_run_reaching_defs
+        ䷆ BRANCH R_check_uninitialized
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.dead_code_init {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷍ ABUNDANCE R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.dead_code_analyze {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R_find_unreachable
+        ䷆ BRANCH R_run_live_vars
+        ䷆ BRANCH R_find_dead_stores
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.memory_init {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷍ ABUNDANCE R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.memory_analyze {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_collect_memory_ops
+        ䷆ BRANCH R_check_suspicious_addrs
+        ䷆ BRANCH R_detect_aliasing
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.concurrency_init {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷍ ABUNDANCE R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.concurrency_analyze {
+    mut_rate   = 0.02
+    cross_pool = "analysis_system"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CFG
+        ䷁ RECV R1, env::INSTRUCTIONS
+        ䷂ ALLOC R2, 0x80
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_count_thread_ops
+        ䷆ BRANCH R_track_locks
+        ䷆ BRANCH R_check_sync_coverage
+        ䷗ RETURN R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.analysis.static_analyzer_init {
+    mut_rate   = 0.005
+    cross_pool = "analysis_system"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x100
+        ䷀ CREA R1, R0
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.analysis.static_analyzer_run {
+    mut_rate   = 0.03
+    cross_pool = "analysis_system"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INSTRUCTIONS
+        ䷂ ALLOC R1, 0x200
+        ䷆ BRANCH R_build_cfg
+        ䷆ BRANCH R_identify_loops
+        ䷆ BRANCH R_run_dataflow
+        ䷆ BRANCH R_run_safety
+        ䷆ BRANCH R_compile_results
+        ䷗ RETURN R1
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 静态分析器.变异策略 {
+    mut_rate = 0.003
+    fitness  = min_size + max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x02
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 静态分析器.选择策略 {
+    mut_rate = 0.002
+    fitness  = max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷏ SPECULATE R1
+        ䷾ SYNC
+        ䷗ RETURN
+    }
+}

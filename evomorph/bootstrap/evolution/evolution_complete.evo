@@ -1,0 +1,350 @@
+@evolang "3.0"
+
+@xiangci {
+    "进化引擎完整实现：遗传算法驱动代码优化，如卦象之变易生生不息。"
+    "道枢自举之五——进化引擎用自身之语言书写自身之优化策略。"
+    "此实现涵盖：种群初始化、选择、交叉、变异、适应度评估、收敛检测。"
+}
+
+@locus evoc.evolution.init {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x04
+        ䷂ ALLOC R1, 0x04
+        ䷂ ALLOC R2, 0x04
+        ䷀ CREA R3, R0
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.init_population {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::POPULATION_SIZE
+        ䷁ RECV R1, env::SEED_GENES
+        ䷂ ALLOC R2, 0x10000
+        ䷌ FELLOWSHIP R0, R2
+        ䷉ STEP R0
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evaluation.evaluate_fitness {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INDIVIDUAL
+        ䷁ RECV R1, env::PLATFORM
+        ䷂ ALLOC R2, 0x08
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_calculate_latency
+        ䷆ BRANCH R_calculate_throughput
+        ䷆ BRANCH R_calculate_energy
+        ䷆ BRANCH R_calculate_size
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.selection.roulette_wheel {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::POPULATION
+        ䷁ RECV R1, env::TOTAL_FITNESS
+        ䷂ ALLOC R2, 0x08
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_select_individual
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.selection.tournament {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::POPULATION
+        ䷁ RECV R1, env::TOURNAMENT_SIZE
+        ䷂ ALLOC R2, 0x40
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_select_contestants
+        ䷆ BRANCH R_find_best
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.selection.rank {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::POPULATION
+        ䷂ ALLOC R1, 0x100
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_sort_by_fitness
+        ䷆ BRANCH R_assign_ranks
+        ䷆ BRANCH R_select_by_rank
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.crossover.single_point {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARENT1
+        ䷁ RECV R1, env::PARENT2
+        ䷁ RECV R2, env::CROSSOVER_POINT
+        ䷂ ALLOC R3, 0x100
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.crossover.two_point {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARENT1
+        ䷁ RECV R1, env::PARENT2
+        ䷁ RECV R2, env::POINT1
+        ䷁ RECV R3, env::POINT2
+        ䷂ ALLOC R4, 0x100
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.crossover.uniform {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARENT1
+        ䷁ RECV R1, env::PARENT2
+        ䷂ ALLOC R2, 0x100
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_choose_gene
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.mutation.flip_yao {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPCODE
+        ䷁ RECV R1, env::BIT_POSITION
+        ䷑ MUT R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.mutation.mutate_modifier {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MODIFIER
+        ䷑ MUT R0, R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.mutation.mutate_operand {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPERAND
+        ䷑ MUT R0, R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.evolve_one_generation {
+    mut_rate   = 0.02
+    cross_pool = "evolution_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::POPULATION
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_evaluate_all_fitness
+        ䷆ BRANCH R_sort_by_fitness
+        ䷆ BRANCH R_select_elites
+        ䷆ BRANCH R_crossover_and_mutate
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.full_evolution {
+    mut_rate   = 0.02
+    cross_pool = "evolution_core"
+    fitness    = max_throughput + min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MAX_GENERATIONS
+        ䷂ ALLOC R1, 0x04
+        ䷀ CREA R1, R0
+        ䷉ STEP R1
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_check_convergence
+        ䷆ BRANCH R_evolve_generation
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.calculate_diversity {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::POPULATION
+        ䷂ ALLOC R1, 0x08
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_count_unique_sequences
+        ䷆ BRANCH R_count_opcode_distribution
+        ䷆ BRANCH R_calculate_fitness_variance
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.adaptive_mutation_rate {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DIVERSITY
+        ䷁ RECV R1, env::CURRENT_MUT_RATE
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_diversity_low
+        ䷆ BRANCH R_diversity_high
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.check_convergence {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::FITNESS_HISTORY
+        ䷁ RECV R1, env::THRESHOLD
+        ䷁ RECV R2, env::WINDOW_SIZE
+        ䷂ ALLOC R3, 0x08
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_calculate_variance
+        ䷔ BITE R3, R1
+        ䷆ BRANCH R_converged
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.export_best_individual {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::BEST_INDIVIDUAL
+        ䷂ ALLOC R1, 0x1000
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_encode_genes
+        ䷆ BRANCH R_encode_metadata
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 进化引擎.变异策略 {
+    mut_rate = 0.005
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 进化引擎.选择策略 {
+    mut_rate = 0.003
+    fitness  = max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷏ SPECULATE R1
+        ䷾ SYNC
+        ䷗ RETURN
+    }
+}
+
+@meta_locus 进化引擎.交叉策略 {
+    mut_rate = 0.005
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷫ MATE R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 进化引擎.适应度评估 {
+    mut_rate = 0.01
+    fitness  = max_throughput + min_energy
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷔ BITE R_expected, R_actual
+        ䷆ BRANCH R_adjust
+        ䷾ SYNC
+    }
+}
