@@ -102,7 +102,8 @@ class EvolutionConfig:
 class EvolutionEngine:
     def __init__(self, config: Optional[EvolutionConfig] = None,
                  fitness_evaluator: Optional[Callable] = None,
-                 platform_simulator: Optional[Any] = None):
+                 platform_simulator: Optional[Any] = None,
+                 use_evomorph: bool = False):
         self.config = config or EvolutionConfig()
         self.fitness_evaluator = fitness_evaluator
         self.platform_simulator = platform_simulator
@@ -112,6 +113,26 @@ class EvolutionEngine:
         self.best_ever: Optional[Individual] = None
         self.cross_pool: Dict[str, List[Individual]] = {}
         self._rng = random.Random()
+        
+        self._use_evomorph = use_evomorph
+        self._backend = None
+        
+        if use_evomorph:
+            try:
+                from evomorph.bootstrap import EvomorphBackend
+                self._backend = EvomorphBackend()
+            except ImportError:
+                self._use_evomorph = False
+
+    def set_mode(self, use_evomorph: bool):
+        """设置使用 Evomorph 实现还是 Python 实现"""
+        self._use_evomorph = use_evomorph
+        if use_evomorph and self._backend is None:
+            try:
+                from evomorph.bootstrap import EvomorphBackend
+                self._backend = EvomorphBackend()
+            except ImportError:
+                self._use_evomorph = False
 
     def initialize_population(self, seed_genes: List[GeneInstruction]) -> List[Individual]:
         self.population = []
@@ -403,6 +424,9 @@ class EvolutionEngine:
         return stats
 
     def evolve(self, max_generations: Optional[int] = None, callback: Optional[Callable] = None) -> Individual:
+        if self._use_evomorph and self._backend and self._backend.is_evomorph_available("evolution"):
+            return self._evolve_using_evomorph(max_generations, callback)
+        
         gens = max_generations or self.config.max_generations
         for _ in range(gens):
             stats = self.evolve_one_generation()
@@ -410,6 +434,47 @@ class EvolutionEngine:
                 callback(stats)
             if self._converged():
                 break
+        return self.best_ever if self.best_ever else (self.population[0] if self.population else None)
+    
+    def _evolve_using_evomorph(self, max_generations: Optional[int], callback: Optional[Callable]) -> Individual:
+        """使用 Evomorph 实现进行进化"""
+        seed_genes_list = [
+            {"opcode": g.opcode, "modifier": g.modifier, "operands": list(g.operands)}
+            for g in self.population[0].genes
+        ] if self.population else []
+        
+        config = {
+            "population_size": self.config.population_size,
+            "max_generations": max_generations or self.config.max_generations,
+            "mut_rate": self.config.mut_rate,
+            "env_targets": list(self.config.env_targets),
+        }
+        
+        result = self._backend.evolve_population(seed_genes_list, config)
+        
+        if "error" in result:
+            return self.best_ever if self.best_ever else (self.population[0] if self.population else None)
+        
+        if "best_genes" in result:
+            best_genes = [
+                GeneInstruction(
+                    opcode=g.get("opcode", 0),
+                    modifier=g.get("modifier", 0),
+                    operands=[],
+                )
+                for g in result["best_genes"]
+            ]
+            best_individual = Individual(
+                genes=best_genes,
+                fitness=result.get("best_fitness", 0.0),
+                origin="evomorph_evolved",
+            )
+            
+            if self.best_ever is None or best_individual.fitness > self.best_ever.fitness:
+                self.best_ever = best_individual
+            
+            return best_individual
+        
         return self.best_ever if self.best_ever else (self.population[0] if self.population else None)
 
     def _converged(self, threshold=0.001, window=10) -> bool:
@@ -544,3 +609,17 @@ class EvolutionEngine:
                 ],
             })
         return result
+
+    def get_backend_status(self):
+        """获取后端状态"""
+        if self._backend:
+            return {
+                "use_evomorph": self._use_evomorph,
+                "backend_available": self._backend.is_evomorph_available("evolution"),
+                "backend_status": self._backend.get_status(),
+            }
+        return {
+            "use_evomorph": self._use_evomorph,
+            "backend_available": False,
+            "message": "使用 Python 实现",
+        }

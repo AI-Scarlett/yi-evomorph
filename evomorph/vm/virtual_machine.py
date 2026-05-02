@@ -24,7 +24,7 @@ class IChingVM:
         "R_A0": 15,
     }
 
-    def __init__(self):
+    def __init__(self, use_evomorph: bool = False):
         self.registers = [0] * self.NUM_REGISTERS
         self.stack = bytearray(self.STACK_SIZE)
         self.heap = bytearray(self.HEAP_SIZE)
@@ -48,7 +48,28 @@ class IChingVM:
         self.generation = 0
         self.cycle_count = 0
         self.energy_cost = 0.0
+        
+        self._use_evomorph = use_evomorph
+        self._backend = None
+        
+        if use_evomorph:
+            try:
+                from evomorph.bootstrap import EvomorphBackend
+                self._backend = EvomorphBackend()
+            except ImportError:
+                self._use_evomorph = False
+        
         self._init_special_regs()
+
+    def set_mode(self, use_evomorph: bool):
+        """设置使用 Evomorph 实现还是 Python 实现"""
+        self._use_evomorph = use_evomorph
+        if use_evomorph and self._backend is None:
+            try:
+                from evomorph.bootstrap import EvomorphBackend
+                self._backend = EvomorphBackend()
+            except ImportError:
+                self._use_evomorph = False
 
     def _init_special_regs(self):
         self.registers[self.SPECIAL_REGS["R_SP"]] = self.STACK_SIZE
@@ -103,6 +124,9 @@ class IChingVM:
         self.io_handlers[port] = handler
 
     def run(self, max_cycles=None):
+        if self._use_evomorph and self._backend and self._backend.is_evomorph_available("vm"):
+            return self._run_using_evomorph(max_cycles)
+        
         self.state = VMState.RUNNING
         while self.state == VMState.RUNNING:
             if max_cycles is not None and self.cycle_count >= max_cycles:
@@ -113,6 +137,48 @@ class IChingVM:
                 break
             self._step()
             self.cycle_count += 1
+        return self.state
+    
+    def _run_using_evomorph(self, max_cycles=None):
+        """使用 Evomorph 实现执行程序"""
+        program_list = []
+        for i in range(0, len(self.program), 2):
+            if i + 1 < len(self.program):
+                byte1 = self.program[i]
+                byte2 = self.program[i + 1]
+                opcode = (byte1 >> 2) & 0x3F
+                modifier = ((byte1 & 0x03) << 4) | (byte2 & 0x0F)
+                program_list.append({
+                    "opcode": opcode,
+                    "modifier": modifier,
+                    "operands": [],
+                })
+        
+        result = self._backend.execute_program(program_list, max_cycles or 10000)
+        
+        if "state" in result:
+            state_map = {
+                "INIT": VMState.INIT,
+                "RUNNING": VMState.RUNNING,
+                "PAUSED": VMState.PAUSED,
+                "HALTED": VMState.HALTED,
+                "ERROR": VMState.ERROR,
+                "TRAPPED": VMState.TRAPPED,
+            }
+            self.state = state_map.get(result["state"], VMState.ERROR)
+        
+        if "cycle_count" in result:
+            self.cycle_count = result["cycle_count"]
+        
+        if "energy_cost" in result:
+            self.energy_cost = result["energy_cost"]
+        
+        if "registers" in result:
+            for i in range(min(self.NUM_REGISTERS, 16)):
+                reg_name = f"R{i}"
+                if reg_name in result["registers"]:
+                    self.registers[i] = result["registers"][reg_name]
+        
         return self.state
 
     def step(self):
@@ -643,3 +709,17 @@ class IChingVM:
 
     def export_bytecode(self):
         return bytes(self.program)
+
+    def get_backend_status(self):
+        """获取后端状态"""
+        if self._backend:
+            return {
+                "use_evomorph": self._use_evomorph,
+                "backend_available": self._backend.is_evomorph_available("vm"),
+                "backend_status": self._backend.get_status(),
+            }
+        return {
+            "use_evomorph": self._use_evomorph,
+            "backend_available": False,
+            "message": "使用 Python 实现",
+        }
