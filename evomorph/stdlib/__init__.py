@@ -32,12 +32,22 @@ def load_ai():
     return _load_evo_stdlib("ai.evo")
 
 
+def load_collections():
+    return _load_evo_stdlib("collections.evo")
+
+
+def load_string():
+    return _load_evo_stdlib("string.evo")
+
+
 def load_all():
     return {
         "io": load_io(),
         "sync": load_sync(),
         "math": load_math(),
         "ai": load_ai(),
+        "collections": load_collections(),
+        "string": load_string(),
     }
 
 

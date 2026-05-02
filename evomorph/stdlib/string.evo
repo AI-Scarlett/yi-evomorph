@@ -1,0 +1,263 @@
+@evolang "3.0"
+
+@xiangci {
+    "串之基：字符串创建、拼接、查找、替换，Unicode支持。"
+}
+
+@locus std.string.new {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷀ CREA R0, @init
+        ䷂ ALLOC R0, R1
+        ䷍ ABUNDANCE R0, 0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.string.length {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.concat {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷬ GATHER R2, R0
+        ䷬ GATHER R2, R1
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.substr {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @offset
+        ䷑ MUT R2, @length
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.string.find {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷑ MUT R2, @search
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.compare {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷨ REDUCE R2, R0
+        ䷨ REDUCE R2, R1
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.split {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷑ MUT R2, @split
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.join {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷬ GATHER R2, R0
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.to_int {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @parse_int
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.to_float {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @parse_float
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.from_int {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @int_to_str
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.from_float {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @float_to_str
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.upper {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @to_upper
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.lower {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @to_lower
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.trim {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @trim_whitespace
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.replace {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷑ MUT R3, @replace_all
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.string.format {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R1, R0
+        ䷑ MUT R2, @format
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.encode_utf8 {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @utf8_encode
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.decode_utf8 {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @utf8_decode
+        ䷗ RETURN R1
+    }
+}

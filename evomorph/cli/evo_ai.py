@@ -1135,6 +1135,107 @@ def _handle_provider_switch(config, prov_key):
             _print("  拉取失败，输入 /model <名称> 手动设置", style="yellow")
 
 
+def _validate_and_repair_evo_code(evo_code: str, config: Dict, max_repair_attempts: int = 3) -> Dict:
+    if not evo_code or not evo_code.startswith("@evolang"):
+        return {"valid": False, "error": "No valid evo code found", "code": evo_code}
+    
+    current_code = evo_code
+    repair_history = []
+    
+    for attempt in range(max_repair_attempts + 1):
+        try:
+            _print(f"  🔍 验证尝试 {attempt + 1}/{max_repair_attempts + 1}...", style="dim")
+            compiler = EvocCompiler()
+            result = compiler.compile(current_code, output_format="dict")
+            
+            if result and "loci" in result and len(result["loci"]) > 0:
+                loci = result["loci"]
+                warnings = []
+                for locus in loci:
+                    if not locus.get("env_targets"):
+                        warnings.append(f"基因座 '{locus.get('name', 'unknown')}' 缺少 env_target")
+                    if not locus.get("fitness") or not locus.get("fitness", {}).get("terms"):
+                        warnings.append(f"基因座 '{locus.get('name', 'unknown')}' 缺少 fitness 表达式")
+                
+                if warnings:
+                    _print(f"  ⚠ 警告: {', '.join(warnings)}", style="yellow")
+                
+                return {
+                    "valid": True, 
+                    "code": current_code, 
+                    "result": result,
+                    "attempts": attempt,
+                    "warnings": warnings,
+                    "repair_history": repair_history
+                }
+                
+        except Exception as e:
+            error_msg = str(e)
+            _print(f"  ✗ 编译错误: {error_msg}", style="bold red")
+            
+            if attempt >= max_repair_attempts:
+                break
+            
+            _print(f"  🔧 尝试自动修复...", style="cyan")
+            
+            repair_prompt = f"""你的上一个 .evo 代码编译失败了。
+
+错误信息:
+{error_msg}
+
+当前代码:
+```evomorph
+{current_code}
+```
+
+请分析错误原因并修复代码。只输出修复后的完整 .evo 代码，不要其他解释。
+确保:
+1. 所有指令都是有效的六十四卦助记符
+2. 语法正确（括号、引号匹配）
+3. 每个 @locus 都有 mut_rate、fitness、env_target
+4. 卦序块中的指令格式正确
+
+输出格式:
+```evomorph
+@evolang "3.0"
+...
+```
+"""
+            
+            repair_conversation = [
+                {"role": "system", "content": load_system_prompt()},
+                {"role": "user", "content": repair_prompt}
+            ]
+            
+            try:
+                repair_output, _ = call_llm(config, repair_conversation)
+                repaired_code = extract_evo_code(repair_output)
+                
+                if repaired_code and repaired_code.startswith("@evolang"):
+                    repair_history.append({
+                        "attempt": attempt + 1,
+                        "original_error": error_msg,
+                        "before": current_code[:200] + "..." if len(current_code) > 200 else current_code,
+                        "after": repaired_code[:200] + "..." if len(repaired_code) > 200 else repaired_code
+                    })
+                    current_code = repaired_code
+                    _print(f"  ✓ 已生成修复版本", style="green")
+                else:
+                    _print(f"  ✗ 修复失败，无法提取有效代码", style="bold red")
+                    break
+            except Exception as repair_error:
+                _print(f"  ✗ 修复过程出错: {repair_error}", style="bold red")
+                break
+    
+    return {
+        "valid": False, 
+        "error": error_msg if 'error_msg' in locals() else "Validation failed",
+        "code": current_code,
+        "attempts": max_repair_attempts,
+        "repair_history": repair_history
+    }
+
+
 def _handle_natural_language(user_input, config, conversation, last_evo_code, current_file, work_dir=None):
     _work_dir = work_dir or os.getcwd()
     local_ctx = _read_local_context(user_input)
@@ -1173,6 +1274,68 @@ def _handle_natural_language(user_input, config, conversation, last_evo_code, cu
     _show_result(llm_output, evo_code, current_file, elapsed)
 
     conversation.append({"role": "assistant", "content": llm_output})
+
+    if evo_code and evo_code.startswith("@evolang"):
+        _print()
+        _print("  ════════════════════════════════════", style="dim")
+        _print("  🧪 启动生成-验证-修复循环 (GVR Loop)", style="bold cyan")
+        _print("  ════════════════════════════════════", style="dim")
+        
+        validation_result = _validate_and_repair_evo_code(evo_code, config, max_repair_attempts=3)
+        
+        if validation_result["valid"]:
+            last_evo_code = validation_result["code"]
+            
+            _print()
+            _print("  ✅ 代码验证通过！", style="bold green")
+            
+            if validation_result["attempts"] > 0:
+                _print(f"  📊 经过 {validation_result['attempts']} 轮修复", style="dim")
+            
+            if validation_result.get("warnings"):
+                _print(f"  ⚠ 警告: {', '.join(validation_result['warnings'])}", style="yellow")
+            
+            _print()
+            _print("  🚀 可用操作:", style="cyan")
+            _print("     /compile  - 编译代码", style="dim")
+            _print("     /run      - 运行代码", style="dim")
+            _print("     /evolve   - 进化优化", style="dim")
+            _print("     /save     - 保存文件", style="dim")
+            
+            if last_evo_code != evo_code:
+                conversation.append({
+                    "role": "user", 
+                    "content": f"代码已通过自动修复。修复后的代码:\n```evomorph\n{last_evo_code}\n```\n\n请简要说明做了哪些修改。"
+                })
+                
+                if HAS_RICH:
+                    spinner3 = Spinner("dots", text="  ⟐ 生成修复说明...", style="cyan")
+                    live3 = Live(spinner3, console=console, transient=True)
+                    live3.start()
+                    explanation, _ = call_llm(config, conversation)
+                    live3.stop()
+                else:
+                    explanation, _ = call_llm(config, conversation)
+                
+                conversation.append({"role": "assistant", "content": explanation})
+                
+                text_without_code = re.sub(r'```[\s\S]*?```', '', explanation).strip()
+                if text_without_code:
+                    _print()
+                    _print("  📝 修复说明:", style="cyan")
+                    if HAS_RICH:
+                        console.print(Markdown(text_without_code[:800]))
+                    else:
+                        print(text_without_code[:800])
+        else:
+            _print()
+            _print("  ❌ 代码验证失败，所有修复尝试均未成功", style="bold red")
+            _print(f"  最后错误: {validation_result.get('error', 'Unknown')}", style="dim")
+            
+            conversation.append({
+                "role": "user",
+                "content": f"代码编译失败，错误信息:\n{validation_result.get('error', 'Unknown')}\n\n请完全重写代码，仔细检查所有语法和指令。"
+            })
 
     tool_actions = _extract_tool_actions(llm_output)
     if tool_actions:
