@@ -1,0 +1,343 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍元基因座：进化之进化"
+    "定义编译器自身的进化策略，实现元进化"
+    "变异算子、交叉策略、选择策略、适应度评估——皆可进化"
+    "此为道枢之核：变易之变易，进化之进化"
+}
+
+@meta_locus meta.evolution.mutation_operator {
+    mut_rate   = 0.01
+    fitness    = min_size + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R3, R2
+        ䷗ RETURN R3
+    }
+}
+
+@meta_locus meta.evolution.crossover_strategy {
+    mut_rate   = 0.01
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷫ MATE R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷏ SPECULATE R3, R2
+        ䷆ BRANCH R4, R3
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@meta_locus meta.evolution.selection_strategy {
+    mut_rate   = 0.005
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷏ SPECULATE R1, R0
+        ䷬ GATHER R2, R1
+        ䷨ REDUCE R3, R2
+        ䷆ BRANCH R4, R3
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@meta_locus meta.evolution.fitness_evaluator {
+    mut_rate   = 0.01
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R1, R0
+        ䷨ REDUCE R2, R1
+        ䷩ INCREASE R3, R2
+        ䷍ ABUNDANCE R4, R3
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@meta_locus meta.evolution.population_manager {
+    mut_rate   = 0.005
+    fitness    = min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷬ GATHER R0, R1
+        ䷓ CONTEMPLATE R0
+        ䷨ REDUCE R0, R2
+        ䷩ INCREASE R0, R3
+        ䷍ ABUNDANCE R4, R0
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@meta_locus meta.evolution.convergence_detector {
+    mut_rate   = 0.005
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R1, R0
+        ䷨ REDUCE R2, R1
+        ䷆ BRANCH R3, R2
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@meta_locus meta.xiangci.intent_recognition {
+    mut_rate   = 0.02
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::XIANGCI_TEXT
+        ䷓ CONTEMPLATE R0
+        ䷌ FELLOWSHIP R0, R1
+        ䷏ SPECULATE R2, R1
+        ䷆ BRANCH R3, R2
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@meta_locus meta.xiangci.instruction_selection {
+    mut_rate   = 0.02
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷀ CREA R1, @translator
+        ䷌ FELLOWSHIP R0, R1
+        ䷏ SPECULATE R2, R1
+        ䷆ BRANCH R3, R2
+        ䷾ SYNC
+        ䷍ ABUNDANCE R4, R3
+        ䷗ RETURN R4
+    }
+}
+
+@meta_locus meta.xiangci.fitness_generation {
+    mut_rate   = 0.01
+    fitness    = min_size + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷂ ALLOC R1, 0x100
+        ䷬ GATHER R2, R1
+        ䷨ REDUCE R3, R2
+        ䷩ INCREASE R4, R3
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@meta_locus meta.platform.adaptation {
+    mut_rate   = 0.008
+    fitness    = min_energy + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷌ FELLOWSHIP R1, env::TARGET_PLATFORM
+        ䷏ SPECULATE R2, R1
+        ䷑ MUT R3, 0x04
+        ䷫ MATE R4, R3
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@meta_locus meta.optimization.strategy {
+    mut_rate   = 0.006
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷏ SPECULATE R1, R0
+        ䷬ GATHER R2, R1
+        ䷨ REDUCE R3, R2
+        ䷩ INCREASE R4, R3
+        ䷍ ABUNDANCE R5, R4
+        ䷾ SYNC
+        ䷗ RETURN R5
+    }
+}
+
+@meta_locus meta.evolution.meta_controller {
+    mut_rate   = 0.003
+    fitness    = max_throughput + min_energy + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷀ CREA R0, @meta_evolution
+        ䷓ CONTEMPLATE R0
+        ䷌ FELLOWSHIP R1, R0
+        ䷏ SPECULATE R2, R1
+        ䷫ MATE R3, R2
+        ䷑ MUT R4, 0x02
+        ䷬ GATHER R5, R4
+        ䷨ REDUCE R6, R5
+        ䷩ INCREASE R7, R6
+        ䷍ ABUNDANCE R8, R7
+        ䷆ BRANCH R9, R8
+        ䷾ SYNC
+        ䷗ RETURN R9
+    }
+}
+
+@meta_locus meta.evolution.adaptive_mutation_rate {
+    mut_rate   = 0.01
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CURRENT_MUT_RATE
+        ䷁ RECV R1, env::FITNESS_TREND
+        ䷁ RECV R2, env::GENERATION
+        ䷁ RECV R3, env::POPULATION_DIVERSITY
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷓ CONTEMPLATE R3
+        ䷨ REDUCE R4, R1
+        ䷏ SPECULATE R5, R3
+        ䷆ BRANCH R6, R4
+        ䷑ MUT R0, 0x02
+        ䷆ BRANCH R7, R5
+        ䷑ MUT R0, 0x01
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@meta_locus meta.evolution.adaptive_crossover_rate {
+    mut_rate   = 0.01
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CURRENT_CROSS_RATE
+        ䷁ RECV R1, env::GENERATION
+        ䷁ RECV R2, env::BEST_FITNESS_DELTA
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷨ REDUCE R3, R2
+        ䷏ SPECULATE R4, R3
+        ䷆ BRANCH R5, R4
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@meta_locus meta.evolution.dynamic_population_manager {
+    mut_rate   = 0.008
+    fitness    = min_energy + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CURRENT_POP_SIZE
+        ䷁ RECV R1, env::GENERATION
+        ䷁ RECV R2, env::CONVERGENCE_SCORE
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷨ REDUCE R3, R2
+        ䷏ SPECULATE R4, R3
+        ䷆ BRANCH R5, R4
+        ䷀ CREA R6, @population_expand
+        ䷆ BRANCH R7, R5
+        ䷂ ALLOC R8, 0x200
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@meta_locus meta.evolution.early_stopping {
+    mut_rate   = 0.005
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::GENERATION
+        ䷁ RECV R1, env::FITNESS_HISTORY
+        ䷁ RECV R2, env::MAX_GENERATIONS
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷬ GATHER R3, R1
+        ䷨ REDUCE R4, R3
+        ䷏ SPECULATE R5, R4
+        ䷆ BRANCH R6, R5
+        ䷾ SYNC
+        ䷗ RETURN R6
+    }
+}
+
+@meta_locus meta.evolution.fitness_weight_adapter {
+    mut_rate   = 0.01
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CURRENT_WEIGHTS
+        ䷁ RECV R1, env::PLATFORM_PROFILE
+        ䷁ RECV R2, env::GENERATION
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷌ FELLOWSHIP R3, R1
+        ䷏ SPECULATE R4, R3
+        ䷑ MUT R0, 0x04
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@meta_locus meta.evolution.mutation_operator_selector {
+    mut_rate   = 0.01
+    fitness    = min_size + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CURRENT_MUTATION_TYPE
+        ䷁ RECV R1, env::GENERATION
+        ䷁ RECV R2, env::MUTATION_SUCCESS_RATE
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷨ REDUCE R3, R2
+        ䷏ SPECULATE R4, R3
+        ䷆ BRANCH R5, R4
+        ䷑ MUT R0, 0x03
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}

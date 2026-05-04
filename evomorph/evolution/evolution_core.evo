@@ -1,0 +1,238 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍进化引擎核心模块"
+    "基于六十四卦指令集的遗传算法实现"
+    "包含：种群初始化、选择、交叉、变异、适应度评估、收敛检测"
+}
+
+@locus evolution.population.init {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_size + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0100
+        ䷂ ALLOC R1, 0x4000
+        ䷌ FELLOWSHIP R2, R0
+        ䷀ CREA R3, R4
+        ䷍ ABUNDANCE R5, R3
+        ䷐ FOLLOWING R6, R5
+        ䷆ BRANCH R7, R6
+        ䷑ MUT R8, 0x05
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus evolution.selection.roulette {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0200
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R1, R0
+        ䷏ SPECULATE R2, R1
+        ䷆ BRANCH R3, R2
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus evolution.selection.tournament {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0200
+        ䷓ CONTEMPLATE R0
+        ䷌ FELLOWSHIP R1, R0
+        ䷏ SPECULATE R2, R1
+        ䷆ BRANCH R3, R2
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus evolution.selection.rank {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0200
+        ䷓ CONTEMPLATE R0
+        ䷨ REDUCE R1, R0
+        ䷩ INCREASE R2, R1
+        ䷏ SPECULATE R3, R2
+        ䷆ BRANCH R4, R3
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@locus evolution.crossover.single_point {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0300
+        ䷁ RECV R1, 0x0301
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷫ MATE R2, R3
+        ䷌ FELLOWSHIP R4, R2
+        ䷍ ABUNDANCE R5, R4
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus evolution.crossover.two_point {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0300
+        ䷁ RECV R1, 0x0301
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷏ SPECULATE R2, R0
+        ䷫ MATE R3, R4
+        ䷏ SPECULATE R5, R3
+        ䷌ FELLOWSHIP R6, R5
+        ䷾ SYNC
+        ䷗ RETURN R6
+    }
+}
+
+@locus evolution.crossover.uniform {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0300
+        ䷁ RECV R1, 0x0301
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷏ SPECULATE R2, R0
+        ䷏ SPECULATE R3, R1
+        ䷫ MATE R4, R5
+        ䷌ FELLOWSHIP R6, R4
+        ䷾ SYNC
+        ䷗ RETURN R6
+    }
+}
+
+@locus evolution.mutation.flip_yao {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0400
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷏ SPECULATE R1, R0
+        ䷆ BRANCH R2, R1
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus evolution.mutation.modifier {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0400
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x05
+        ䷌ FELLOWSHIP R1, R0
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus evolution.fitness.evaluate {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0500
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R1, R0
+        ䷨ REDUCE R2, R1
+        ䷩ INCREASE R3, R2
+        ䷍ ABUNDANCE R4, R3
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@locus evolution.convergence.check {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0600
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R1, R0
+        ䷨ REDUCE R2, R1
+        ䷆ BRANCH R3, R2
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus evolution.generation.evolve {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷌ FELLOWSHIP R1, R0
+        ䷏ SPECULATE R2, R1
+        ䷫ MATE R3, R4
+        ䷑ MUT R5, 0x04
+        ䷬ GATHER R6, R5
+        ䷨ REDUCE R7, R6
+        ䷆ BRANCH R8, R7
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}

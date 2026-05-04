@@ -1,0 +1,384 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph MCP Server"
+    "功能：提供MCP协议接口，支持编译、象辞翻译、进化编译、运行、查询卦象、列出平台"
+    "架构：基因座模块化设计，支持进化优化"
+    "道枢：以六十四卦指令集构建AI编程接口"
+}
+
+@meta_locus mcp.global_config {
+    mut_rate = 0.001
+    fitness  = max_throughput + min_latency
+
+    卦序: {
+        ䷂ ALLOC R0, 0x10
+        ䷍ ABUNDANCE R0, 0x02
+        ䷾ SYNC
+    }
+}
+
+@meta_locus mcp.evolution.strategy {
+    mut_rate = 0.005
+    fitness  = max_throughput + min_size + min_energy
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus mcp.io.read_line {
+    mut_rate   = 0.01
+    cross_pool = "mcp_io"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STDIN
+        ䷂ ALLOC R1, 0xFF
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus mcp.io.write_line {
+    mut_rate   = 0.01
+    cross_pool = "mcp_io"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STDOUT
+        ䷍ ABUNDANCE R0, R1
+        ䷝ ILLUMINATE R0
+        ䷾ SYNC
+    }
+}
+
+@locus mcp.request.parse {
+    mut_rate   = 0.015
+    cross_pool = "mcp_request"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::JSON_INPUT
+        ䷂ ALLOC R1, 0xFF
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_validate_json
+        ䷁ RECV R2, env::METHOD_FIELD
+        ䷁ RECV R3, env::PARAMS_FIELD
+        ䷁ RECV R4, env::ID_FIELD
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus mcp.request.route {
+    mut_rate   = 0.015
+    cross_pool = "mcp_request"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::METHOD
+        ䷓ CONTEMPLATE R0
+        ䷔ BITE R0, 0x69
+        ䷆ BRANCH R_check_initialize
+        ䷔ BITE R0, 0x74
+        ䷆ BRANCH R_check_tools_list
+        ䷔ BITE R0, 0x63
+        ䷆ BRANCH R_check_tools_call
+        ䷔ BITE R0, 0x6E
+        ䷆ BRANCH R_check_notification
+        ䷍ ABUNDANCE R1, 0x00
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus mcp.response.initialize {
+    mut_rate   = 0.01
+    cross_pool = "mcp_response"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0xFF
+        ䷍ ABUNDANCE R0, 0x7B
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus mcp.response.tools_list {
+    mut_rate   = 0.01
+    cross_pool = "mcp_response"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0xFF
+        ䷍ ABUNDANCE R0, 0x7B
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus mcp.tool.compile {
+    mut_rate   = 0.02
+    cross_pool = "mcp_tools"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_CODE
+        ䷁ RECV R1, env::OUTPUT_FORMAT
+        ䷀ CREA R2, @evoc.bootstrap.compile
+        ䷌ FELLOWSHIP R0, R2
+        ䷾ SYNC
+        ䷁ RECV R3, env::COMPILED_OUTPUT
+        ䷗ RETURN R3
+    }
+}
+
+@locus mcp.tool.xiangci {
+    mut_rate   = 0.02
+    cross_pool = "mcp_tools"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::XIANGCI_TEXT
+        ䷁ RECV R1, env::TARGET_PLATFORMS
+        ䷀ CREA R2, @xiangci.sdk.translate
+        ䷌ FELLOWSHIP R0, R2
+        ䷾ SYNC
+        ䷁ RECV R3, env::TRANSLATED_EVO
+        ䷗ RETURN R3
+    }
+}
+
+@locus mcp.tool.evolve {
+    mut_rate   = 0.02
+    cross_pool = "mcp_tools"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_CODE
+        ䷁ RECV R1, env::GENERATIONS
+        ䷁ RECV R2, env::POPULATION_SIZE
+        ䷁ RECV R3, env::TARGET_PLATFORMS
+        ䷀ CREA R4, @evolution.engine.init
+        ䷀ CREA R5, @evolution.engine.evolve
+        ䷌ FELLOWSHIP R0, R5
+        ䷾ SYNC
+        ䷁ RECV R6, env::EVOLVED_RESULT
+        ䷗ RETURN R6
+    }
+}
+
+@locus mcp.tool.run {
+    mut_rate   = 0.02
+    cross_pool = "mcp_tools"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_CODE
+        ䷁ RECV R1, env::MAX_CYCLES
+        ䷀ CREA R2, @evoc.bootstrap.compile
+        ䷌ FELLOWSHIP R0, R2
+        ䷾ SYNC
+        ䷀ CREA R3, @vm.iching.run
+        ䷌ FELLOWSHIP R2, R3
+        ䷾ SYNC
+        ䷁ RECV R4, env::EXECUTION_RESULT
+        ䷗ RETURN R4
+    }
+}
+
+@locus mcp.tool.lookup_hexagram {
+    mut_rate   = 0.01
+    cross_pool = "mcp_tools"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::QUERY_STRING
+        ䷂ ALLOC R1, 0xFF
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_lookup_match
+        ䷍ ABUNDANCE R1, 0x00
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus mcp.tool.list_platforms {
+    mut_rate   = 0.01
+    cross_pool = "mcp_tools"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0xFF
+        ䷁ RECV R1, env::PLATFORM_REGISTRY
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_platform_loop
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus mcp.tools.call.dispatch {
+    mut_rate   = 0.015
+    cross_pool = "mcp_tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TOOL_NAME
+        ䷁ RECV R1, env::TOOL_ARGUMENTS
+        ䷓ CONTEMPLATE R0
+        ䷔ BITE R0, 0x63
+        ䷆ BRANCH R_check_compile
+        ䷔ BITE R0, 0x78
+        ䷆ BRANCH R_check_xiangci
+        ䷔ BITE R0, 0x65
+        ䷆ BRANCH R_check_evolve
+        ䷔ BITE R0, 0x72
+        ䷆ BRANCH R_check_run
+        ䷔ BITE R0, 0x6C
+        ䷆ BRANCH R_check_lookup
+        ䷔ BITE R0, 0x70
+        ䷆ BRANCH R_check_platforms
+        ䷍ ABUNDANCE R2, 0x00
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus mcp.response.build {
+    mut_rate   = 0.01
+    cross_pool = "mcp_response"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::RESULT_DATA
+        ䷁ RECV R1, env::REQUEST_ID
+        ䷂ ALLOC R2, 0xFF
+        ䷍ ABUNDANCE R2, 0x7B
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus mcp.response.build_error {
+    mut_rate   = 0.01
+    cross_pool = "mcp_response"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::ERROR_MESSAGE
+        ䷁ RECV R1, env::REQUEST_ID
+        ䷂ ALLOC R2, 0xFF
+        ䷍ ABUNDANCE R2, 0x7B
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus mcp.main.loop {
+    mut_rate   = 0.02
+    cross_pool = "mcp_main"
+    fitness    = max_throughput + min_energy + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷀ CREA R0, @cli.init
+        ䷾ SYNC
+        ䷆ BRANCH R_main_loop_start
+        
+        ䷁ RECV R1, env::STDIN_LINE
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_check_empty_line
+        ䷆ BRANCH R_parse_json
+        
+        ䷀ CREA R2, @mcp.request.parse
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+        ䷁ RECV R3, env::PARSED_METHOD
+        ䷁ RECV R4, env::PARSED_PARAMS
+        ䷁ RECV R5, env::PARSED_ID
+        
+        ䷀ CREA R6, @mcp.request.route
+        ䷌ FELLOWSHIP R3, R6
+        ䷾ SYNC
+        ䷁ RECV R7, env::ROUTE_TARGET
+        
+        ䷓ CONTEMPLATE R7
+        ䷔ BITE R7, 0x01
+        ䷆ BRANCH R_handle_initialize
+        ䷔ BITE R7, 0x02
+        ䷆ BRANCH R_handle_tools_list
+        ䷔ BITE R7, 0x03
+        ䷆ BRANCH R_handle_tools_call
+        ䷔ BITE R7, 0x04
+        ䷆ BRANCH R_handle_notification
+        ䷆ BRANCH R_handle_unknown
+        
+        ䷀ CREA R8, @mcp.response.initialize
+        ䷾ SYNC
+        ䷁ RECV R9, env::RESPONSE_JSON
+        ䷆ BRANCH R_send_response
+        
+        ䷀ CREA R10, @mcp.response.tools_list
+        ䷾ SYNC
+        ䷁ RECV R11, env::RESPONSE_JSON
+        ䷆ BRANCH R_send_response
+        
+        ䷀ CREA R12, @mcp.tools.call.dispatch
+        ䷌ FELLOWSHIP R4, R12
+        ䷾ SYNC
+        ䷁ RECV R13, env::TOOL_RESULT
+        ䷀ CREA R14, @mcp.response.build
+        ䷌ FELLOWSHIP R13, R14
+        ䷾ SYNC
+        ䷁ RECV R15, env::RESPONSE_JSON
+        ䷆ BRANCH R_send_response
+        
+        ䷆ BRANCH R_main_loop_continue
+        
+        ䷀ CREA R0, @mcp.io.write_line
+        ䷌ FELLOWSHIP R9, R0
+        ䷾ SYNC
+        ䷆ BRANCH R_main_loop_continue
+        
+        ䷉ STEP R1
+        ䷆ BRANCH R_main_loop_start
+        
+        ䷁ RECV R0, env::EXIT_CODE
+        ䷗ RETURN R0
+    }
+}
+
+@meta_locus mcp.optimization.target {
+    mut_rate = 0.003
+    fitness  = max_throughput + min_energy + min_latency
+
+    卦序: {
+        ䷏ SPECULATE R0
+        ䷓ CONTEMPLATE R1
+        ䷙ BARRIER R0
+        ䷾ SYNC
+    }
+}

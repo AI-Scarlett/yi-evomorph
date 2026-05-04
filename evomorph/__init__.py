@@ -10,5 +10,5 @@ from evomorph.monitor.evomon import EvoMon
 from evomorph.hub.repository import EvoHub
 from evomorph.sdk.xiangci import XiangciSDK
 
-__version__ = "3.0.0"
+__version__ = "0.0.3"
 __lang__ = "易衍·Evomorph"

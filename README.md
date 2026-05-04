@@ -4,6 +4,8 @@
 
 易衍（Evomorph）是一种基于《易经》六十四卦的进化编程语言。每条指令的操作码等于其对应卦象的六爻二进制值，代码通过遗传算法自动进化优化，适应不同目标平台。
 
+**当前版本**: v0.0.3
+
 ## 特性
 
 - **六十四卦指令集** — 操作码 = 爻位二进制，元亨利贞四大类 64 条指令
@@ -14,6 +16,7 @@
 - **AI 驱动** — 内置 11 家大模型厂商支持，自然语言直接生成 .evo 代码
 - **交互式 CLI** — 下拉菜单命令选择，上下键导航，回车确认
 - **✅ 完全自举** — 第2代编译器（进化后）已完全可用，输出与Python编译器100%一致
+- **🧬 MCP Server（双版本）** — 提供Python版和Evomorph版MCP Server，支持编译、象辞翻译、进化编译、运行、查询卦象、列出平台
 
 ## 自举状态
 
@@ -347,22 +350,27 @@ evo-ai
 ```
 evomorph/
 ├── evomorph/
+│   ├── __init__.py              # 版本定义 (v0.0.3)
 │   ├── cli/evo_ai.py             # AI 编程 CLI（交互式 Shell）
 │   ├── prompts/system_prompt.md  # LLM 系统提示词
 │   ├── lsp/language_server.py    # LSP 语言服务器
 │   ├── compiler/                 # EvocCompiler 编译器
 │   │   ├── __init__.py           # 编译器主文件（新增错误诊断、语义分析、IR集成）
 │   │   ├── codegen.py            # 代码生成器（扩展优化级别，新增多个优化Pass）
-│   │   ├── ir.py                 # 新增：中间表示（IR）模块（含多个优化Pass）
+│   │   ├── ir.py                 # 中间表示（IR）模块（含多个优化Pass）
 │   │   ├── lexer.py              # 词法分析器
 │   │   └── parser.py             # 语法分析器
 │   ├── vm/virtual_machine.py     # IChingVM 卦象虚拟机
-│   ├── evolution/engine.py       # 进化引擎（遗传算法）
+│   ├── evolution/                # 进化引擎
+│   │   ├── engine.py             # Python版进化引擎（遗传算法）
+│   │   ├── evolution_core.evo    # Evomorph版进化引擎核心（.evo实现）
+│   │   └── evolution_meta.evo    # Evomorph版元基因座（进化之进化）
 │   ├── hexagrams/instruction_set.py  # 六十四卦指令集
 │   ├── simulator/niche.py        # 平台模拟生态位
 │   ├── sdk/xiangci.py            # 象辞翻译 SDK
 │   ├── stdlib/                   # 标准库（.evo 格式）
 │   ├── debugger/                 # 爻镜调试器
+│   ├── native/                   # 原生加载器
 │   └── bootstrap/                # 自举相关
 │       ├── enhanced_bootstrap.py # 增强自举模块（多代编译器、进化优化、一致性验证）
 │       ├── full_self_bootstrap.evo  # 第2代编译器完整源码（152个基因座）
@@ -371,11 +379,17 @@ evomorph/
 │       │   ├── gen3_compiler.evo # 第3代编译器框架
 │       │   ├── lexer.evo         # 词法分析器（.evo实现）
 │       │   ├── parser.evo        # 语法分析器（.evo实现）
-│       │   └── codegen.evo       # 代码生成器（.evo实现）
+│       │   ├── codegen.evo       # 代码生成器（.evo实现）
+│       │   └── compile_evo_for_vm.py # 编译为C虚拟机格式
 │       └── evolved/              # 进化后的第2代编译器模块（157个.evo文件）
 ├── ai/
-│   ├── mcp/evomorph_mcp_server.py  # MCP Server
-│   └── prompts/system_prompt.md    # 系统提示词
+│   ├── mcp/
+│   │   ├── evomorph_mcp_server.py   # Python版MCP Server
+│   │   └── evomorph_mcp_server.evo  # Evomorph版MCP Server（基因座模块化）
+│   ├── configs/                  # AI工具配置
+│   │   ├── hermes.json           # Hermes配置
+│   │   └── codebuddy.json        # CodeBuddy配置
+│   └── prompts/system_prompt.md  # 系统提示词
 ├── bootstrap/                     # 运行时和自举
 │   └── runtime/                   # 运行时
 │       ├── ichingvm.c             # C语言虚拟机（高性能）
@@ -385,6 +399,8 @@ evomorph/
 ├── docs/                        # 文档
 ├── examples/                    # 示例 .evo 文件
 ├── tests/                       # 测试
+├── build_evo_cli.py             # CLI构建脚本
+├── evolve_gen3.py               # 第3代编译器进化脚本
 ├── pyproject.toml               # 项目配置
 └── setup.py                     # 安装配置
 ```
@@ -426,6 +442,35 @@ pip install -e .
 ```bash
 python3 -m pytest tests/ -v
 ```
+
+## 更新日志
+
+### v0.0.3 (2026-05-04)
+
+#### 新增功能
+- **🧬 Evomorph版MCP Server** (`ai/mcp/evomorph_mcp_server.evo`)
+  - 用易衍·Evomorph语言重写的MCP Server
+  - 基因座模块化架构，支持进化优化
+  - 与Python版功能完全对齐：编译、象辞翻译、进化编译、运行、查询卦象、列出平台
+  - 使用64卦指令集实现：CREA, RECV, ALLOC, FELLOWSHIP, SYNC等
+
+- **🧬 Evomorph版进化引擎** (`evomorph/evolution/`)
+  - `evolution_core.evo`: 进化引擎核心（种群初始化、选择、交叉、变异、适应度评估）
+  - `evolution_meta.evo`: 元基因座（进化之进化，变异算子、交叉策略、选择策略可进化）
+
+- **🛠️ 新增工具脚本**
+  - `build_evo_cli.py`: CLI构建脚本
+  - `evolve_gen3.py`: 第3代编译器进化脚本
+  - `compile_evo_for_vm.py`: 编译为C虚拟机格式
+
+#### 版本号更新
+- `evomorph/__init__.py`: `__version__` 从 "3.0.0" 改为 "0.0.3"
+- `setup.py`: `version` 从 "3.0.0" 改为 "0.0.3"
+- `tools/yistudio/package.json`: `version` 从 "3.0.0" 改为 "0.0.3"
+- `ai/mcp/evomorph_mcp_server.py`: `SERVER_VERSION` 从 "3.0.0" 改为 "0.0.3"
+- `ai/configs/hermes.json`: `version` 从 "3.0.0" 改为 "0.0.3"
+- `ai/configs/codebuddy.json`: `version` 从 "3.0.0" 改为 "0.0.3"
+- `evomorph/cli/evo_ai.py`: 横幅版本从 "v0.0.1" 改为 "v0.0.3"
 
 ## License
 

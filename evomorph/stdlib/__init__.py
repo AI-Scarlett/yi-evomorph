@@ -56,6 +56,10 @@ def load_native():
     return _load_evo_stdlib("native.evo")
 
 
+def load_evolution():
+    return _load_evo_stdlib("evolution.evo")
+
+
 def load_all():
     return {
         "io": load_io(),
@@ -68,6 +72,7 @@ def load_all():
         "crypto": load_crypto(),
         "sys": load_sys(),
         "native": load_native(),
+        "evolution": load_evolution(),
     }
 
 
