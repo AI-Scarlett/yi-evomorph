@@ -35,9 +35,29 @@
 
 ## MCP Server
 
-### 位置
+### 双版本实现
 
-`ai/mcp/evomorph_mcp_server.py`
+易衍·Evomorph 提供双版本 MCP Server，供不同场景使用：
+
+#### 1. Python版（稳定推荐）
+
+**位置**：`ai/mcp/evomorph_mcp_server.py`
+
+**特点：
+- 稳定可靠，经过充分测试
+- 完整支持所有6个工具
+- 适合生产环境使用
+
+#### 2. Evomorph版（基因座模块化）
+
+**位置**：`ai/mcp/evomorph_mcp_server.evo`
+
+**特点**：
+- 用易衍·Evomorph语言原生实现
+- 基因座模块化架构，支持进化优化
+- 包含17个基因座（3个元基因座 + 14个功能基因座）
+- 展示六十四卦指令集的实际应用
+- 适合学习和理解易衍语言
 
 ### 传输协议
 
@@ -57,6 +77,33 @@ Stdio（标准输入/输出），JSON-RPC 2.0
         }
     }
 }
+```
+
+### Evomorph版MCP Server架构
+
+```
+@meta_locus
+├── mcp.global_config          # 全局配置
+├── mcp.evolution.strategy     # 进化策略
+└── mcp.optimization.target    # 优化目标
+
+@locus
+├── mcp.io.read_line           # IO读取
+├── mcp.io.write_line          # IO写入
+├── mcp.request.parse          # 请求解析
+├── mcp.request.route          # 请求路由
+├── mcp.response.initialize    # 初始化响应
+├── mcp.response.tools_list    # 工具列表响应
+├── mcp.response.build         # 构建响应
+├── mcp.response.build_error   # 构建错误响应
+├── mcp.tool.compile           # 编译工具
+├── mcp.tool.xiangci           # 象辞翻译工具
+├── mcp.tool.evolve            # 进化编译工具
+├── mcp.tool.run               # 运行工具
+├── mcp.tool.lookup_hexagram   # 查询卦象工具
+├── mcp.tool.list_platforms     # 列出平台工具
+├── mcp.tools.call.dispatch    # 工具分发
+└── mcp.main.loop            # 主循环
 ```
 
 ### 提供的工具
@@ -142,7 +189,7 @@ Cursor 自动读取 `.cursorrules` 文件。
 **hermes.json 结构**：
 ```json
 {
-    "project": { "name": "易衍·Evomorph", "language": "evomorph", "version": "3.0.0" },
+    "project": { "name": "易衍·Evomorph", "language": "evomorph", "version": "0.0.3" },
     "hermes": {
         "system_prompt_source": "ai/prompts/system_prompt.md",
         "rules_files": [".trae/rules/project_rules.md", ".cursorrules"],
@@ -172,7 +219,7 @@ Cursor 自动读取 `.cursorrules` 文件。
 {
     "context": {
         "language": "易衍·Evomorph",
-        "version": "3.0.0",
+        "version": "0.0.3",
         "file_extensions": [".evo"],
         "key_concepts": {
             "opcode_equals_yao_binary": "操作码等于卦象爻位二进制值",
@@ -460,13 +507,23 @@ evo-ai config
 | 文件 | 用途 |
 |------|------|
 | `evomorph/cli/evo_ai.py` | evo-ai CLI 交互式 AI 编程环境 |
-| `ai/mcp/evomorph_mcp_server.py` | MCP Server（所有 AI 工具共用） |
+| `ai/mcp/evomorph_mcp_server.py` | Python版 MCP Server（稳定推荐） |
+| `ai/mcp/evomorph_mcp_server.evo` | Evomorph版 MCP Server（基因座模块化） |
 | `ai/mcp/mcp_config.json` | MCP 配置 |
 | `ai/prompts/system_prompt.md` | LLM 系统提示词 |
 | `ai/configs/hermes.json` | Hermes 配置 |
 | `ai/configs/codebuddy.json` | CodeBuddy 配置 |
 | `ai/configs/codex.json` | Codex 配置 |
+| `evomorph/evolution/evolution_core.evo` | Evomorph版进化引擎核心 |
+| `evomorph/evolution/evolution_meta.evo` | Evomorph版元基因座（进化之进化） |
+| `evomorph/stdlib/evolution.evo` | 标准库进化模块 |
 | `.trae/rules/project_rules.md` | TRAE 项目规则 |
 | `.cursorrules` | Cursor 规则 |
 | `docs/evo-ai-usage.md` | evo-ai CLI 使用手册 |
 | `docs/build-and-install.md` | 编译与安装说明 |
+
+## 版本信息
+
+- 当前版本：**v0.0.3**
+- 语言版本：**@evolang "3.0"**
+- 发布日期：2026-05-04
