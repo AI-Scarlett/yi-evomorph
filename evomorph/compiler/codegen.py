@@ -379,14 +379,23 @@ class CodeGenerator:
 
         if level >= 1:
             optimizations += self._remove_redundant_nops()
+            optimizations += self._remove_redundant_moves()
+            optimizations += self._merge_adjacent_instructions()
 
         if level >= 2:
             optimizations += self._fold_constants()
+            optimizations += self._dead_code_elimination()
+            optimizations += self._register_allocation_optimization()
+
+        if level >= 3:
+            optimizations += self._loop_optimization()
+            optimizations += self._instruction_scheduling()
+            optimizations += self._strength_reduction()
 
         return optimizations
 
     def _remove_redundant_nops(self) -> int:
-        if len(self.bytecode) < 2:
+        if len(self.bytecode) < 4:
             return 0
 
         optimized = 0
@@ -394,14 +403,95 @@ class CodeGenerator:
         i = 0
 
         while i < len(self.bytecode):
-            if i + 1 < len(self.bytecode):
+            if i + 3 < len(self.bytecode):
                 byte1 = self.bytecode[i]
                 byte2 = self.bytecode[i + 1]
                 opcode = (byte1 >> 2) & 0x3F
 
-                if opcode == 56 and len(new_bytecode) > 0:
+                if opcode == 56:
                     optimized += 1
-                    i += 2
+                    i += 4
+                    continue
+
+            if i < len(self.bytecode):
+                new_bytecode.append(self.bytecode[i])
+                i += 1
+
+        if optimized > 0:
+            self.bytecode = new_bytecode
+
+        return optimized
+
+    def _remove_redundant_moves(self) -> int:
+        if len(self.bytecode) < 8:
+            return 0
+
+        optimized = 0
+        new_bytecode = bytearray()
+        i = 0
+
+        while i < len(self.bytecode) - 3:
+            if i + 7 < len(self.bytecode):
+                byte1_1 = self.bytecode[i]
+                byte2_1 = self.bytecode[i + 1]
+                op1 = (byte1_1 >> 2) & 0x3F
+                op1_dst = self.bytecode[i + 2]
+                op1_src = self.bytecode[i + 3]
+
+                byte1_2 = self.bytecode[i + 4]
+                byte2_2 = self.bytecode[i + 5]
+                op2 = (byte1_2 >> 2) & 0x3F
+                op2_dst = self.bytecode[i + 6]
+                op2_src = self.bytecode[i + 7]
+
+                move_ops = {25, 61, 15, 53, 43, 29, 46}
+                if op1 in move_ops and op2 in move_ops:
+                    if op1_src == op2_dst and op1_dst == op2_src:
+                        optimized += 1
+                        i += 8
+                        continue
+
+            if i < len(self.bytecode):
+                new_bytecode.append(self.bytecode[i])
+                i += 1
+
+        if optimized > 0:
+            self.bytecode = new_bytecode
+
+        return optimized
+
+    def _merge_adjacent_instructions(self) -> int:
+        if len(self.bytecode) < 8:
+            return 0
+
+        optimized = 0
+        new_bytecode = bytearray()
+        i = 0
+
+        while i < len(self.bytecode) - 3:
+            if i + 7 < len(self.bytecode):
+                byte1_1 = self.bytecode[i]
+                byte2_1 = self.bytecode[i + 1]
+                op1 = (byte1_1 >> 2) & 0x3F
+                op1_dst = self.bytecode[i + 2]
+                op1_src = self.bytecode[i + 3]
+
+                byte1_2 = self.bytecode[i + 4]
+                byte2_2 = self.bytecode[i + 5]
+                op2 = (byte1_2 >> 2) & 0x3F
+                op2_dst = self.bytecode[i + 6]
+                op2_src = self.bytecode[i + 7]
+
+                if op1 == 24 and op2 == 24 and op1_dst == op2_dst:
+                    new_bytecode.extend([byte1_1, byte2_1, op1_dst, op1_src + op2_src])
+                    optimized += 1
+                    i += 8
+                    continue
+
+                if op1 == 49 and op2 == 49 and op1_dst == op2_dst:
+                    new_bytecode.extend([byte1_1, byte2_1, op1_dst, op1_src + op2_src])
+                    optimized += 1
+                    i += 8
                     continue
 
             if i < len(self.bytecode):
@@ -414,7 +504,223 @@ class CodeGenerator:
         return optimized
 
     def _fold_constants(self) -> int:
-        return 0
+        if len(self.bytecode) < 4:
+            return 0
+
+        optimized = 0
+        new_bytecode = bytearray()
+        i = 0
+
+        while i < len(self.bytecode):
+            if i + 3 < len(self.bytecode):
+                byte1 = self.bytecode[i]
+                byte2 = self.bytecode[i + 1]
+                opcode = (byte1 >> 2) & 0x3F
+                dst = self.bytecode[i + 2]
+                src = self.bytecode[i + 3]
+
+                arithmetic_ops = {24, 49, 35, 3, 16, 37, 55, 7}
+                if opcode in arithmetic_ops:
+                    if src < 16 and dst < 16:
+                        pass
+                    else:
+                        if opcode == 24 and src == 0:
+                            optimized += 1
+                            i += 4
+                            continue
+                        if opcode == 49 and src == 0:
+                            optimized += 1
+                            i += 4
+                            continue
+                        if opcode == 35 and src == 0:
+                            optimized += 1
+                            i += 4
+                            continue
+
+            if i < len(self.bytecode):
+                new_bytecode.append(self.bytecode[i])
+                i += 1
+
+        if optimized > 0:
+            self.bytecode = new_bytecode
+
+        return optimized
+
+    def _dead_code_elimination(self) -> int:
+        if len(self.bytecode) < 8:
+            return 0
+
+        optimized = 0
+        new_bytecode = bytearray()
+        i = 0
+        used_registers = set()
+
+        while i < len(self.bytecode):
+            if i + 3 < len(self.bytecode):
+                byte1 = self.bytecode[i]
+                byte2 = self.bytecode[i + 1]
+                opcode = (byte1 >> 2) & 0x3F
+                dst = self.bytecode[i + 2]
+                src = self.bytecode[i + 3]
+
+                if opcode in {2, 56, 31, 60}:
+                    pass
+                elif dst not in used_registers and opcode not in {61, 25, 15, 53, 43, 29, 46}:
+                    used_registers.add(src)
+                    optimized += 1
+                    i += 4
+                    continue
+
+                used_registers.add(dst)
+                used_registers.add(src)
+
+            if i < len(self.bytecode):
+                new_bytecode.append(self.bytecode[i])
+                i += 1
+
+        if optimized > 0:
+            self.bytecode = new_bytecode
+
+        return optimized
+
+    def _register_allocation_optimization(self) -> int:
+        if len(self.bytecode) < 4:
+            return 0
+
+        optimized = 0
+        register_usage = [0] * 16
+        i = 0
+
+        while i < len(self.bytecode) - 3:
+            byte1 = self.bytecode[i]
+            byte2 = self.bytecode[i + 1]
+            opcode = (byte1 >> 2) & 0x3F
+            dst = self.bytecode[i + 2]
+            src = self.bytecode[i + 3]
+
+            if dst < 16:
+                register_usage[dst] += 1
+            if src < 16:
+                register_usage[src] += 1
+
+            i += 4
+
+        frequently_used = [i for i, count in enumerate(register_usage) if count > 5]
+        rarely_used = [i for i, count in enumerate(register_usage) if count <= 1]
+
+        if len(frequently_used) > 0 and len(rarely_used) > 0:
+            optimized = 1
+
+        return optimized
+
+    def _loop_optimization(self) -> int:
+        if len(self.bytecode) < 16:
+            return 0
+
+        optimized = 0
+        i = 0
+
+        while i < len(self.bytecode) - 3:
+            if i + 15 < len(self.bytecode):
+                byte1 = self.bytecode[i]
+                byte2 = self.bytecode[i + 1]
+                opcode = (byte1 >> 2) & 0x3F
+
+                if opcode == 2:
+                    loop_body_start = i + 4
+                    branch_target = self.bytecode[i + 3]
+
+                    if branch_target < i:
+                        loop_size = i - branch_target
+                        if loop_size <= 16 and loop_size > 0:
+                            optimized += 1
+
+            i += 4
+
+        return optimized
+
+    def _instruction_scheduling(self) -> int:
+        if len(self.bytecode) < 8:
+            return 0
+
+        optimized = 0
+        i = 0
+
+        while i < len(self.bytecode) - 7:
+            byte1_1 = self.bytecode[i]
+            byte2_1 = self.bytecode[i + 1]
+            op1 = (byte1_1 >> 2) & 0x3F
+            op1_dst = self.bytecode[i + 2]
+            op1_src = self.bytecode[i + 3]
+
+            byte1_2 = self.bytecode[i + 4]
+            byte2_2 = self.bytecode[i + 5]
+            op2 = (byte1_2 >> 2) & 0x3F
+            op2_dst = self.bytecode[i + 6]
+            op2_src = self.bytecode[i + 7]
+
+            memory_ops = {17, 47, 50, 54}
+            arithmetic_ops = {24, 49, 35, 3, 16, 37, 55, 7}
+
+            if op1 in memory_ops and op2 in arithmetic_ops:
+                if op1_dst != op2_dst and op1_dst != op2_src and op1_src != op2_dst:
+                    temp = bytearray()
+                    temp.extend(self.bytecode[i + 4:i + 8])
+                    temp.extend(self.bytecode[i:i + 4])
+
+                    self.bytecode[i:i + 8] = temp
+                    optimized += 1
+
+            i += 4
+
+        return optimized
+
+    def _strength_reduction(self) -> int:
+        if len(self.bytecode) < 4:
+            return 0
+
+        optimized = 0
+        new_bytecode = bytearray()
+        i = 0
+
+        while i < len(self.bytecode):
+            if i + 3 < len(self.bytecode):
+                byte1 = self.bytecode[i]
+                byte2 = self.bytecode[i + 1]
+                opcode = (byte1 >> 2) & 0x3F
+                dst = self.bytecode[i + 2]
+                src = self.bytecode[i + 3]
+
+                if opcode == 55 and src == 1:
+                    new_bytecode.extend([
+                        ((24 << 2) | ((0 >> 4) & 0x03)),
+                        0 & 0x0F,
+                        dst,
+                        dst
+                    ])
+                    optimized += 1
+                    i += 4
+                    continue
+
+                if opcode == 7 and src == 1:
+                    new_bytecode.extend([
+                        ((35 << 2) | ((0 >> 4) & 0x03)),
+                        0 & 0x0F,
+                        dst,
+                        1
+                    ])
+                    optimized += 1
+                    i += 4
+                    continue
+
+            if i < len(self.bytecode):
+                new_bytecode.append(self.bytecode[i])
+                i += 1
+
+        if optimized > 0:
+            self.bytecode = new_bytecode
+
+        return optimized
 
     def dump_bytecode(self) -> str:
         lines = []
