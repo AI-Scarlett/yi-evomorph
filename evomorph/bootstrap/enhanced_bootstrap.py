@@ -120,18 +120,14 @@ class EnhancedBootstrap:
                 max_generations=200,
                 mut_rate=0.015,
                 selection_method=SelectionMethod.TOURNAMENT,
-                tournament_size=7,
-                use_adaptive_mutation=True
+                tournament_size=7
             ),
             "extreme": EvolutionConfig(
                 population_size=128,
                 max_generations=500,
                 mut_rate=0.01,
-                min_mut_rate=0.001,
-                max_mut_rate=0.1,
                 selection_method=SelectionMethod.TOURNAMENT,
                 tournament_size=10,
-                use_adaptive_mutation=True,
                 elite_count=4
             )
         }
@@ -419,12 +415,9 @@ class EnhancedBootstrap:
                 population_size=custom_config.get("population_size", 32),
                 max_generations=custom_config.get("max_generations", 50),
                 mut_rate=custom_config.get("mut_rate", 0.02),
-                min_mut_rate=custom_config.get("min_mut_rate", 0.001),
-                max_mut_rate=custom_config.get("max_mut_rate", 0.15),
                 selection_method=SelectionMethod(custom_config.get("selection_method", "tournament")),
                 crossover_method=CrossoverMethod(custom_config.get("crossover_method", "single_point")),
                 tournament_size=custom_config.get("tournament_size", 5),
-                use_adaptive_mutation=custom_config.get("use_adaptive_mutation", True),
                 elite_count=custom_config.get("elite_count", 2),
             )
         else:

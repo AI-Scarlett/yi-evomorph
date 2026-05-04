@@ -1,0 +1,440 @@
+@evolang "3.0"
+
+@xiangci {
+    "集合之基：列表、映射、集合、队列，
+    组织数据之容器。"
+}
+
+@locus std.collection.list.new {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x1000
+        ䷍ ABUNDANCE R0, 0
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.list.append {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LIST
+        ䷁ RECV R1, env::ELEMENT
+        ䷓ CONTEMPLATE R0
+        ䷍ ABUNDANCE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.list.get {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LIST
+        ䷁ RECV R1, env::INDEX
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_valid_index
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.list.set {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LIST
+        ䷁ RECV R1, env::INDEX
+        ䷁ RECV R2, env::VALUE
+        ䷓ CONTEMPLATE R0
+        ䷍ ABUNDANCE R0, R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.list.length {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LIST
+        ䷓ CONTEMPLATE R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.list.remove {
+    mut_rate   = 0.02
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LIST
+        ䷁ RECV R1, env::INDEX
+        ䷓ CONTEMPLATE R0
+        ䷰ REPLACE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.list.insert {
+    mut_rate   = 0.02
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LIST
+        ䷁ RECV R1, env::INDEX
+        ䷁ RECV R2, env::ELEMENT
+        ䷓ CONTEMPLATE R0
+        ䷍ ABUNDANCE R0, R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.list.concat {
+    mut_rate   = 0.02
+    cross_pool = "collection_ops"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LIST_A
+        ䷁ RECV R1, env::LIST_B
+        ䷂ ALLOC R2, 0x2000
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.collection.list.slice {
+    mut_rate   = 0.02
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LIST
+        ䷁ RECV R1, env::START
+        ䷁ RECV R2, env::END
+        ䷂ ALLOC R3, 0x1000
+        ䷍ ABUNDANCE R3, R0
+        ䷑ MUT R3, R1
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.collection.map.new {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x2000
+        ䷍ ABUNDANCE R0, 0
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.map.put {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MAP
+        ䷁ RECV R1, env::KEY
+        ䷁ RECV R2, env::VALUE
+        ䷓ CONTEMPLATE R0
+        ䷍ ABUNDANCE R0, R1
+        ䷍ ABUNDANCE R0, R2
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.map.get {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MAP
+        ䷁ RECV R1, env::KEY
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_found
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.map.contains {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MAP
+        ䷁ RECV R1, env::KEY
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_found
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.map.remove {
+    mut_rate   = 0.02
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MAP
+        ䷁ RECV R1, env::KEY
+        ䷓ CONTEMPLATE R0
+        ䷰ REPLACE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.map.keys {
+    mut_rate   = 0.02
+    cross_pool = "collection_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MAP
+        ䷂ ALLOC R1, 0x1000
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R0, R1
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.collection.map.values {
+    mut_rate   = 0.02
+    cross_pool = "collection_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MAP
+        ䷂ ALLOC R1, 0x1000
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R0, R1
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.collection.set.new {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x1000
+        ䷍ ABUNDANCE R0, 0
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.set.add {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SET
+        ䷁ RECV R1, env::ELEMENT
+        ䷓ CONTEMPLATE R0
+        ䷍ ABUNDANCE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.set.remove {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SET
+        ䷁ RECV R1, env::ELEMENT
+        ䷓ CONTEMPLATE R0
+        ䷰ REPLACE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.set.contains {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SET
+        ䷁ RECV R1, env::ELEMENT
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_found
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.set.union {
+    mut_rate   = 0.02
+    cross_pool = "collection_ops"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SET_A
+        ䷁ RECV R1, env::SET_B
+        ䷂ ALLOC R2, 0x2000
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.collection.set.intersection {
+    mut_rate   = 0.02
+    cross_pool = "collection_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SET_A
+        ䷁ RECV R1, env::SET_B
+        ䷂ ALLOC R2, 0x1000
+        ䷒ APPROACH R0, R1
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.collection.queue.new {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x1000
+        ䷍ ABUNDANCE R0, 0
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.queue.enqueue {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::QUEUE
+        ䷁ RECV R1, env::ELEMENT
+        ䷭ PUSH_UP R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.queue.dequeue {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::QUEUE
+        ䷯ WELL R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.queue.peek {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::QUEUE
+        ䷓ CONTEMPLATE R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.stack.new {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x1000
+        ䷍ ABUNDANCE R0, 0
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.collection.stack.push {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STACK
+        ䷁ RECV R1, env::VALUE
+        ䷭ PUSH_UP R1
+        ䷾ SYNC
+    }
+}
+
+@locus std.collection.stack.pop {
+    mut_rate   = 0.01
+    cross_pool = "collection_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STACK
+        ䷯ WELL R0
+        ䷗ RETURN R0
+    }
+}

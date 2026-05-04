@@ -32,12 +32,42 @@ def load_ai():
     return _load_evo_stdlib("ai.evo")
 
 
+def load_string():
+    return _load_evo_stdlib("string.evo")
+
+
+def load_collection():
+    return _load_evo_stdlib("collection.evo")
+
+
+def load_date():
+    return _load_evo_stdlib("date.evo")
+
+
+def load_crypto():
+    return _load_evo_stdlib("crypto.evo")
+
+
+def load_sys():
+    return _load_evo_stdlib("sys.evo")
+
+
+def load_native():
+    return _load_evo_stdlib("native.evo")
+
+
 def load_all():
     return {
         "io": load_io(),
         "sync": load_sync(),
         "math": load_math(),
         "ai": load_ai(),
+        "string": load_string(),
+        "collection": load_collection(),
+        "date": load_date(),
+        "crypto": load_crypto(),
+        "sys": load_sys(),
+        "native": load_native(),
     }
 
 

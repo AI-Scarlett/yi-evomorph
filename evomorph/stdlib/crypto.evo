@@ -1,0 +1,479 @@
+@evolang "3.0"
+
+@xiangci {
+    "加密之基：哈希、签名、验证、密钥，
+    守护数据之安全。"
+}
+
+@locus std.crypto.hash_md5 {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DATA
+        ䷂ ALLOC R1, 0x20
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @md5_rounds
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.hash_sha1 {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DATA
+        ䷂ ALLOC R1, 0x28
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @sha1_rounds
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.hash_sha256 {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DATA
+        ䷂ ALLOC R1, 0x40
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @sha256_rounds
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.hash_sha512 {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DATA
+        ䷂ ALLOC R1, 0x80
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @sha512_rounds
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.hmac_sha256 {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::KEY
+        ䷁ RECV R1, env::DATA
+        ䷂ ALLOC R2, 0x100
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷑ MUT R2, @hmac_pad
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.crypto.sign_rsa {
+    mut_rate   = 0.03
+    cross_pool = "crypto_ops"
+    fitness    = min_energy + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PRIVATE_KEY
+        ䷁ RECV R1, env::DATA_HASH
+        ䷂ ALLOC R2, 0x400
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷑ MUT R2, @rsa_private_op
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.crypto.verify_rsa {
+    mut_rate   = 0.03
+    cross_pool = "crypto_ops"
+    fitness    = min_energy + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PUBLIC_KEY
+        ䷁ RECV R1, env::SIGNATURE
+        ䷁ RECV R2, env::DATA_HASH
+        ䷂ ALLOC R3, 0x40
+        ䷌ FELLOWSHIP R0, R3
+        ䷌ FELLOWSHIP R1, R3
+        ䷑ MUT R3, @rsa_public_op
+        ䷒ APPROACH R3, R2
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.crypto.sign_ecdsa {
+    mut_rate   = 0.03
+    cross_pool = "crypto_ops"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PRIVATE_KEY
+        ䷁ RECV R1, env::DATA_HASH
+        ䷂ ALLOC R2, 0x80
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷑ MUT R2, @ecdsa_sign
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.crypto.verify_ecdsa {
+    mut_rate   = 0.03
+    cross_pool = "crypto_ops"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PUBLIC_KEY
+        ䷁ RECV R1, env::SIGNATURE
+        ䷁ RECV R2, env::DATA_HASH
+        ䷂ ALLOC R3, 0x40
+        ䷌ FELLOWSHIP R0, R3
+        ䷌ FELLOWSHIP R1, R3
+        ䷑ MUT R3, @ecdsa_verify
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.crypto.encrypt_aes_ecb {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::KEY
+        ䷁ RECV R1, env::PLAINTEXT
+        ䷂ ALLOC R2, 0x1000
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷑ MUT R2, @aes_encrypt
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.crypto.decrypt_aes_ecb {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::KEY
+        ䷁ RECV R1, env::CIPHERTEXT
+        ䷂ ALLOC R2, 0x1000
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷑ MUT R2, @aes_decrypt
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.crypto.encrypt_aes_cbc {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::KEY
+        ䷁ RECV R1, env::IV
+        ䷁ RECV R2, env::PLAINTEXT
+        ䷂ ALLOC R3, 0x1000
+        ䷌ FELLOWSHIP R0, R3
+        ䷌ FELLOWSHIP R1, R3
+        ䷌ FELLOWSHIP R2, R3
+        ䷑ MUT R3, @aes_cbc_encrypt
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.crypto.decrypt_aes_cbc {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::KEY
+        ䷁ RECV R1, env::IV
+        ䷁ RECV R2, env::CIPHERTEXT
+        ䷂ ALLOC R3, 0x1000
+        ䷌ FELLOWSHIP R0, R3
+        ䷌ FELLOWSHIP R1, R3
+        ䷌ FELLOWSHIP R2, R3
+        ䷑ MUT R3, @aes_cbc_decrypt
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.crypto.encrypt_aes_gcm {
+    mut_rate   = 0.03
+    cross_pool = "crypto_ops"
+    fitness    = min_energy + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::KEY
+        ䷁ RECV R1, env::NONCE
+        ䷁ RECV R2, env::PLAINTEXT
+        ䷁ RECV R3, env::AAD
+        ䷂ ALLOC R4, 0x1000
+        ䷌ FELLOWSHIP R0, R4
+        ䷌ FELLOWSHIP R1, R4
+        ䷌ FELLOWSHIP R2, R4
+        ䷌ FELLOWSHIP R3, R4
+        ䷑ MUT R4, @aes_gcm_seal
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@locus std.crypto.decrypt_aes_gcm {
+    mut_rate   = 0.03
+    cross_pool = "crypto_ops"
+    fitness    = min_energy + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::KEY
+        ䷁ RECV R1, env::NONCE
+        ䷁ RECV R2, env::CIPHERTEXT
+        ䷁ RECV R3, env::TAG
+        ䷁ RECV R4, env::AAD
+        ䷂ ALLOC R5, 0x1000
+        ䷌ FELLOWSHIP R0, R5
+        ䷌ FELLOWSHIP R1, R5
+        ䷌ FELLOWSHIP R2, R5
+        ䷑ MUT R5, @aes_gcm_open
+        ䷾ SYNC
+        ䷗ RETURN R5
+    }
+}
+
+@locus std.crypto.encrypt_chacha20 {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::KEY
+        ䷁ RECV R1, env::NONCE
+        ䷁ RECV R2, env::PLAINTEXT
+        ䷂ ALLOC R3, 0x1000
+        ䷌ FELLOWSHIP R0, R3
+        ䷌ FELLOWSHIP R1, R3
+        ䷌ FELLOWSHIP R2, R3
+        ䷑ MUT R3, @chacha20_stream
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.crypto.x25519_keygen {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::RANDOM_SEED
+        ䷂ ALLOC R1, 0x40
+        ䷑ MUT R1, @x25519_scalar_mult
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.x25519_shared {
+    mut_rate   = 0.02
+    cross_pool = "crypto_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PRIVATE_KEY
+        ䷁ RECV R1, env::PUBLIC_KEY
+        ䷂ ALLOC R2, 0x40
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷑ MUT R2, @x25519_scalar_mult
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.crypto.random_bytes {
+    mut_rate   = 0.01
+    cross_pool = "crypto_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LENGTH
+        ䷂ ALLOC R1, 0x1000
+        ䷑ MUT R1, @csprng
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.random_int {
+    mut_rate   = 0.01
+    cross_pool = "crypto_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MIN
+        ䷁ RECV R1, env::MAX
+        ䷂ ALLOC R2, 0x10
+        ䷑ MUT R2, @csprng_range
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.crypto.encode_base64 {
+    mut_rate   = 0.01
+    cross_pool = "crypto_ops"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DATA
+        ䷂ ALLOC R1, 0x2000
+        ䷕ ADORN R1, R0
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.decode_base64 {
+    mut_rate   = 0.01
+    cross_pool = "crypto_ops"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::BASE64_STR
+        ䷂ ALLOC R1, 0x1000
+        ䷕ ADORN R1, R0
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.encode_hex {
+    mut_rate   = 0.01
+    cross_pool = "crypto_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DATA
+        ䷂ ALLOC R1, 0x2000
+        ䷑ MUT R1, @hex_encode
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.decode_hex {
+    mut_rate   = 0.01
+    cross_pool = "crypto_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::HEX_STR
+        ䷂ ALLOC R1, 0x1000
+        ䷑ MUT R1, @hex_decode
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.crypto.constant_time_eq {
+    mut_rate   = 0.01
+    cross_pool = "crypto_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::A
+        ䷁ RECV R1, env::B
+        ䷒ APPROACH R0, R1
+        ䷑ MUT R0, @constant_time_mask
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.crypto.derive_key_pbkdf2 {
+    mut_rate   = 0.03
+    cross_pool = "crypto_ops"
+    fitness    = min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PASSWORD
+        ䷁ RECV R1, env::SALT
+        ䷁ RECV R2, env::ITERATIONS
+        ䷁ RECV R3, env::KEY_LEN
+        ䷂ ALLOC R4, 0x200
+        ䷌ FELLOWSHIP R0, R4
+        ䷌ FELLOWSHIP R1, R4
+        ䷑ MUT R4, @pbkdf2_hmac
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}
+
+@locus std.crypto.derive_key_argon2 {
+    mut_rate   = 0.03
+    cross_pool = "crypto_ops"
+    fitness    = min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PASSWORD
+        ䷁ RECV R1, env::SALT
+        ䷁ RECV R2, env::TIME_COST
+        ䷁ RECV R3, env::MEM_COST
+        ䷂ ALLOC R4, 0x10000
+        ䷌ FELLOWSHIP R0, R4
+        ䷌ FELLOWSHIP R1, R4
+        ䷑ MUT R4, @argon2id
+        ䷾ SYNC
+        ䷗ RETURN R4
+    }
+}

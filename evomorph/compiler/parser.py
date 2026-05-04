@@ -3,11 +3,16 @@ from evomorph.hexagrams import HexagramInstructionSet
 
 
 class ASTNode:
-    pass
+    def __init__(self):
+        self.line = 0
+        self.col = 0
+        self.end_line = 0
+        self.end_col = 0
 
 
 class ProgramNode(ASTNode):
     def __init__(self):
+        super().__init__()
         self.version = None
         self.loci = []
         self.xiangci_blocks = []
@@ -16,6 +21,7 @@ class ProgramNode(ASTNode):
 
 class LocusNode(ASTNode):
     def __init__(self, name):
+        super().__init__()
         self.name = name
         self.mut_rate = 0.02
         self.cross_pool = "default"
@@ -27,6 +33,7 @@ class LocusNode(ASTNode):
 
 class MetaLocusNode(ASTNode):
     def __init__(self, name):
+        super().__init__()
         self.name = name
         self.mut_rate = 0.01
         self.fitness_expr = None
@@ -35,11 +42,13 @@ class MetaLocusNode(ASTNode):
 
 class XiangciNode(ASTNode):
     def __init__(self):
+        super().__init__()
         self.text = ""
 
 
 class InstructionNode(ASTNode):
     def __init__(self):
+        super().__init__()
         self.opcode = None
         self.symbol = None
         self.mnemonic = None
@@ -50,17 +59,20 @@ class InstructionNode(ASTNode):
 
 class FitnessExpr(ASTNode):
     def __init__(self):
+        super().__init__()
         self.terms = []
 
 
 class FitnessTerm(ASTNode):
     def __init__(self, keyword, weight=1.0):
+        super().__init__()
         self.keyword = keyword
         self.weight = weight
 
 
 class OperandNode(ASTNode):
     def __init__(self, kind, value):
+        super().__init__()
         self.kind = kind
         self.value = value
 

@@ -1,0 +1,249 @@
+@evolang "3.0"
+
+@xiangci {
+    "第3代编译器 - 进化优化版本"
+    "GEN3: 从 GEN2 进化优化而来"
+    "适应度目标: max_throughput + min_energy + min_size"
+    "进化代数: 50 代"
+}
+
+@meta_locus gen3.global_config {
+    mut_rate = 0.001
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷂ ALLOC R0, 0x04
+        ䷍ ABUNDANCE R0, 0x03
+        ䷾ SYNC
+    }
+}
+
+@locus gen3.lexer {
+    mut_rate   = 0.005
+    cross_pool = "compiler"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷗ RETURN
+        ䷏ SPECULATE.MOD8
+        ䷓ CONTEMPLATE.MOD10
+        ䷆ BRANCH
+        ䷁ RECV
+        ䷁ RECV
+        ䷑ MUT
+        ䷍ ABUNDANCE
+        ䷉ STEP
+        ䷅ LOCK
+        ䷚ NOURISH.MOD16
+        ䷰ REPLACE
+        ䷁ RECV
+        ䷁ RECV.MOD16
+        ䷁ RECV
+        ䷓ CONTEMPLATE
+        ䷧ UNLOCK.MOD4
+        ䷶ ABOUND
+        ䷗ RETURN
+        ䷁ RECV
+        ䷁ RECV.MOD4
+        ䷑ MUT
+        ䷄ WAIT
+        ䷔ BITE
+        ䷂ ALLOC
+        ䷥ CONVERT
+        ䷛ OVERLOAD.MOD2
+        ䷚ NOURISH.MOD32
+        ䷗ RETURN.MOD16
+        ䷎ YIELD
+        ䷂ ALLOC
+        ䷍ ABUNDANCE.MOD18
+        ䷓ CONTEMPLATE.MOD32
+        ䷒ APPROACH
+        ䷍ ABUNDANCE
+        ䷁ RECV
+        ䷎ YIELD.MOD33
+        ䷙ BARRIER
+        ䷚ NOURISH.MOD8
+    }
+}
+
+@locus gen3.parser {
+    mut_rate   = 0.005
+    cross_pool = "compiler"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷒ APPROACH
+        ䷅ LOCK
+        ䷼ TRUST
+        ䷣ OBSCURE
+        ䷇ MERGE
+        ䷗ RETURN
+        ䷂ ALLOC
+        ䷐ FOLLOWING
+        ䷊ FLUSH
+        ䷶ ABOUND
+        ䷢ ADVANCE
+        ䷀ CREA
+        ䷾ SYNC
+        ䷁ RECV
+        ䷶ ABOUND
+        ䷗ RETURN
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷚ NOURISH
+        ䷆ BRANCH
+        ䷍ ABUNDANCE
+        ䷁ RECV
+        ䷊ FLUSH
+        ䷾ SYNC
+        ䷏ SPECULATE
+        ䷢ ADVANCE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷵ MISMATCH
+        ䷒ APPROACH
+        ䷙ BARRIER
+        ䷣ OBSCURE
+        ䷇ MERGE
+        ䷚ NOURISH
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷒ APPROACH
+        ䷟ PERSIST
+        ䷗ RETURN
+    }
+}
+
+@locus gen3.codegen {
+    mut_rate   = 0.005
+    cross_pool = "compiler"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷲ SHOCK
+        ䷒ APPROACH
+        ䷲ SHOCK
+        ䷆ BRANCH
+        ䷍ ABUNDANCE
+        ䷗ RETURN
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷍ ABUNDANCE
+        ䷗ RETURN
+        ䷇ MERGE
+        ䷻ THROTTLE
+        ䷜ TRAP
+        ䷟ PERSIST
+        ䷓ CONTEMPLATE
+        ䷜ TRAP
+        ䷍ ABUNDANCE
+        ䷗ RETURN
+        ䷁ RECV
+        ䷍ ABUNDANCE
+        ䷪ BREAK
+        ䷖ STRIP
+        ䷭ PUSH_UP
+        ䷍ ABUNDANCE
+        ䷝ ILLUMINATE
+        ䷎ YIELD
+        ䷡ THRUST
+        ䷡ THRUST
+        ䷹ JOY
+        ䷅ LOCK
+        ䷾ SYNC
+        ䷁ RECV
+        ䷾ SYNC
+        ䷁ RECV
+        ䷂ ALLOC
+        ䷍ ABUNDANCE
+        ䷶ ABOUND
+        ䷩ INCREASE
+        ䷜ TRAP
+        ䷝ ILLUMINATE
+    }
+}
+
+@locus gen3.vm {
+    mut_rate   = 0.005
+    cross_pool = "compiler"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷗ RETURN
+        ䷁ RECV
+        ䷦ LAME
+        ䷀ CREA
+        ䷗ RETURN
+        ䷆ BRANCH
+        ䷍ ABUNDANCE
+        ䷉ STEP
+        ䷹ JOY
+        ䷀ CREA
+        ䷾ SYNC
+        ䷲ SHOCK
+        ䷂ ALLOC
+        ䷾ SYNC
+        ䷡ THRUST
+        ䷉ STEP
+        ䷖ STRIP
+        ䷆ BRANCH
+        ䷙ BARRIER
+        ䷗ RETURN
+        ䷁ RECV
+        ䷑ MUT
+        ䷚ NOURISH
+        ䷵ MISMATCH
+        ䷝ ILLUMINATE
+        ䷭ PUSH_UP
+        ䷍ ABUNDANCE
+        ䷹ JOY
+        ䷂ ALLOC
+        ䷅ LOCK
+        ䷣ OBSCURE
+        ䷂ ALLOC
+        ䷂ ALLOC
+        ䷂ ALLOC
+        ䷴ GRADUAL
+        ䷱ CAST
+        ䷍ ABUNDANCE
+        ䷂ ALLOC
+        ䷏ SPECULATE
+        ䷂ ALLOC
+    }
+}
+
+@locus gen3.main {
+    mut_rate   = 0.01
+    cross_pool = "compiler"
+    fitness    = max_throughput + min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷀ CREA R1, @gen3.lexer
+        ䷀ CREA R2, @gen3.parser
+        ䷀ CREA R3, @gen3.codegen
+        ䷌ FELLOWSHIP R0, R1
+        ䷌ FELLOWSHIP R1, R2
+        ䷌ FELLOWSHIP R2, R3
+        ䷾ SYNC
+    }
+}
+
+@meta_locus gen3.evolution {
+    mut_rate = 0.003
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x02
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}

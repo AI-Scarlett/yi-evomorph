@@ -1,0 +1,281 @@
+@evolang "3.0"
+
+@xiangci {
+    "字符串之基：长度、连接、切片、比较、查找、替换，
+    处理人类语言之基石。"
+}
+
+@locus std.string.length {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STRING_PTR
+        ䷂ ALLOC R1, 0x10
+        ䷓ CONTEMPLATE R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.string.concat {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STR_A
+        ䷁ RECV R1, env::STR_B
+        ䷂ ALLOC R2, 0x1000
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.substr {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷁ RECV R1, env::START_IDX
+        ䷁ RECV R2, env::LENGTH
+        ䷂ ALLOC R3, 0x1000
+        ䷍ ABUNDANCE R3, R0
+        ䷑ MUT R3, R1
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.string.compare {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STR_A
+        ䷁ RECV R1, env::STR_B
+        ䷨ REDUCE R0, R1
+        ䷓ CONTEMPLATE R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.string.find {
+    mut_rate   = 0.02
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷁ RECV R1, env::PATTERN
+        ䷂ ALLOC R2, 0x100
+        ䷌ FELLOWSHIP R0, R2
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R_found
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.replace {
+    mut_rate   = 0.02
+    cross_pool = "string_ops"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷁ RECV R1, env::OLD_PATTERN
+        ䷁ RECV R2, env::NEW_PATTERN
+        ䷂ ALLOC R3, 0x2000
+        ䷍ ABUNDANCE R3, R0
+        ䷰ REPLACE R3, R1
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus std.string.split {
+    mut_rate   = 0.02
+    cross_pool = "string_ops"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷁ RECV R1, env::DELIMITER
+        ䷂ ALLOC R2, 0x1000
+        ䷌ FELLOWSHIP R0, R2
+        ䷓ CONTEMPLATE R2
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.join {
+    mut_rate   = 0.02
+    cross_pool = "string_ops"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARTS
+        ䷁ RECV R1, env::SEPARATOR
+        ䷂ ALLOC R2, 0x2000
+        ䷬ GATHER R0, R2
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.trim {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷂ ALLOC R1, 0x1000
+        ䷍ ABUNDANCE R1, R0
+        ䷑ MUT R1, @trim_whitespace
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.to_lower {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷂ ALLOC R1, 0x1000
+        ䷍ ABUNDANCE R1, R0
+        ䷑ MUT R1, @lowercase_mask
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.to_upper {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷂ ALLOC R1, 0x1000
+        ䷍ ABUNDANCE R1, R0
+        ䷑ MUT R1, @uppercase_mask
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.starts_with {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷁ RECV R1, env::PREFIX
+        ䷒ APPROACH R0, R1
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.string.ends_with {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷁ RECV R1, env::SUFFIX
+        ䷓ CONTEMPLATE R0
+        ䷒ APPROACH R0, R1
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.string.contains {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE
+        ䷁ RECV R1, env::SUBSTR
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_found
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.string.format {
+    mut_rate   = 0.03
+    cross_pool = "string_ops"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::FORMAT_STR
+        ䷁ RECV R1, env::ARGS
+        ䷂ ALLOC R2, 0x4000
+        ䷕ ADORN R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.string.parse_int {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::NUM_STR
+        ䷂ ALLOC R1, 0x10
+        ䷍ ABUNDANCE R1, 0
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_digit_loop
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.string.int_to_str {
+    mut_rate   = 0.01
+    cross_pool = "string_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INTEGER
+        ䷂ ALLOC R1, 0x100
+        ䷍ ABUNDANCE R1, 0
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R1, @digit_conv
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}

@@ -1,0 +1,251 @@
+@evolang "3.0"
+
+@xiangci {
+    "时间之基：年月日时分秒，
+    记录流逝之刻度。"
+}
+
+@locus std.date.now {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.timestamp {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.parse {
+    mut_rate   = 0.02
+    cross_pool = "date_ops"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DATE_STR
+        ䷂ ALLOC R1, 0x100
+        ䷕ ADORN R1, R0
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.date.format {
+    mut_rate   = 0.02
+    cross_pool = "date_ops"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷁ RECV R1, env::FORMAT_STR
+        ䷂ ALLOC R2, 0x200
+        ䷕ ADORN R2, R0
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.date.get_year {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷑ MUT R0, @year_mask
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.get_month {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷑ MUT R0, @month_mask
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.get_day {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷑ MUT R0, @day_mask
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.get_hour {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷑ MUT R0, @hour_mask
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.get_minute {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷑ MUT R0, @minute_mask
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.get_second {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷑ MUT R0, @second_mask
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.get_weekday {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷑ MUT R0, @weekday_mask
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.add_seconds {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷁ RECV R1, env::SECONDS
+        ䷩ INCREASE R0, R1
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.subtract_seconds {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TIMESTAMP
+        ䷁ RECV R1, env::SECONDS
+        ䷨ REDUCE R0, R1
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.diff {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TS_A
+        ䷁ RECV R1, env::TS_B
+        ䷨ REDUCE R0, R1
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.is_leap_year {
+    mut_rate   = 0.02
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::YEAR
+        ䷑ MUT R0, @leap_check
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.days_in_month {
+    mut_rate   = 0.02
+    cross_pool = "date_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::YEAR
+        ䷁ RECV R1, env::MONTH
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_month_switch
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.date.sleep {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MILLISECONDS
+        ䷄ WAIT R0
+        ䷾ SYNC
+    }
+}
+
+@locus std.date.sleep_seconds {
+    mut_rate   = 0.01
+    cross_pool = "date_ops"
+    fitness    = min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SECONDS
+        ䷍ ABUND R1, 1000
+        ䷩ INCREASE R0, R1
+        ䷄ WAIT R0
+        ䷾ SYNC
+    }
+}

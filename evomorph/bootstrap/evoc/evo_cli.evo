@@ -1,0 +1,450 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 命令行自举工具"
+    "目标：完全替代 Python 的 enhanced_bootstrap.py"
+    "功能：编译、进化优化、一致性验证、最小可信计算基操作"
+    "道枢自举：用易衍语言书写自身的构建工具"
+}
+
+@meta_locus cli.global_config {
+    mut_rate = 0.001
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷂ ALLOC R0, 0x10
+        ䷍ ABUNDANCE R0, 0x03
+        ䷾ SYNC
+    }
+}
+
+@locus cli.init {
+    mut_rate   = 0.005
+    cross_pool = "cli_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x04
+        ䷂ ALLOC R1, 0x04
+        ䷂ ALLOC R2, 0x04
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R0, 0x00
+        ䷍ ABUNDANCE R1, 0x00
+        ䷍ ABUNDANCE R2, 0x00
+        ䷍ ABUNDANCE R3, 0x00
+        ䷾ SYNC
+    }
+}
+
+@locus cli.parse_args {
+    mut_rate   = 0.01
+    cross_pool = "cli_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::ARGC
+        ䷁ RECV R1, env::ARGV
+        ䷂ ALLOC R2, 0x100
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_arg_loop
+        ䷗ RETURN
+        ䷁ RECV R3, env::ARGV
+        ䷈ PREFETCH R3
+        ䷔ BITE R3, 0x63
+        ䷆ BRANCH R_check_compile
+        ䷔ BITE R3, 0x65
+        ䷆ BRANCH R_check_evolve
+        ䷔ BITE R3, 0x76
+        ䷆ BRANCH R_check_verify
+        ䷔ BITE R3, 0x74
+        ䷆ BRANCH R_check_tcb
+        ䷔ BITE R3, 0x73
+        ䷆ BRANCH R_check_status
+        ䷉ STEP R1
+        ䷨ REDUCE R0, 0x01
+        ䷾ SYNC
+    }
+}
+
+@locus cli.cmd.compile {
+    mut_rate   = 0.02
+    cross_pool = "cli_commands"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_PATH
+        ䷁ RECV R1, env::GENERATION
+        ䷁ RECV R2, env::OUTPUT_PATH
+        ䷓ CONTEMPLATE R1
+        ䷔ BITE R1, 0x30
+        ䷆ BRANCH R_use_gen0
+        ䷔ BITE R1, 0x31
+        ䷆ BRANCH R_use_gen1
+        ䷔ BITE R1, 0x32
+        ䷆ BRANCH R_use_gen2
+        ䷆ BRANCH R_use_auto
+        ䷁ RECV R3, env::SOURCE_CODE
+        ䷀ CREA R4, @evoc.bootstrap.compile
+        ䷌ FELLOWSHIP R3, R4
+        ䷾ SYNC
+        ䷁ RECV R5, env::OUTPUT_DATA
+        ䷍ ABUNDANCE R2, R5
+        ䷾ SYNC
+    }
+}
+
+@locus cli.cmd.evolve {
+    mut_rate   = 0.02
+    cross_pool = "cli_commands"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_NAME
+        ䷁ RECV R1, env::EVOLVE_MODE
+        ䷁ RECV R2, env::MAX_GENERATIONS
+        ䷁ RECV R3, env::POPULATION_SIZE
+        ䷓ CONTEMPLATE R1
+        ䷔ BITE R1, 0x71
+        ䷆ BRANCH R_mode_quick
+        ䷔ BITE R1, 0x73
+        ䷆ BRANCH R_mode_standard
+        ䷔ BITE R1, 0x64
+        ䷆ BRANCH R_mode_deep
+        ䷔ BITE R1, 0x65
+        ䷆ BRANCH R_mode_extreme
+        ䷁ RECV R4, env::LOCUS_DATA
+        ䷀ CREA R5, @evolution.engine.init
+        ䷀ CREA R6, @evolution.engine.evolve
+        ䷌ FELLOWSHIP R4, R6
+        ䷾ SYNC
+        ䷁ RECV R7, env::EVOLVED_LOCUS
+        ䷍ ABUNDANCE R0, R7
+        ䷾ SYNC
+    }
+}
+
+@locus cli.cmd.verify {
+    mut_rate   = 0.02
+    cross_pool = "cli_commands"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_FILES
+        ䷂ ALLOC R1, 0x100
+        ䷍ ABUNDANCE R1, 0x01
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_verify_loop
+        ䷁ RECV R2, env::SOURCE_FILE
+        ䷀ CREA R3, @cli.cmd.compile
+        ䷍ ABUNDANCE R4, 0x31
+        ䷌ FELLOWSHIP R2, R3
+        ䷁ RECV R5, env::GEN1_OUTPUT
+        ䷍ ABUNDANCE R4, 0x32
+        ䷌ FELLOWSHIP R2, R3
+        ䷁ RECV R6, env::GEN2_OUTPUT
+        ䷀ CREA R7, @evoc.core.memory_compare
+        ䷌ FELLOWSHIP R5, R6
+        ䷓ CONTEMPLATE R7
+        ䷆ BRANCH R_match
+        ䷍ ABUNDANCE R1, 0x00
+        ䷨ REDUCE R0, 0x01
+        ䷾ SYNC
+    }
+}
+
+@locus cli.cmd.tcb.status {
+    mut_rate   = 0.01
+    cross_pool = "cli_commands"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::C_VM_PATH
+        ䷁ RECV R1, env::ASSEMBLER_PATH
+        ䷂ ALLOC R2, 0x10
+        ䷂ ALLOC R3, 0x10
+        ䷂ ALLOC R4, 0x10
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_check_vm_exists
+        ䷍ ABUNDANCE R2, 0x00
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_check_asm_exists
+        ䷍ ABUNDANCE R3, 0x00
+        ䷌ FELLOWSHIP R2, R3
+        ䷔ BITE R2, 0x01
+        ䷔ BITE R3, 0x01
+        ䷆ BRANCH R_tcb_ready
+        ䷍ ABUNDANCE R4, 0x01
+        ䷾ SYNC
+    }
+}
+
+@locus cli.cmd.tcb.build {
+    mut_rate   = 0.02
+    cross_pool = "cli_commands"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::C_SOURCE_PATH
+        ䷁ RECV R1, env::OUTPUT_BINARY
+        ䷀ CREA R2, @std.sys.shellexec
+        ䷁ RECV R3, env::GCC_PATH
+        ䷌ FELLOWSHIP R3, R2
+        ䷁ RECV R4, env::COMPILE_FLAGS
+        ䷌ FELLOWSHIP R4, R2
+        ䷾ SYNC
+        ䷁ RECV R5, env::EXIT_CODE
+        ䷓ CONTEMPLATE R5
+        ䷆ BRANCH R_build_success
+        ䷍ ABUNDANCE R6, 0x00
+        ䷗ RETURN
+        ䷍ ABUNDANCE R6, 0x01
+        ䷾ SYNC
+    }
+}
+
+@locus cli.cmd.tcb.compile {
+    mut_rate   = 0.02
+    cross_pool = "cli_commands"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVO_SOURCE
+        ䷁ RECV R1, env::OUTPUT_ASM
+        ䷁ RECV R2, env::OUTPUT_RAW
+        ䷀ CREA R3, @cli.cmd.compile
+        ䷌ FELLOWSHIP R0, R3
+        ䷁ RECV R4, env::COMPILED_LOCUS
+        ䷀ CREA R5, @native.image.build
+        ䷌ FELLOWSHIP R4, R5
+        ䷁ RECV R6, env::ASM_OUTPUT
+        ䷍ ABUNDANCE R1, R6
+        ䷁ RECV R7, env::C_VM_PATH
+        ䷀ CREA R8, @std.sys.shellexec
+        ䷌ FELLOWSHIP R7, R8
+        ䷾ SYNC
+        ䷁ RECV R9, env::RAW_OUTPUT
+        ䷍ ABUNDANCE R2, R9
+        ䷾ SYNC
+    }
+}
+
+@locus cli.cmd.status {
+    mut_rate   = 0.01
+    cross_pool = "cli_commands"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x200
+        ䷁ RECV R1, env::GEN1_MODULES
+        ䷁ RECV R2, env::GEN2_MODULES
+        ䷁ RECV R3, env::LOADED_LOCI
+        ䷁ RECV R4, env::TCB_STATUS
+        ䷍ ABUNDANCE R0, 0x7B
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x67
+        ䷍ ABUNDANCE R0, 0x65
+        ䷍ ABUNDANCE R0, 0x6E
+        ䷍ ABUNDANCE R0, 0x65
+        ䷍ ABUNDANCE R0, 0x72
+        ䷍ ABUNDANCE R0, 0x61
+        ䷍ ABUNDANCE R0, 0x74
+        ䷍ ABUNDANCE R0, 0x69
+        ䷍ ABUNDANCE R0, 0x6F
+        ䷍ ABUNDANCE R0, 0x6E
+        ䷍ ABUNDANCE R0, 0x73
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x3A
+        ䷍ ABUNDANCE R0, 0x20
+        ䷍ ABUNDANCE R0, 0x7B
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x67
+        ䷍ ABUNDANCE R0, 0x65
+        ䷍ ABUNDANCE R0, 0x6E
+        ䷍ ABUNDANCE R0, 0x30
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x3A
+        ䷍ ABUNDANCE R0, 0x20
+        ䷍ ABUNDANCE R0, 0x7B
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x61
+        ䷍ ABUNDANCE R0, 0x76
+        ䷍ ABUNDANCE R0, 0x61
+        ䷍ ABUNDANCE R0, 0x69
+        ䷍ ABUNDANCE R0, 0x6C
+        ䷍ ABUNDANCE R0, 0x61
+        ䷍ ABUNDANCE R0, 0x62
+        ䷍ ABUNDANCE R0, 0x6C
+        ䷍ ABUNDANCE R0, 0x65
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x3A
+        ䷍ ABUNDANCE R0, 0x20
+        ䷍ ABUNDANCE R0, 0x74
+        ䷍ ABUNDANCE R0, 0x72
+        ䷍ ABUNDANCE R0, 0x75
+        ䷍ ABUNDANCE R0, 0x65
+        ䷍ ABUNDANCE R0, 0x7D
+        ䷍ ABUNDANCE R0, 0x2C
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x67
+        ䷍ ABUNDANCE R0, 0x65
+        ䷍ ABUNDANCE R0, 0x6E
+        ䷍ ABUNDANCE R0, 0x31
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x3A
+        ䷍ ABUNDANCE R0, 0x20
+        ䷍ ABUNDANCE R0, 0x7B
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x61
+        ䷍ ABUNDANCE R0, 0x76
+        ䷍ ABUNDANCE R0, 0x61
+        ䷍ ABUNDANCE R0, 0x69
+        ䷍ ABUNDANCE R0, 0x6C
+        ䷍ ABUNDANCE R0, 0x61
+        ䷍ ABUNDANCE R0, 0x62
+        ䷍ ABUNDANCE R0, 0x6C
+        ䷍ ABUNDANCE R0, 0x65
+        ䷍ ABUNDANCE R0, 0x22
+        ䷍ ABUNDANCE R0, 0x3A
+        ䷍ ABUNDANCE R0, 0x20
+        ䷔ BITE R1, 0x00
+        ䷆ BRANCH R_gen1_empty
+        ䷍ ABUNDANCE R0, 0x66
+        ䷍ ABUNDANCE R0, 0x61
+        ䷍ ABUNDANCE R0, 0x6C
+        ䷍ ABUNDANCE R0, 0x73
+        ䷍ ABUNDANCE R0, 0x65
+        ䷆ BRANCH R_gen1_done
+        ䷍ ABUNDANCE R0, 0x66
+        ䷍ ABUNDANCE R0, 0x61
+        ䷍ ABUNDANCE R0, 0x6C
+        ䷍ ABUNDANCE R0, 0x73
+        ䷍ ABUNDANCE R0, 0x65
+        ䷾ SYNC
+    }
+}
+
+@locus cli.main {
+    mut_rate   = 0.02
+    cross_pool = "cli_core"
+    fitness    = max_throughput + min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷀ CREA R0, @cli.init
+        ䷀ CREA R1, @cli.parse_args
+        ䷌ FELLOWSHIP R0, R1
+        ䷁ RECV R2, env::COMMAND
+        ䷓ CONTEMPLATE R2
+        ䷔ BITE R2, 0x63
+        ䷆ BRANCH R_run_compile
+        ䷔ BITE R2, 0x65
+        ䷆ BRANCH R_run_evolve
+        ䷔ BITE R2, 0x76
+        ䷆ BRANCH R_run_verify
+        ䷔ BITE R2, 0x74
+        ䷆ BRANCH R_run_tcb
+        ䷔ BITE R2, 0x73
+        ䷆ BRANCH R_run_status
+        ䷀ CREA R3, @std.io.println
+        ䷍ ABUNDANCE R4, 0x48
+        ䷍ ABUNDANCE R4, 0x65
+        ䷍ ABUNDANCE R4, 0x6C
+        ䷍ ABUNDANCE R4, 0x70
+        ䷍ ABUNDANCE R4, 0x3A
+        ䷍ ABUNDANCE R4, 0x20
+        ䷍ ABUNDANCE R4, 0x65
+        ䷍ ABUNDANCE R4, 0x76
+        ䷍ ABUNDANCE R4, 0x6F
+        ䷍ ABUNDANCE R4, 0x2D
+        ䷍ ABUNDANCE R4, 0x63
+        ䷍ ABUNDANCE R4, 0x6C
+        ䷍ ABUNDANCE R4, 0x69
+        ䷍ ABUNDANCE R4, 0x20
+        ䷍ ABUNDANCE R4, 0x5B
+        ䷍ ABUNDANCE R4, 0x63
+        ䷍ ABUNDANCE R4, 0x6F
+        ䷍ ABUNDANCE R4, 0x6D
+        ䷍ ABUNDANCE R4, 0x70
+        ䷍ ABUNDANCE R4, 0x69
+        ䷍ ABUNDANCE R4, 0x6C
+        ䷍ ABUNDANCE R4, 0x65
+        ䷍ ABUNDANCE R4, 0x7C
+        ䷍ ABUNDANCE R4, 0x65
+        ䷍ ABUNDANCE R4, 0x76
+        ䷍ ABUNDANCE R4, 0x6F
+        ䷍ ABUNDANCE R4, 0x6C
+        ䷍ ABUNDANCE R4, 0x76
+        ䷍ ABUNDANCE R4, 0x65
+        ䷍ ABUNDANCE R4, 0x7C
+        ䷍ ABUNDANCE R4, 0x74
+        ䷍ ABUNDANCE R4, 0x63
+        ䷍ ABUNDANCE R4, 0x62
+        ䷍ ABUNDANCE R4, 0x7C
+        ䷍ ABUNDANCE R4, 0x73
+        ䷍ ABUNDANCE R4, 0x74
+        ䷍ ABUNDANCE R4, 0x61
+        ䷍ ABUNDANCE R4, 0x74
+        ䷍ ABUNDANCE R4, 0x75
+        ䷍ ABUNDANCE R4, 0x73
+        ䷍ ABUNDANCE R4, 0x5D
+        ䷌ FELLOWSHIP R4, R3
+        ䷁ RECV R5, env::EXIT_CODE
+        ䷗ RETURN R5
+        ䷀ CREA R6, @cli.cmd.compile
+        ䷾ SYNC
+        ䷀ CREA R7, @cli.cmd.evolve
+        ䷾ SYNC
+        ䷀ CREA R8, @cli.cmd.verify
+        ䷾ SYNC
+        ䷁ RECV R9, env::TCB_ACTION
+        ䷓ CONTEMPLATE R9
+        ䷔ BITE R9, 0x73
+        ䷆ BRANCH R_tcb_status
+        ䷔ BITE R9, 0x62
+        ䷆ BRANCH R_tcb_build
+        ䷔ BITE R9, 0x63
+        ䷆ BRANCH R_tcb_compile
+        ䷀ CREA R10, @cli.cmd.tcb.status
+        ䷾ SYNC
+        ䷀ CREA R11, @cli.cmd.tcb.build
+        ䷾ SYNC
+        ䷀ CREA R12, @cli.cmd.tcb.compile
+        ䷾ SYNC
+        ䷀ CREA R13, @cli.cmd.status
+        ䷾ SYNC
+        ䷁ RECV R14, env::FINAL_EXIT_CODE
+        ䷗ RETURN R14
+    }
+}
+
+@meta_locus cli.evolution.strategy {
+    mut_rate = 0.005
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@meta_locus cli.optimization.target {
+    mut_rate = 0.003
+    fitness  = max_throughput + min_energy
+
+    卦序: {
+        ䷏ SPECULATE R0
+        ䷓ CONTEMPLATE R1
+        ䷾ SYNC
+    }
+}

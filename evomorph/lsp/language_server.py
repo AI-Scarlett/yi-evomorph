@@ -233,45 +233,93 @@ def get_completions(uri, line, character, source_lines):
 
 def get_diagnostics(uri, source):
     diagnostics = []
+    source_lines = source.split("\n")
+    
+    def find_locus_line(locus_name, start_from=0):
+        for i in range(start_from, len(source_lines)):
+            line = source_lines[i].strip()
+            if ("@locus " + locus_name in line) or ("@locus " + locus_name + " {" in line):
+                return i
+        return 0
+    
+    def find_instruction_line(mnemonic, locus_start_line):
+        if locus_start_line + 20 < len(source_lines):
+            end_line = min(locus_start_line + 50, len(source_lines))
+        else:
+            end_line = len(source_lines)
+        for i in range(locus_start_line, end_line):
+            line = source_lines[i]
+            if mnemonic in line:
+                return i
+        return locus_start_line
+    
     try:
         result = compiler.compile(source, output_format="dict")
         loci = result.get("loci", [])
+        
         for locus in loci:
             name = locus.get("name", "")
+            locus_line = find_locus_line(name)
+            
             if not locus.get("env_targets"):
                 diagnostics.append({
-                    "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}},
+                    "range": {
+                        "start": {"line": locus_line, "character": 0},
+                        "end": {"line": locus_line, "character": len(source_lines[locus_line]) if locus_line < len(source_lines) else 10}
+                    },
                     "severity": 2,
                     "message": f"基因座 '{name}' 缺少 env_target 目标平台",
                     "source": "evomorph",
                 })
+            
             if not locus.get("fitness") or not locus.get("fitness", {}).get("terms"):
                 diagnostics.append({
-                    "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}},
+                    "range": {
+                        "start": {"line": locus_line, "character": 0},
+                        "end": {"line": locus_line, "character": len(source_lines[locus_line]) if locus_line < len(source_lines) else 10}
+                    },
                     "severity": 2,
                     "message": f"基因座 '{name}' 缺少 fitness 适应度表达式",
                     "source": "evomorph",
                 })
+            
             for instr in locus.get("instructions", []):
                 if instr.get("opcode") is None:
+                    mnemonic = instr.get("mnemonic", "?")
+                    instr_line = find_instruction_line(mnemonic, locus_line)
                     diagnostics.append({
-                        "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}},
+                        "range": {
+                            "start": {"line": instr_line, "character": 0},
+                            "end": {"line": instr_line, "character": len(source_lines[instr_line]) if instr_line < len(source_lines) else 10}
+                        },
                         "severity": 1,
-                        "message": f"无法识别的指令: {instr.get('mnemonic', '?')}",
+                        "message": f"无法识别的指令: {mnemonic}",
                         "source": "evomorph",
                     })
     except SyntaxError as e:
+        msg = str(e)
+        line_num = 0
+        
+        import re
+        line_match = re.search(r'line\s+(\d+)', msg, re.IGNORECASE)
+        if line_match:
+            line_num = int(line_match.group(1)) - 1
+        
         diagnostics.append({
-            "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}},
+            "range": {
+                "start": {"line": line_num, "character": 0},
+                "end": {"line": line_num, "character": len(source_lines[line_num]) if line_num < len(source_lines) else 10}
+            },
             "severity": 1,
-            "message": f"语法错误: {str(e)}",
+            "message": f"语法错误: {msg}",
             "source": "evomorph",
         })
     except Exception as e:
+        msg = str(e)
         diagnostics.append({
             "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 1}},
             "severity": 1,
-            "message": f"编译错误: {str(e)}",
+            "message": f"编译错误: {msg}",
             "source": "evomorph",
         })
     return diagnostics
@@ -493,6 +541,9 @@ def handle_request(request):
                 "documentSymbolProvider": True,
                 "textDocumentSync": {"change": 1, "openClose": True},
                 "publishDiagnostics": True,
+                "documentFormattingProvider": True,
+                "renameProvider": True,
+                "codeActionProvider": {"codeActionKinds": ["quickfix", "refactor", "source"]},
             }
         }
     elif method == "textDocument/completion":
@@ -548,6 +599,35 @@ def handle_request(request):
             result = get_document_symbols(source_lines)
         else:
             result = []
+    elif method == "textDocument/formatting":
+        uri = params.get("textDocument", {}).get("uri", "")
+        source = _get_source(uri)
+        if source:
+            result = format_document(source)
+        else:
+            result = []
+    elif method == "textDocument/rename":
+        uri = params.get("textDocument", {}).get("uri", "")
+        pos = params.get("position", {})
+        new_name = params.get("newName", "")
+        line = pos.get("line", 0)
+        character = pos.get("character", 0)
+        source = _get_source(uri)
+        if source and new_name:
+            source_lines = source.split("\n")
+            result = rename_symbol(uri, line, character, new_name, source_lines)
+        else:
+            result = None
+    elif method == "textDocument/codeAction":
+        uri = params.get("textDocument", {}).get("uri", "")
+        range_ = params.get("range", {})
+        context = params.get("context", {})
+        source = _get_source(uri)
+        if source:
+            source_lines = source.split("\n")
+            result = get_code_actions(uri, range_, context, source_lines)
+        else:
+            result = []
     elif method == "textDocument/didOpen":
         uri = params.get("textDocument", {}).get("uri", "")
         source = params.get("textDocument", {}).get("text", "")
@@ -575,6 +655,224 @@ def handle_request(request):
     if req_id is not None and result is not None:
         return {"jsonrpc": "2.0", "id": req_id, "result": result}
     return None
+
+
+def format_document(source: str) -> List[Dict[str, Any]]:
+    lines = source.split("\n")
+    formatted = []
+    edits = []
+    
+    in_guaxu_block = False
+    brace_depth = 0
+    guaxu_indent = 0
+    
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        original_indent = len(line) - len(line.lstrip())
+        
+        if "卦序:" in stripped:
+            in_guaxu_block = True
+            brace_depth = 1
+            guaxu_indent = original_indent
+            formatted_line = " " * original_indent + "卦序: {"
+        elif stripped.startswith("{") and in_guaxu_block:
+            brace_depth += 1
+            formatted_line = line
+        elif stripped.startswith("}"):
+            brace_depth -= 1
+            if brace_depth <= 0:
+                in_guaxu_block = False
+            formatted_line = line
+        elif in_guaxu_block and stripped:
+            first_token = stripped.split()[0] if stripped.split() else ""
+            if first_token in MNEMONIC_MAP or first_token in SYMBOL_MAP:
+                formatted_line = " " * (guaxu_indent + 8) + stripped
+            else:
+                formatted_line = " " * (guaxu_indent + 4) + stripped
+        elif stripped.startswith("@locus") or stripped.startswith("@meta_locus"):
+            match = re.match(r'(@(?:meta_)?locus)\s+(\w+)\s*\{', stripped)
+            if match:
+                keyword = match.group(1)
+                name = match.group(2)
+                formatted_line = f"{keyword} {name} {{"
+            else:
+                formatted_line = stripped
+        elif "=" in stripped and not in_guaxu_block:
+            match = re.match(r'(\w+)\s*=\s*(.+)', stripped)
+            if match:
+                key = match.group(1)
+                value = match.group(2).strip()
+                if key in ["mut_rate", "cross_pool", "fitness", "env_target", "max_generations"]:
+                    formatted_line = f"    {key}   = {value}"
+                else:
+                    formatted_line = stripped
+            else:
+                formatted_line = stripped
+        else:
+            formatted_line = line.rstrip()
+        
+        if formatted_line != line.rstrip():
+            edits.append({
+                "range": {
+                    "start": {"line": i, "character": 0},
+                    "end": {"line": i, "character": len(line)}
+                },
+                "newText": formatted_line
+            })
+    
+    return edits
+
+
+def rename_symbol(uri: str, line: int, character: int, new_name: str, source_lines: List[str]) -> Optional[Dict[str, Any]]:
+    if line >= len(source_lines):
+        return None
+    
+    source_line = source_lines[line]
+    word = _extract_word(source_line, character)
+    
+    if not word:
+        return None
+    
+    if word.startswith("@"):
+        old_name = word[1:]
+    else:
+        old_name = word
+    
+    if not old_name.isidentifier():
+        return None
+    
+    edits = []
+    
+    for i, src_line in enumerate(source_lines):
+        stripped = src_line.strip()
+        
+        if stripped.startswith("@locus ") or stripped.startswith("@meta_locus "):
+            locus_name = stripped.replace("@locus", "").replace("@meta_locus", "").strip().rstrip("{").strip()
+            if locus_name == old_name:
+                start_idx = src_line.find(old_name)
+                if start_idx >= 0:
+                    edits.append({
+                        "range": {
+                            "start": {"line": i, "character": start_idx},
+                            "end": {"line": i, "character": start_idx + len(old_name)}
+                        },
+                        "newText": new_name
+                    })
+        
+        for match in re.finditer(r'@' + re.escape(old_name) + r'\b', src_line):
+            start_idx = match.start() + 1
+            edits.append({
+                "range": {
+                    "start": {"line": i, "character": start_idx},
+                    "end": {"line": i, "character": start_idx + len(old_name)}
+                },
+                "newText": new_name
+            })
+    
+    if not edits:
+        return None
+    
+    return {
+        "changes": {
+            uri: edits
+        }
+    }
+
+
+def get_code_actions(uri: str, range_: Dict[str, Any], context: Dict[str, Any], source_lines: List[str]) -> List[Dict[str, Any]]:
+    actions = []
+    
+    start_line = range_.get("start", {}).get("line", 0)
+    end_line = range_.get("end", {}).get("line", len(source_lines) - 1)
+    
+    for i in range(start_line, min(end_line + 1, len(source_lines))):
+        line = source_lines[i]
+        stripped = line.strip()
+        
+        if "@locus" in stripped or "@meta_locus" in stripped:
+            if "env_target" not in "\n".join(source_lines[i:i+10]):
+                actions.append({
+                    "title": "添加 env_target 属性",
+                    "kind": "quickfix",
+                    "diagnostics": [],
+                    "edit": {
+                        "changes": {
+                            uri: [{
+                                "range": {
+                                    "start": {"line": i + 1, "character": 0},
+                                    "end": {"line": i + 1, "character": 0}
+                                },
+                                "newText": '    env_target = ["linux-6.x"]\n'
+                            }]
+                        }
+                    }
+                })
+            
+            if "fitness" not in "\n".join(source_lines[i:i+10]):
+                actions.append({
+                    "title": "添加 fitness 属性",
+                    "kind": "quickfix",
+                    "diagnostics": [],
+                    "edit": {
+                        "changes": {
+                            uri: [{
+                                "range": {
+                                    "start": {"line": i + 1, "character": 0},
+                                    "end": {"line": i + 1, "character": 0}
+                                },
+                                "newText": '    fitness    = min_latency + 2.0*max_throughput\n'
+                            }]
+                        }
+                    }
+                })
+            
+            if "mut_rate" not in "\n".join(source_lines[i:i+10]):
+                actions.append({
+                    "title": "添加 mut_rate 属性",
+                    "kind": "quickfix",
+                    "diagnostics": [],
+                    "edit": {
+                        "changes": {
+                            uri: [{
+                                "range": {
+                                    "start": {"line": i + 1, "character": 0},
+                                    "end": {"line": i + 1, "character": 0}
+                                },
+                                "newText": '    mut_rate   = 0.02\n'
+                            }]
+                        }
+                    }
+                })
+        
+        if "卦序:" in stripped:
+            guaxu_content = "\n".join(source_lines[i:i+20])
+            if "SYNC" not in guaxu_content:
+                actions.append({
+                    "title": "添加 SYNC 同步指令",
+                    "kind": "refactor",
+                    "edit": {
+                        "changes": {
+                            uri: [{
+                                "range": {
+                                    "start": {"line": i + 3, "character": 0},
+                                    "end": {"line": i + 3, "character": 0}
+                                },
+                                "newText": "    ䷾ SYNC\n"
+                            }]
+                        }
+                    }
+                })
+    
+    actions.append({
+        "title": "格式化整个文档",
+        "kind": "source.formatDocument",
+        "command": {
+            "title": "格式化",
+            "command": "editor.action.formatDocument"
+        }
+    })
+    
+    return actions
 
 
 _source_cache: Dict[str, str] = {}
