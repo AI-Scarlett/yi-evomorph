@@ -17,7 +17,7 @@ from evomorph.native.loader.evb_loader import NativeLoader
 
 MCP_VERSION = "2024-11-05"
 SERVER_NAME = "evomorph-mcp"
-SERVER_VERSION = "0.0.3"
+SERVER_VERSION = "0.0.4"
 
 isa = HexagramInstructionSet()
 compiler = EvocCompiler()

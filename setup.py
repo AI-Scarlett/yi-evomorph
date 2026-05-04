@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="evomorph",
-    version="0.0.3",
+    version="0.0.4",
     description="易衍·Evomorph — 六十四卦指令集进化编程语言",
     packages=find_packages(),
     python_requires=">=3.9",

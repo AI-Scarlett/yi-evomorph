@@ -1,9 +1,34 @@
 @evolang "3.0"
 
 @xiangci {
-    "易衍进化引擎核心模块"
-    "基于六十四卦指令集的遗传算法实现"
-    "包含：种群初始化、选择、交叉、变异、适应度评估、收敛检测"
+    "易衍进化引擎核心模块 v3.0"
+    "基于六十四卦指令集的完整遗传算法实现"
+    "包含：种群初始化、选择算法、交叉算子、变异算子、适应度评估、进化循环、收敛检测"
+    "完全重构自Python EvolutionEngine，使用Evomorph原生语义"
+}
+
+@locus evolution.config.init {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_size + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0040
+        ䷂ ALLOC R1, 0x0100
+        ䷌ FELLOWSHIP R2, R0
+        ䷍ ABUNDANCE R3, 0x40
+        ䷐ FOLLOWING R4, R3
+        ䷆ BRANCH R5, R4
+        ䷑ MUT R6, 0x03
+        ䷓ CONTEMPLATE R7
+        ䷬ GATHER R8, R7
+        ䷨ REDUCE R9, R8
+        ䷩ INCREASE R10, R9
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
 }
 
 @locus evolution.population.init {
@@ -15,15 +40,47 @@
 
     卦序: {
         ䷁ RECV R0, 0x0100
-        ䷂ ALLOC R1, 0x4000
+        ䷂ ALLOC R1, 0x8000
         ䷌ FELLOWSHIP R2, R0
         ䷀ CREA R3, R4
         ䷍ ABUNDANCE R5, R3
         ䷐ FOLLOWING R6, R5
         ䷆ BRANCH R7, R6
-        ䷑ MUT R8, 0x05
+        ䷓ CONTEMPLATE R8
+        ䷑ MUT R9, 0x05
+        ䷏ SPECULATE R10, R9
+        ䷬ GATHER R11, R10
+        ䷨ REDUCE R12, R11
+        ䷩ INCREASE R13, R12
         ䷾ SYNC
         ䷗ RETURN R0
+    }
+}
+
+@locus evolution.population.create_variant {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0101
+        ䷁ RECV R1, 0x0102
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R2, 0x00
+        ䷑ MUT R3, 0x01
+        ䷑ MUT R4, 0x02
+        ䷑ MUT R5, 0x03
+        ䷑ MUT R6, 0x04
+        ䷑ MUT R7, 0x05
+        ䷏ SPECULATE R8, R7
+        ䷬ GATHER R9, R8
+        ䷨ REDUCE R10, R9
+        ䷩ INCREASE R11, R10
+        ䷍ ABUNDANCE R12, R11
+        ䷾ SYNC
+        ䷗ RETURN R12
     }
 }
 
@@ -39,9 +96,12 @@
         ䷓ CONTEMPLATE R0
         ䷬ GATHER R1, R0
         ䷏ SPECULATE R2, R1
-        ䷆ BRANCH R3, R2
+        ䷨ REDUCE R3, R2
+        ䷩ INCREASE R4, R3
+        ䷆ BRANCH R5, R4
+        ䷍ ABUNDANCE R6, R5
         ䷾ SYNC
-        ䷗ RETURN R3
+        ䷗ RETURN R6
     }
 }
 
@@ -54,12 +114,16 @@
 
     卦序: {
         ䷁ RECV R0, 0x0200
+        ䷁ RECV R1, 0x0201
         ䷓ CONTEMPLATE R0
-        ䷌ FELLOWSHIP R1, R0
-        ䷏ SPECULATE R2, R1
-        ䷆ BRANCH R3, R2
+        ䷌ FELLOWSHIP R2, R0
+        ䷏ SPECULATE R3, R2
+        ䷨ REDUCE R4, R3
+        ䷩ INCREASE R5, R4
+        ䷆ BRANCH R6, R5
+        ䷍ ABUNDANCE R7, R6
         ䷾ SYNC
-        ䷗ RETURN R3
+        ䷗ RETURN R7
     }
 }
 
@@ -76,9 +140,11 @@
         ䷨ REDUCE R1, R0
         ䷩ INCREASE R2, R1
         ䷏ SPECULATE R3, R2
-        ䷆ BRANCH R4, R3
+        ䷬ GATHER R4, R3
+        ䷆ BRANCH R5, R4
+        ䷍ ABUNDANCE R6, R5
         ䷾ SYNC
-        ䷗ RETURN R4
+        ䷗ RETURN R6
     }
 }
 
@@ -94,11 +160,12 @@
         ䷁ RECV R1, 0x0301
         ䷓ CONTEMPLATE R0
         ䷓ CONTEMPLATE R1
-        ䷫ MATE R2, R3
-        ䷌ FELLOWSHIP R4, R2
-        ䷍ ABUNDANCE R5, R4
+        ䷏ SPECULATE R2, R0
+        ䷫ MATE R3, R4
+        ䷌ FELLOWSHIP R5, R3
+        ䷍ ABUNDANCE R6, R5
         ䷾ SYNC
-        ䷗ RETURN R2
+        ䷗ RETURN R6
     }
 }
 
@@ -115,11 +182,13 @@
         ䷓ CONTEMPLATE R0
         ䷓ CONTEMPLATE R1
         ䷏ SPECULATE R2, R0
-        ䷫ MATE R3, R4
-        ䷏ SPECULATE R5, R3
-        ䷌ FELLOWSHIP R6, R5
+        ䷏ SPECULATE R3, R2
+        ䷫ MATE R4, R5
+        ䷏ SPECULATE R6, R4
+        ䷌ FELLOWSHIP R7, R6
+        ䷍ ABUNDANCE R8, R7
         ䷾ SYNC
-        ䷗ RETURN R6
+        ䷗ RETURN R8
     }
 }
 
@@ -139,8 +208,9 @@
         ䷏ SPECULATE R3, R1
         ䷫ MATE R4, R5
         ䷌ FELLOWSHIP R6, R4
+        ䷍ ABUNDANCE R7, R6
         ䷾ SYNC
-        ䷗ RETURN R6
+        ䷗ RETURN R7
     }
 }
 
@@ -153,10 +223,12 @@
 
     卦序: {
         ䷁ RECV R0, 0x0400
+        ䷁ RECV R1, 0x0401
         ䷓ CONTEMPLATE R0
-        ䷑ MUT R0, 0x03
-        ䷏ SPECULATE R1, R0
-        ䷆ BRANCH R2, R1
+        ䷑ MUT R0, R1
+        ䷏ SPECULATE R2, R0
+        ䷬ GATHER R3, R2
+        ䷆ BRANCH R4, R3
         ䷾ SYNC
         ䷗ RETURN R0
     }
@@ -174,8 +246,27 @@
         ䷓ CONTEMPLATE R0
         ䷑ MUT R0, 0x05
         ䷌ FELLOWSHIP R1, R0
+        ䷍ ABUNDANCE R2, R1
         ䷾ SYNC
-        ䷗ RETURN R1
+        ䷗ RETURN R2
+    }
+}
+
+@locus evolution.mutation.operand {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0400
+        ䷁ RECV R1, 0x0402
+        ䷓ CONTEMPLATE R0
+        ䷍ ABUNDANCE R2, R1
+        ䷌ FELLOWSHIP R3, R2
+        ䷾ SYNC
+        ䷗ RETURN R3
     }
 }
 
@@ -193,8 +284,153 @@
         ䷨ REDUCE R2, R1
         ䷩ INCREASE R3, R2
         ䷍ ABUNDANCE R4, R3
+        ䷏ SPECULATE R5, R4
+        ䷆ BRANCH R6, R5
+        ䷾ SYNC
+        ䷗ RETURN R6
+    }
+}
+
+@locus evolution.fitness.latency {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0501
+        ䷓ CONTEMPLATE R0
+        ䷨ REDUCE R1, R0
+        ䷏ SPECULATE R2, R1
+        ䷆ BRANCH R3, R2
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus evolution.fitness.throughput {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0502
+        ䷓ CONTEMPLATE R0
+        ䷩ INCREASE R1, R0
+        ䷏ SPECULATE R2, R1
+        ䷬ GATHER R3, R2
+        ䷆ BRANCH R4, R3
         ䷾ SYNC
         ䷗ RETURN R4
+    }
+}
+
+@locus evolution.fitness.energy {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0503
+        ䷓ CONTEMPLATE R0
+        ䷨ REDUCE R1, R0
+        ䷏ SPECULATE R2, R1
+        ䷆ BRANCH R3, R2
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus evolution.fitness.size {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0504
+        ䷓ CONTEMPLATE R0
+        ䷨ REDUCE R1, R0
+        ䷏ SPECULATE R2, R1
+        ䷆ BRANCH R3, R2
+        ䷾ SYNC
+        ䷗ RETURN R3
+    }
+}
+
+@locus evolution.generation.evolve_one {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R1, R0
+        ䷨ REDUCE R2, R1
+        ䷩ INCREASE R3, R2
+        ䷏ SPECULATE R4, R3
+        ䷌ FELLOWSHIP R5, R4
+        ䷫ MATE R6, R7
+        ䷑ MUT R8, 0x04
+        ䷆ BRANCH R9, R8
+        ䷍ ABUNDANCE R10, R9
+        ䷾ SYNC
+        ䷗ RETURN R10
+    }
+}
+
+@locus evolution.generation.evolve_loop {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0700
+        ䷁ RECV R1, 0x0701
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R2, R1
+        ䷓ CONTEMPLATE R3
+        ䷬ GATHER R4, R3
+        ䷨ REDUCE R5, R4
+        ䷩ INCREASE R6, R5
+        ䷏ SPECULATE R7, R6
+        ䷌ FELLOWSHIP R8, R7
+        ䷫ MATE R9, R10
+        ䷑ MUT R11, 0x04
+        ䷍ ABUNDANCE R12, R11
+        ䷆ BRANCH R13, R12
+        ䷾ SYNC
+        ䷗ RETURN R13
+    }
+}
+
+@locus evolution.elite.preserve {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_size + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0800
+        ䷁ RECV R1, 0x0801
+        ䷓ CONTEMPLATE R0
+        ䷌ FELLOWSHIP R2, R0
+        ䷐ FOLLOWING R3, R2
+        ䷍ ABUNDANCE R4, R3
+        ䷆ BRANCH R5, R4
+        ䷾ SYNC
+        ䷗ RETURN R5
     }
 }
 
@@ -207,31 +443,195 @@
 
     卦序: {
         ䷁ RECV R0, 0x0600
+        ䷁ RECV R1, 0x0601
         ䷓ CONTEMPLATE R0
-        ䷬ GATHER R1, R0
-        ䷨ REDUCE R2, R1
-        ䷆ BRANCH R3, R2
+        ䷓ CONTEMPLATE R1
+        ䷨ REDUCE R2, R0
+        ䷨ REDUCE R3, R1
+        ䷩ INCREASE R4, R2
+        ䷏ SPECULATE R5, R4
+        ䷬ GATHER R6, R5
+        ䷆ BRANCH R7, R6
         ䷾ SYNC
-        ䷗ RETURN R3
+        ䷗ RETURN R7
     }
 }
 
-@locus evolution.generation.evolve {
+@locus evolution.diversity.calculate {
     mut_rate   = 0.005
     cross_pool = "evolution_core"
-    fitness    = max_throughput + min_energy
+    fitness    = min_latency + max_throughput
     env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
     max_generations = 50
 
     卦序: {
+        ䷁ RECV R0, 0x0900
         ䷓ CONTEMPLATE R0
         ䷌ FELLOWSHIP R1, R0
-        ䷏ SPECULATE R2, R1
-        ䷫ MATE R3, R4
-        ䷑ MUT R5, 0x04
-        ䷬ GATHER R6, R5
-        ䷨ REDUCE R7, R6
+        ䷐ FOLLOWING R2, R1
+        ䷏ SPECULATE R3, R2
+        ䷬ GATHER R4, R3
+        ䷨ REDUCE R5, R4
+        ䷩ INCREASE R6, R5
+        ䷍ ABUNDANCE R7, R6
         ䷆ BRANCH R8, R7
+        ䷾ SYNC
+        ䷗ RETURN R8
+    }
+}
+
+@locus evolution.population.sort {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0A00
+        ䷓ CONTEMPLATE R0
+        ䷨ REDUCE R1, R0
+        ䷩ INCREASE R2, R1
+        ䷏ SPECULATE R3, R2
+        ䷌ FELLOWSHIP R4, R3
+        ䷐ FOLLOWING R5, R4
+        ䷆ BRANCH R6, R5
+        ䷍ ABUNDANCE R7, R6
+        ䷾ SYNC
+        ䷗ RETURN R7
+    }
+}
+
+@locus evolution.history.record {
+    mut_rate   = 0.005
+    cross_pool = "evolution_core"
+    fitness    = min_size + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 50
+
+    卦序: {
+        ䷁ RECV R0, 0x0B00
+        ䷓ CONTEMPLATE R0
+        ䷬ GATHER R1, R0
+        ䷨ REDUCE R2, R1
+        ䷩ INCREASE R3, R2
+        ䷍ ABUNDANCE R4, R3
+        ䷐ FOLLOWING R5, R4
+        ䷾ SYNC
+        ䷗ RETURN R5
+    }
+}
+
+@meta_locus evolution.meta.adaptive_mutation {
+    mut_rate   = 0.01
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CURRENT_MUT_RATE
+        ䷁ RECV R1, env::FITNESS_TREND
+        ䷁ RECV R2, env::GENERATION
+        ䷁ RECV R3, env::POPULATION_DIVERSITY
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷓ CONTEMPLATE R3
+        ䷨ REDUCE R4, R1
+        ䷏ SPECULATE R5, R3
+        ䷆ BRANCH R6, R4
+        ䷑ MUT R0, 0x02
+        ䷆ BRANCH R7, R5
+        ䷑ MUT R0, 0x01
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@meta_locus evolution.meta.adaptive_crossover {
+    mut_rate   = 0.01
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CURRENT_CROSS_RATE
+        ䷁ RECV R1, env::GENERATION
+        ䷁ RECV R2, env::BEST_FITNESS_DELTA
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷨ REDUCE R3, R2
+        ䷏ SPECULATE R4, R3
+        ䷆ BRANCH R5, R4
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@meta_locus evolution.meta.early_stopping {
+    mut_rate   = 0.005
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::GENERATION
+        ䷁ RECV R1, env::FITNESS_HISTORY
+        ䷁ RECV R2, env::MAX_GENERATIONS
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷬ GATHER R3, R1
+        ䷨ REDUCE R4, R3
+        ䷏ SPECULATE R5, R4
+        ䷆ BRANCH R6, R5
+        ䷾ SYNC
+        ䷗ RETURN R6
+    }
+}
+
+@meta_locus evolution.meta.dynamic_population {
+    mut_rate   = 0.008
+    fitness    = min_energy + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CURRENT_POP_SIZE
+        ䷁ RECV R1, env::GENERATION
+        ䷁ RECV R2, env::CONVERGENCE_SCORE
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷨ REDUCE R3, R2
+        ䷏ SPECULATE R4, R3
+        ䷆ BRANCH R5, R4
+        ䷀ CREA R6, @population_expand
+        ䷆ BRANCH R7, R5
+        ䷂ ALLOC R8, 0x200
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@meta_locus evolution.meta.fitness_weights {
+    mut_rate   = 0.01
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CURRENT_WEIGHTS
+        ䷁ RECV R1, env::PLATFORM_PROFILE
+        ䷁ RECV R2, env::GENERATION
+        ䷓ CONTEMPLATE R0
+        ䷓ CONTEMPLATE R1
+        ䷓ CONTEMPLATE R2
+        ䷌ FELLOWSHIP R3, R1
+        ䷏ SPECULATE R4, R3
+        ䷑ MUT R0, 0x04
         ䷾ SYNC
         ䷗ RETURN R0
     }

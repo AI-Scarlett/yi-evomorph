@@ -4,7 +4,7 @@
 
 易衍（Evomorph）是一种基于《易经》六十四卦的进化编程语言。每条指令的操作码等于其对应卦象的六爻二进制值，代码通过遗传算法自动进化优化，适应不同目标平台。
 
-**当前版本**: v0.0.3
+**当前版本**: v0.0.4
 
 ## 特性
 
@@ -350,7 +350,7 @@ evo-ai
 ```
 evomorph/
 ├── evomorph/
-│   ├── __init__.py              # 版本定义 (v0.0.3)
+│   ├── __init__.py              # 版本定义 (v0.0.4)
 │   ├── cli/evo_ai.py             # AI 编程 CLI（交互式 Shell）
 │   ├── prompts/system_prompt.md  # LLM 系统提示词
 │   ├── lsp/language_server.py    # LSP 语言服务器
@@ -444,6 +444,55 @@ python3 -m pytest tests/ -v
 ```
 
 ## 更新日志
+
+### v0.0.4 (2026-05-04)
+
+#### 新增功能
+- **🚀 原生Evomorph运行时** (`evomorph/native/runtime/`)
+  - 完整的C语言虚拟机实现，包含64卦指令集处理器
+  - 集成式进化引擎：与虚拟机共享状态，提供原生性能
+  - 支持多种选择算法：轮盘赌、锦标赛、排名选择
+  - 支持多种交叉算子：单点、两点、均匀交叉
+  - 支持多种变异算子：爻位翻转、修饰符变异
+  - 完整的进化循环：精英保留、种群更新、收敛检测
+
+- **🧬 Evomorph版进化引擎重构** (`evomorph/evolution/evolution_core.evo`)
+  - 完全重构自Python EvolutionEngine
+  - 30+个基因座，覆盖完整进化流程
+  - 5个元基因座，支持自适应进化策略
+  - 基因座分类：配置、种群、选择、交叉、变异、适应度、进化循环、收敛、多样性、历史记录
+
+- **🛠️ 新增测试程序** (`evomorph/native/runtime/test_runtime.c`)
+  - 虚拟机基本功能测试
+  - 进化配置测试
+  - 种群管理测试
+  - 进化算子测试
+  - 完整进化流程测试
+
+#### 原生运行时数据结构
+```c
+/* 基因指令：操作码=爻位二进制 */
+typedef struct {
+    uint8_t opcode;      /* 0-63 (六爻二进制) */
+    uint8_t modifier;    /* 修饰符 */
+    uint8_t operands[2]; /* 操作数 */
+} EvoGeneInstruction;
+
+/* 虚拟机：集成进化引擎 */
+typedef struct {
+    uint32_t registers[16];  /* 16个通用寄存器 */
+    uint8_t* stack;          /* 栈 (64KB) */
+    uint8_t* heap;           /* 堆 (16MB) */
+    /* 进化引擎状态 */
+    EvoPopulation* population;
+    EvoEvolutionConfig* evo_config;
+    uint32_t current_generation;
+    EvoIndividual* best_ever;
+} EvoVM;
+```
+
+#### 版本号更新
+- 所有版本号从 "0.0.3" 更新为 "0.0.4"
 
 ### v0.0.3 (2026-05-04)
 

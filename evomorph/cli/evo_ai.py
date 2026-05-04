@@ -935,14 +935,14 @@ def print_banner():
     if HAS_RICH:
         banner = Text()
         banner.append("  易衍 · Evomorph ", style="bold cyan")
-        banner.append("v0.0.3", style="dim")
+        banner.append("v0.0.4", style="dim")
         console.print()
         console.print(Panel(banner, border_style="cyan", padding=(0, 2)))
         console.print("  自然语言编程  │  / 命令菜单  │  Ctrl+C 打断", style="dim")
         console.print()
     else:
         print()
-        print("\033[36m  易衍 · Evomorph  v0.0.3\033[0m")
+        print("\033[36m  易衍 · Evomorph  v0.0.4\033[0m")
         print("  自然语言编程  │  / 命令菜单  │  Ctrl+C 打断")
         print()
 
