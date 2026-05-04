@@ -1,0 +1,166 @@
+; ============================================================
+; 易衍·Evomorph 简单测试
+; 验证字符串比较功能
+; ============================================================
+
+; ========== 常量定义 ==========
+SYS_STRCMP  EQU 21
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+; ========== 宏：加载小立即数 ==========
+%macro LOAD_0 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro LOAD_1 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro LOAD_10 1
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro PTR_INC 1
+    LOAD_1 R1
+    INCREASE %1, R1
+%endmacro
+
+; ========== 主程序 ==========
+main:
+    ; ===== 分配缓冲区 =====
+    ALLOC R0, 0                 ; R0 = 缓冲区 1 (256 字节)
+    FELLOWSHIP R14, R0          ; R14 = 保存缓冲区 1 地址
+    
+    ALLOC R0, 0                 ; R0 = 缓冲区 2 (256 字节)
+    FELLOWSHIP R15, R0          ; R15 = 保存缓冲区 2 地址
+    
+    ; ===== 构建 "A" 到缓冲区 1 =====
+    FELLOWSHIP R0, R14          ; R0 = 缓冲区 1
+    
+    ABOUND R1, 65               ; 'A' = 65
+    DISPERSE R0, R1
+    PTR_INC R0
+    
+    LOAD_0 R1
+    DISPERSE R0, R1
+    
+    ; ===== 构建 "A" 到缓冲区 2 =====
+    FELLOWSHIP R0, R15          ; R0 = 缓冲区 2
+    
+    ABOUND R1, 65               ; 'A' = 65
+    DISPERSE R0, R1
+    PTR_INC R0
+    
+    LOAD_0 R1
+    DISPERSE R0, R1
+    
+    ; ===== 比较两个字符串 =====
+    FELLOWSHIP R1, R14
+    FELLOWSHIP R2, R15
+    ABOUND R0, SYS_STRCMP
+    RECV R0, 0
+    ; R0 = 0 表示相等
+    
+    ; ===== 根据 R0 的值决定打印什么 =====
+    ; 如果 R0 == 0，打印 "PASS\n"
+    ; 否则打印 "FAIL\n"
+    
+    ; 检查 R0 == 0
+    ; BRANCH 在非零时跳转
+    ; 所以如果 R0 == 0，不跳转
+    ; 如果 R0 != 0，跳转到 fail 代码
+    
+    ; 注意：BRANCH 目标只能是 8 位 (0-255)
+    ; 所以我们需要把跳转目标放在附近
+    
+    BRANCH R0, do_fail
+    
+    ; ===== R0 == 0，打印 "PASS\n" =====
+    ; 首先构建字符串
+    ALLOC R0, 0                 ; 分配结果缓冲区
+    FELLOWSHIP R10, R0          ; R10 = 缓冲区指针
+    FELLOWSHIP R11, R0          ; R11 = 保存起始地址
+    
+    ABOUND R1, 80                ; 'P' = 80
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 65                ; 'A' = 65
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 83                ; 'S' = 83
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 83                ; 'S' = 83
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R11
+    RECV R0, 0
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+    
+    HALT
+
+do_fail:
+    ; ===== R0 != 0，打印 "FAIL\n" =====
+    ALLOC R0, 0                 ; 分配结果缓冲区
+    FELLOWSHIP R10, R0          ; R10 = 缓冲区指针
+    FELLOWSHIP R11, R0          ; R11 = 保存起始地址
+    
+    ABOUND R1, 70                ; 'F' = 70
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 65                ; 'A' = 65
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 73                ; 'I' = 73
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 76                ; 'L' = 76
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R11
+    RECV R0, 0
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

@@ -1,0 +1,720 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍编译器自举实现 - 完整版本"
+    "道枢自举：编译器用自身之语言书写自身"
+    "此文件包含：词法分析器、语法分析器、代码生成器、虚拟机核心、标准库"
+    "目标：完全摆脱Python/C/JavaScript依赖，实现真正的自举"
+}
+
+@meta_locus 编译器.全局配置 {
+    mut_rate = 0.001
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷂ ALLOC R0, 0x04
+        ䷍ ABUNDANCE R0, 0x03
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.core.memory_copy {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SRC_ADDR
+        ䷁ RECV R1, env::DST_ADDR
+        ䷁ RECV R2, env::LENGTH
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R_copy_loop
+        ䷗ RETURN
+        ䷁ RECV R3, env::SRC_ADDR
+        ䷈ PREFETCH R3
+        ䷍ ABUNDANCE R1, R3
+        ䷉ STEP R0
+        ䷉ STEP R1
+        ䷨ REDUCE R2, 0x01
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.core.memory_compare {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SRC1
+        ䷁ RECV R1, env::SRC2
+        ䷁ RECV R2, env::LENGTH
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R_cmp_loop
+        ䷍ ABUNDANCE R3, 0x00
+        ䷗ RETURN
+        ䷁ RECV R4, env::SRC1
+        ䷁ RECV R5, env::SRC2
+        ䷈ PREFETCH R4
+        ䷈ PREFETCH R5
+        ䷔ BITE R4, R5
+        ䷆ BRANCH R_not_equal
+        ䷉ STEP R0
+        ䷉ STEP R1
+        ䷨ REDUCE R2, 0x01
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.core.string_length {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STR_ADDR
+        ䷂ ALLOC R1, 0x04
+        ䷍ ABUNDANCE R1, 0x00
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_len_loop
+        ䷍ ABUNDANCE R0, R1
+        ䷗ RETURN
+        ䷁ RECV R2, env::STR_ADDR
+        ䷈ PREFETCH R2
+        ䷔ BITE R2, 0x00
+        ䷆ BRANCH R_end_of_string
+        ䷉ STEP R0
+        ䷉ STEP R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.init {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x04
+        ䷂ ALLOC R1, 0x04
+        ䷂ ALLOC R2, 0x04
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R0, 0x00
+        ䷍ ABUNDANCE R1, 0x01
+        ䷍ ABUNDANCE R2, 0x01
+        ䷍ ABUNDANCE R3, 0x00
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.is_whitespace {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷔ BITE R0, 0x20
+        ䷆ BRANCH R_is_space
+        ䷔ BITE R0, 0x09
+        ䷆ BRANCH R_is_tab
+        ䷔ BITE R0, 0x0D
+        ䷆ BRANCH R_is_cr
+        ䷍ ABUNDANCE R1, 0x00
+        ䷗ RETURN
+        ䷍ ABUNDANCE R1, 0x01
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.is_digit {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷔ BITE R0, 0x30
+        ䷆ BRANCH R_below_zero
+        ䷔ BITE R0, 0x39
+        ䷆ BRANCH R_above_nine
+        ䷍ ABUNDANCE R1, 0x01
+        ䷗ RETURN
+        ䷍ ABUNDANCE R1, 0x00
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.is_alpha {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷔ BITE R0, 0x41
+        ䷆ BRANCH R_below_A
+        ䷔ BITE R0, 0x5A
+        ䷆ BRANCH R_above_Z
+        ䷍ ABUNDANCE R1, 0x01
+        ䷗ RETURN
+        ䷔ BITE R0, 0x61
+        ䷆ BRANCH R_below_a
+        ䷔ BITE R0, 0x7A
+        ䷆ BRANCH R_above_z
+        ䷍ ABUNDANCE R1, 0x01
+        ䷗ RETURN
+        ䷔ BITE R0, 0x5F
+        ䷆ BRANCH R_is_underscore
+        ䷍ ABUNDANCE R1, 0x00
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.scan_identifier {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_PTR
+        ䷂ ALLOC R1, 0x40
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 0x00
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_id_loop
+        ䷍ ABUNDANCE R0, R1
+        ䷗ RETURN
+        ䷁ RECV R3, env::SOURCE_PTR
+        ䷈ PREFETCH R3
+        ䷀ CREA R4, @is_alpha
+        ䷔ BITE R1, 0x00
+        ䷆ BRANCH R_alpha_false
+        ䷀ CREA R4, @is_digit
+        ䷔ BITE R1, 0x00
+        ䷆ BRANCH R_digit_false
+        ䷍ ABUNDANCE R1, R3
+        ䷉ STEP R0
+        ䷉ STEP R1
+        ䷉ STEP R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.scan_number {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_PTR
+        ䷂ ALLOC R1, 0x20
+        ䷂ ALLOC R2, 0x04
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R2, 0x00
+        ䷍ ABUNDANCE R3, 0x0A
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_num_loop
+        ䷍ ABUNDANCE R0, R1
+        ䷗ RETURN
+        ䷁ RECV R4, env::SOURCE_PTR
+        ䷈ PREFETCH R4
+        ䷀ CREA R5, @is_digit
+        ䷔ BITE R1, 0x00
+        ䷆ BRANCH R_not_digit
+        ䷍ ABUNDANCE R1, R4
+        ䷉ STEP R0
+        ䷉ STEP R1
+        ䷉ STEP R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.scan_string {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_PTR
+        ䷂ ALLOC R1, 0x100
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 0x00
+        ䷉ STEP R0
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_str_loop
+        ䷍ ABUNDANCE R0, R1
+        ䷗ RETURN
+        ䷁ RECV R3, env::SOURCE_PTR
+        ䷈ PREFETCH R3
+        ䷔ BITE R3, 0x22
+        ䷆ BRANCH R_end_quote
+        ䷔ BITE R3, 0x5C
+        ䷆ BRANCH R_escape_char
+        ䷍ ABUNDANCE R1, R3
+        ䷉ STEP R0
+        ䷉ STEP R1
+        ䷉ STEP R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.init {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x04
+        ䷂ ALLOC R1, 0x04
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R0, 0x00
+        ䷍ ABUNDANCE R1, 0x00
+        ䷍ ABUNDANCE R2, 0x00
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_program {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TOKEN_STREAM
+        ䷂ ALLOC R1, 0x1000
+        ䷌ FELLOWSHIP R0, R1
+        ䷉ STEP R0
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_check_evolang
+        ䷆ BRANCH R_check_locus
+        ䷆ BRANCH R_check_meta_locus
+        ䷆ BRANCH R_check_xiangci
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_locus {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_KW
+        ䷁ RECV R1, env::LOCUS_NAME
+        ䷂ ALLOC R2, 0x200
+        ䷌ FELLOWSHIP R0, R2
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R_parse_locus_attrs
+        ䷆ BRANCH R_parse_guaxu
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.init {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x04
+        ䷂ ALLOC R1, 0x04
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R0, 0x00
+        ䷍ ABUNDANCE R1, 0x00
+        ䷍ ABUNDANCE R2, 0x00
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.emit_header {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x10
+        ䷍ ABUNDANCE R0, 0x45
+        ䷍ ABUNDANCE R0, 0x56
+        ䷍ ABUNDANCE R0, 0x4F
+        ䷍ ABUNDANCE R0, 0x42
+        ䷍ ABUNDANCE R0, 0x00
+        ䷍ ABUNDANCE R0, 0x03
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.encode_instruction {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPCODE
+        ䷁ RECV R1, env::MODIFIER
+        ䷁ RECV R2, env::OP1
+        ䷁ RECV R3, env::OP2
+        ䷂ ALLOC R4, 0x04
+        ䷩ INCREASE R0, R1
+        ䷍ ABUNDANCE R4, R0
+        ䷍ ABUNDANCE R4, R2
+        ䷍ ABUNDANCE R4, R3
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.init {
+    mut_rate   = 0.005
+    cross_pool = "vm_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x40
+        ䷂ ALLOC R1, 0x10000
+        ䷂ ALLOC R2, 0x100000
+        ䷍ ABUNDANCE R0, 0x00
+        ䷍ ABUNDANCE R1, 0x00
+        ䷍ ABUNDANCE R2, 0x00
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.load_program {
+    mut_rate   = 0.01
+    cross_pool = "vm_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::BYTECODE
+        ䷁ RECV R1, env::BYTECODE_LEN
+        ䷂ ALLOC R2, 0x100000
+        ䷌ FELLOWSHIP R0, R2
+        ䷉ STEP R0
+        ䷓ CONTEMPLATE R0
+        ䷍ ABUNDANCE R2, R0
+        ䷉ STEP R2
+        ䷨ REDUCE R1, 0x01
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.step {
+    mut_rate   = 0.01
+    cross_pool = "vm_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PC
+        ䷁ RECV R1, env::PROGRAM
+        ䷂ ALLOC R2, 0x08
+        ䷈ PREFETCH R1
+        ䷍ ABUNDANCE R2, R1
+        ䷆ BRANCH R_decode_opcode
+        ䷆ BRANCH R_decode_modifier
+        ䷆ BRANCH R_read_operands
+        ䷆ BRANCH R_execute_op
+        ䷉ STEP R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_crea {
+    mut_rate   = 0.005
+    cross_pool = "vm_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DST_REG
+        ䷁ RECV R1, env::THREAD_COUNTER
+        ䷉ STEP R1
+        ䷍ ABUNDANCE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_alloc {
+    mut_rate   = 0.005
+    cross_pool = "vm_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::DST_REG
+        ䷁ RECV R1, env::SIZE
+        ䷁ RECV R2, env::HEAP_PTR
+        ䷩ INCREASE R2, R1
+        ䷍ ABUNDANCE R0, R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_branch {
+    mut_rate   = 0.005
+    cross_pool = "vm_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::COND_REG
+        ䷁ RECV R1, env::TARGET_ADDR
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_condition_true
+        ䷗ RETURN
+        ䷍ ABUNDANCE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_sync {
+    mut_rate   = 0.005
+    cross_pool = "vm_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::BARRIER_ID
+        ䷁ RECV R1, env::BARRIER_COUNT
+        ䷉ STEP R1
+        ䷍ ABUNDANCE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.run {
+    mut_rate   = 0.02
+    cross_pool = "vm_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::MAX_CYCLES
+        ䷂ ALLOC R1, 0x04
+        ䷍ ABUNDANCE R1, 0x00
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_run_loop
+        ䷀ CREA R2, @step
+        ䷉ STEP R1
+        ䷨ REDUCE R0, 0x01
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.string.concat {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STR1
+        ䷁ RECV R1, env::STR2
+        ䷂ ALLOC R2, 0x200
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.string.compare {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::STR1
+        ䷁ RECV R1, env::STR2
+        ䷀ CREA R2, @memory_compare
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.io.print {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PRINT_VALUE
+        ䷝ ILLUMINATE R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.math.add {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::A
+        ䷁ RECV R1, env::B
+        ䷩ INCREASE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.math.sub {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::A
+        ䷁ RECV R1, env::B
+        ䷨ REDUCE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.math.and {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::A
+        ䷁ RECV R1, env::B
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.math.or {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::A
+        ䷁ RECV R1, env::B
+        ䷇ MERGE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.math.xor {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::A
+        ䷁ RECV R1, env::B
+        ䷕ ADORN R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.math.shl {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VALUE
+        ䷁ RECV R1, env::SHIFT
+        ䷈ PREFETCH R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.stdlib.math.shr {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VALUE
+        ䷁ RECV R1, env::SHIFT
+        ䷊ FLUSH R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.compile {
+    mut_rate   = 0.02
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_CODE
+        ䷀ CREA R1, @lexer.init
+        ䷀ CREA R2, @lexer.tokenize
+        ䷀ CREA R3, @parser.init
+        ䷀ CREA R4, @parser.parse_program
+        ䷀ CREA R5, @codegen.init
+        ䷀ CREA R6, @codegen.full_pass
+        ䷌ FELLOWSHIP R2, R4
+        ䷌ FELLOWSHIP R4, R6
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.self_compile {
+    mut_rate   = 0.02
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SELF_SOURCE
+        ䷀ CREA R1, @compile
+        ䷁ RECV R2, env::OUTPUT_EVB
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 自举编译器.变异策略 {
+    mut_rate = 0.005
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 自举编译器.选择策略 {
+    mut_rate = 0.003
+    fitness  = max_throughput
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷏ SPECULATE R1
+        ䷾ SYNC
+        ䷗ RETURN
+    }
+}

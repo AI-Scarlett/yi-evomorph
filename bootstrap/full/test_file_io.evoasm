@@ -1,0 +1,126 @@
+; ============================================================
+; 易衍·Evomorph EvoASM 文件 IO 测试程序
+; 测试：打开、读取、写入、关闭文件
+; ============================================================
+
+; ========== 常量定义 ==========
+SYS_OPEN    EQU 0
+SYS_READ    EQU 1
+SYS_WRITE   EQU 2
+SYS_CLOSE   EQU 3
+SYS_PRINT   EQU 40
+SYS_MALLOC  EQU 10
+SYS_EXIT    EQU 255
+
+MODE_READ   EQU 0
+MODE_WRITE  EQU 1
+MODE_RW     EQU 2
+
+BUF_SIZE    EQU 256
+
+; ========== 内存地址 ==========
+; 数据区从 0x00120000 开始
+FILENAME_IN  EQU 0x00120000   ; 输入文件名
+FILENAME_OUT EQU 0x00120100   ; 输出文件名
+BUFFER       EQU 0x00120200   ; 缓冲区
+MSG_SUCCESS  EQU 0x00120300   ; 成功消息
+MSG_ERROR    EQU 0x00120400   ; 错误消息
+
+; ========== 宏定义 ==========
+%macro PRINT 1
+    ABOUND R0, SYS_PRINT
+    ABOUND R1, %1
+    RECV R0, 0
+%endmacro
+
+%macro SYSCALL3 3
+    ABOUND R0, %1
+    ABOUND R1, %2
+    ABOUND R2, %3
+    RECV R0, 0
+%endmacro
+
+; ========== 程序入口 ==========
+; 首先设置文件名和消息字符串
+; 注意：在实际运行时，这些字符串需要预先加载到内存中
+; 这里我们使用 C 虚拟机可以直接访问的内存地址
+
+; 步骤 1: 打印开始消息
+PRINT MSG_SUCCESS
+
+; 步骤 2: 打开输出文件 (写入模式)
+ABOUND R0, SYS_OPEN
+ABOUND R1, FILENAME_OUT
+ABOUND R2, MODE_WRITE
+RECV R0, 0
+ABOUND R10, R0         ; R10 = 输出文件描述符
+
+; 检查是否打开成功
+CMP R10, 0
+BRANCH R0, open_error   ; 如果返回 0，打开失败
+
+; 步骤 3: 准备要写入的数据
+; 模拟数据: "Hello, Evomorph!\n"
+; 在实际场景中，这些数据会通过其他方式加载
+
+; 步骤 4: 写入文件
+ABOUND R0, SYS_WRITE
+ABOUND R1, R10
+ABOUND R2, BUFFER
+ABOUND R3, 17           ; 写入 17 字节
+RECV R0, 0
+
+; 步骤 5: 关闭输出文件
+ABOUND R0, SYS_CLOSE
+ABOUND R1, R10
+RECV R0, 0
+
+; 步骤 6: 打开输入文件 (读取模式)
+ABOUND R0, SYS_OPEN
+ABOUND R1, FILENAME_OUT
+ABOUND R2, MODE_READ
+RECV R0, 0
+ABOUND R11, R0         ; R11 = 输入文件描述符
+
+CMP R11, 0
+BRANCH R0, open_error
+
+; 步骤 7: 读取文件内容
+ABOUND R0, SYS_READ
+ABOUND R1, R11
+ABOUND R2, BUFFER
+ABOUND R3, BUF_SIZE
+RECV R0, 0
+ABOUND R12, R0         ; R12 = 读取的字节数
+
+; 步骤 8: 关闭输入文件
+ABOUND R0, SYS_CLOSE
+ABOUND R1, R11
+RECV R0, 0
+
+; 步骤 9: 验证读取的数据
+; R12 应该等于 17
+ABOUND R13, 17
+CMP R12, R13
+BRANCH R0, verify_error
+
+; 成功！
+ABOUND R14, 1           ; R14 = 1 表示成功
+BRANCH R14, end_program
+
+open_error:
+ABOUND R14, 2           ; R14 = 2 表示打开错误
+BRANCH R14, end_program
+
+verify_error:
+ABOUND R14, 3           ; R14 = 3 表示验证错误
+
+end_program:
+; 打印结果状态
+PRINT MSG_SUCCESS
+
+; 退出
+ABOUND R0, SYS_EXIT
+RECV R0, 0
+
+HALT

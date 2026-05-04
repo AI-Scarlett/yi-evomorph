@@ -1,0 +1,406 @@
+; ============================================================
+; 易衍·Evomorph EvoASM 词法分析器
+; 用 EvoASM 编写的完整词法分析器
+; ============================================================
+;
+; Token 类型定义 (存储在 R5 中):
+;   0 = TOKEN_EOF
+;   1 = TOKEN_MNEMONIC
+;   2 = TOKEN_REGISTER
+;   3 = TOKEN_NUMBER
+;   4 = TOKEN_IDENTIFIER
+;   5 = TOKEN_LABEL
+;   6 = TOKEN_COMMA
+;   7 = TOKEN_COLON
+;   8 = TOKEN_COMMENT
+;   9 = TOKEN_ERROR
+;
+; 寄存器使用:
+;   R0  = 临时 / 系统调用号
+;   R1  = 参数1 / 字符
+;   R2  = 参数2 / 临时
+;   R3  = 参数3 / 临时
+;   R4  = 当前位置指针
+;   R5  = 当前 Token 类型
+;   R6  = Token 值缓冲区指针
+;   R7  = 行号
+;   R8  = 列号
+;   R9  = 临时保存
+;   R10 = 临时保存
+;   R11 = 临时保存
+;   R12 = 输入源起始地址
+;   R13 = 输入源结束地址
+;   R14 = 标志位
+;   R15 = 返回值
+;
+; ============================================================
+
+; ========== 常量定义 ==========
+SYS_READ    EQU 1
+SYS_MALLOC  EQU 10
+SYS_MEMCPY  EQU 12
+SYS_MEMSET  EQU 13
+SYS_MEMCMP  EQU 14
+SYS_STRLEN  EQU 20
+SYS_STRCMP  EQU 21
+SYS_STRCPY  EQU 22
+SYS_ISDIGIT EQU 30
+SYS_ISALPHA EQU 31
+SYS_ISALNUM EQU 32
+SYS_ISSPACE EQU 33
+SYS_TOUPPER EQU 34
+SYS_TOLOWER EQU 35
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+TOKEN_EOF       EQU 0
+TOKEN_MNEMONIC  EQU 1
+TOKEN_REGISTER  EQU 2
+TOKEN_NUMBER    EQU 3
+TOKEN_IDENTIFIER EQU 4
+TOKEN_LABEL     EQU 5
+TOKEN_COMMA     EQU 6
+TOKEN_COLON     EQU 7
+TOKEN_COMMENT   EQU 8
+TOKEN_ERROR     EQU 9
+
+; ========== 内存布局 ==========
+INPUT_BUFFER    EQU 0x00120000   ; 输入缓冲区 (64KB)
+TOKEN_BUFFER    EQU 0x00121000   ; Token 缓冲区 (256 字节)
+SCRATCH_BUFFER  EQU 0x00121100   ; 临时缓冲区
+MNEMONIC_TABLE  EQU 0x00122000   ; 助记符表 (64 个条目)
+
+; ========== 助记符表 ==========
+; 格式: "NAME\0opcode" (最多 8 字符名称 + 1 字节操作码)
+; 这部分在运行时需要初始化
+
+; ========== 宏定义 ==========
+%macro PEEK_CHAR 0
+    ; 读取当前字符，不移动指针
+    ; 结果在 R1
+    ABOUND R0, 0
+    ABOUND R1, R4
+    PENETRATE R0, R1    ; R0 = *R4
+    FELLOWSHIP R1, R0
+%endmacro
+
+%macro NEXT_CHAR 0
+    ; 读取当前字符并移动指针
+    PEEK_CHAR
+    INCREASE R4, 1      ; R4++
+    INCREASE R8, 1      ; 列号++
+%endmacro
+
+%macro SKIP_WHILE_SPACE 0
+    ; 跳过空白字符
+skip_space_loop:
+    PEEK_CHAR
+    ABOUND R0, SYS_ISSPACE
+    RECV R0, 0          ; R0 = isspace(R1)
+    CMP R0, 0
+    BRANCH R0, skip_space_done
+    NEXT_CHAR
+    BRANCH R1, skip_space_loop
+skip_space_done:
+%endmacro
+
+%macro IS_AT_END 0
+    ; 检查是否到达输入结束
+    ; 结果在 R0: 1=结束, 0=未结束
+    CMP R4, R13
+    BRANCH R0, is_at_end_false
+    ABOUND R0, 1
+    BRANCH R0, is_at_end_done
+is_at_end_false:
+    ABOUND R0, 0
+is_at_end_done:
+%endmacro
+
+; ========== 程序入口 ==========
+; 初始化
+ABOUND R7, 1          ; 行号 = 1
+ABOUND R8, 1          ; 列号 = 1
+ABOUND R12, INPUT_BUFFER ; 输入起始
+ABOUND R13, INPUT_BUFFER ; 输入结束 (需要实际设置)
+ABOUND R4, R12        ; 当前指针 = 起始
+
+; 初始化助记符表
+; 注意：实际运行时需要填充这个表
+; 这里简化处理，使用硬编码的助记符识别
+
+; ========== 主词法分析循环 ==========
+lexer_main_loop:
+    SKIP_WHILE_SPACE
+    
+    ; 检查是否结束
+    IS_AT_END
+    CMP R0, 0
+    BRANCH R0, lexer_not_eof
+    
+    ; 到达 EOF
+    ABOUND R5, TOKEN_EOF
+    BRANCH R0, lexer_done
+
+lexer_not_eof:
+    ; 读取下一个字符
+    NEXT_CHAR
+    
+    ; 检查字符类型
+    ; 首先检查是否是注释 (;)
+    ABOUND R0, ';'
+    CMP R1, R0
+    BRANCH R0, not_comment
+    
+    ; 这是注释，跳过直到行尾
+    BRANCH R0, parse_comment
+
+not_comment:
+    ; 检查是否是逗号
+    ABOUND R0, ','
+    CMP R1, R0
+    BRANCH R0, not_comma
+    
+    ; 逗号 Token
+    ABOUND R5, TOKEN_COMMA
+    BRANCH R0, lexer_main_loop
+
+not_comma:
+    ; 检查是否是冒号
+    ABOUND R0, ':'
+    CMP R1, R0
+    BRANCH R0, not_colon
+    
+    ; 冒号 Token
+    ABOUND R5, TOKEN_COLON
+    BRANCH R0, lexer_main_loop
+
+not_colon:
+    ; 检查是否是数字
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, not_number
+    
+    ; 解析数字
+    BRANCH R0, parse_number
+
+not_number:
+    ; 检查是否是字母 (标识符/助记符/寄存器)
+    ABOUND R0, SYS_ISALPHA
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, not_identifier
+    
+    ; 解析标识符
+    BRANCH R0, parse_identifier
+
+not_identifier:
+    ; 未知字符
+    ABOUND R5, TOKEN_ERROR
+    BRANCH R0, lexer_main_loop
+
+; ========== 解析注释 ==========
+parse_comment:
+    ; 跳过直到换行或 EOF
+parse_comment_loop:
+    IS_AT_END
+    CMP R0, 0
+    BRANCH R0, parse_comment_check_char
+    
+    ; EOF，结束
+    ABOUND R5, TOKEN_COMMENT
+    BRANCH R0, lexer_main_loop
+
+parse_comment_check_char:
+    PEEK_CHAR
+    ABOUND R0, 10      ; 换行符
+    CMP R1, R0
+    BRANCH R0, parse_comment_not_newline
+    
+    ; 遇到换行符，增加行号
+    INCREASE R7, 1
+    ABOUND R8, 1
+    NEXT_CHAR
+    ABOUND R5, TOKEN_COMMENT
+    BRANCH R0, lexer_main_loop
+
+parse_comment_not_newline:
+    NEXT_CHAR
+    BRANCH R0, parse_comment_loop
+
+; ========== 解析数字 ==========
+parse_number:
+    ; 保存第一个字符
+    ABOUND R6, TOKEN_BUFFER
+    ABOUND R0, R1
+    DISPERSE R6, R0     ; *R6 = R1
+    INCREASE R6, 1
+    
+parse_number_loop:
+    IS_AT_END
+    CMP R0, 0
+    BRANCH R0, parse_number_check_digit
+    
+    ; EOF
+    ABOUND R0, 0
+    DISPERSE R6, R0     ; 字符串结束符
+    ABOUND R5, TOKEN_NUMBER
+    BRANCH R0, lexer_main_loop
+
+parse_number_check_digit:
+    PEEK_CHAR
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, parse_number_done
+    
+    ; 是数字，继续
+    NEXT_CHAR
+    ABOUND R0, R1
+    DISPERSE R6, R0
+    INCREASE R6, 1
+    BRANCH R0, parse_number_loop
+
+parse_number_done:
+    ABOUND R0, 0
+    DISPERSE R6, R0     ; 字符串结束符
+    ABOUND R5, TOKEN_NUMBER
+    BRANCH R0, lexer_main_loop
+
+; ========== 解析标识符 ==========
+parse_identifier:
+    ; 保存第一个字符
+    ABOUND R6, TOKEN_BUFFER
+    ABOUND R0, R1
+    DISPERSE R6, R0
+    INCREASE R6, 1
+    
+parse_identifier_loop:
+    IS_AT_END
+    CMP R0, 0
+    BRANCH R0, parse_identifier_check_char
+    
+    ; EOF
+    ABOUND R0, 0
+    DISPERSE R6, R0
+    BRANCH R0, check_identifier_type
+
+parse_identifier_check_char:
+    PEEK_CHAR
+    
+    ; 检查是否是字母数字或下划线
+    ABOUND R0, SYS_ISALNUM
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, parse_identifier_check_underscore
+    
+    ; 是字母数字，继续
+    NEXT_CHAR
+    ABOUND R0, R1
+    DISPERSE R6, R0
+    INCREASE R6, 1
+    BRANCH R0, parse_identifier_loop
+
+parse_identifier_check_underscore:
+    ; 检查是否是下划线
+    ABOUND R0, '_'
+    CMP R1, R0
+    BRANCH R0, parse_identifier_done
+    
+    ; 是下划线，继续
+    NEXT_CHAR
+    ABOUND R0, R1
+    DISPERSE R6, R0
+    INCREASE R6, 1
+    BRANCH R0, parse_identifier_loop
+
+parse_identifier_done:
+    ABOUND R0, 0
+    DISPERSE R6, R0     ; 字符串结束符
+
+check_identifier_type:
+    ; 检查是否是寄存器 (R0-R15)
+    ; 首先检查第一个字符是否是 'R'
+    ABOUND R0, TOKEN_BUFFER
+    PENETRATE R1, R0    ; R1 = 第一个字符
+    ABOUND R0, 'R'
+    CMP R1, R0
+    BRANCH R0, not_register_check
+    
+    ; 检查第二个字符是否是数字
+    ABOUND R0, TOKEN_BUFFER
+    INCREASE R0, 1
+    PENETRATE R1, R0
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, not_register_check
+    
+    ; 是寄存器
+    ABOUND R5, TOKEN_REGISTER
+    BRANCH R0, check_for_label
+
+not_register_check:
+    ; 检查是否是助记符
+    ; 简化版本：检查长度和常见助记符
+    ; 实际实现需要查表
+    ; 这里假设长度 > 1 的可能是助记符
+    ABOUND R0, SYS_STRLEN
+    ABOUND R1, TOKEN_BUFFER
+    RECV R0, 0
+    CMP R0, 1
+    BRANCH R0, is_identifier
+    
+    ; 长度 > 1，假设是助记符
+    ABOUND R5, TOKEN_MNEMONIC
+    BRANCH R0, check_for_label
+
+is_identifier:
+    ABOUND R5, TOKEN_IDENTIFIER
+
+check_for_label:
+    ; 检查下一个字符是否是冒号 (标签定义)
+    IS_AT_END
+    CMP R0, 0
+    BRANCH R0, check_colon_char
+    
+    ; EOF，没有冒号
+    BRANCH R0, lexer_main_loop
+
+check_colon_char:
+    PEEK_CHAR
+    ABOUND R0, ':'
+    CMP R1, R0
+    BRANCH R0, no_colon
+    
+    ; 是冒号，这是标签定义
+    NEXT_CHAR           ; 跳过冒号
+    ABOUND R5, TOKEN_LABEL
+    BRANCH R0, lexer_main_loop
+
+no_colon:
+    BRANCH R0, lexer_main_loop
+
+; ========== 结束 ==========
+lexer_done:
+    ; 词法分析完成
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT
+
+; ========== 助记符识别子程序 (预留) ==========
+; 实际实现需要：
+; 1. 将标识符转换为大写
+; 2. 在助记符表中查找
+; 3. 返回对应的操作码或 0xFF
+;
+; 简化版本使用硬编码比较：
+;   "ABOUND"   = 13
+;   "INCREASE" = 49
+;   "REDUCE"   = 35
+;   "BRANCH"   = 2
+;   "CMP"      = 37
+;   "HALT"     = 56
+;   "RECV"     = 0
+;   等等...

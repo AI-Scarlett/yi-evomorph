@@ -1,0 +1,145 @@
+; ============================================================
+; 测试 .ASYNC BRANCH 寄存器间接长跳转
+; ============================================================
+
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+; 简单的常量加载宏
+%macro LOAD_VAL 2
+    ABOUND R1, %2
+    FELLOWSHIP %1, R1
+%endmacro
+
+main:
+    ; ===== 步骤 1: 设置 R0 = 1 (非零) 确保跳转 =====
+    LOAD_VAL R0, 1
+    
+    ; ===== 步骤 2: 将目标地址加载到 R1 =====
+    ; 注意: far_label 地址是 0x0064 (由 first_pass 确定)
+    ; 在实际汇编器中，我们需要两阶段汇编或特殊处理
+    ; 这里我们手动计算:
+    ; main: 0x0000
+    ; 每条指令 4 字节
+    ; 让我们计算 far_label 的位置
+    
+    ; 方法: 使用 .ASYNC BRANCH 时，operand2 是寄存器号
+    ; 而不是立即数地址
+    ; 虚拟机将从该寄存器读取完整的 32 位地址
+    
+    ; ===== 填充代码使 far_label 超过 255 =====
+    ; 填充 64 条指令 = 256 字节
+    ; 这样 far_label 就会在 0x0104 (260)
+    
+    ; 填充指令 1-60
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    
+    ; 更多填充
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+    ABOUND R2, 0
+
+; ===== 远目标标签 (地址应该 > 255) =====
+far_label:
+    ; 打印 "Long jump success!\n"
+    ; 'L' = 76
+    LOAD_VAL R1, 76
+    
+    ; 这里我们简化：直接打印数字 76 来验证执行
+    ; 使用 ILLUMINATE 指令打印寄存器值
+    LOAD_VAL R0, 76
+    ILLUMINATE R0
+    
+    ; 打印换行 (10)
+    LOAD_VAL R0, 10
+    ILLUMINATE R0
+    
+    ; 跳转到退出
+    BRANCH R0, exit_program
+
+; ===== 如果长跳转失败，这里会执行 =====
+short_reach:
+    ; 打印 "Short reach only\n"
+    LOAD_VAL R0, 83  ; 'S'
+    ILLUMINATE R0
+    
+    LOAD_VAL R0, 10
+    ILLUMINATE R0
+
+exit_program:
+    ; ===== 退出 =====
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

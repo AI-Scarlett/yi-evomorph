@@ -1,0 +1,22 @@
+@evolang "3.0"
+
+@xiangci {
+    "完全自举演示程序"
+    "此程序用易衍语言编写，由 gen2 编译器编译，在 C 虚拟机上运行"
+    "演示：打印消息 + 计算 5+10+3=18"
+}
+
+@locus demo.full_bootstrap {
+    mut_rate   = 0.01
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷶ ABOUND R0, 5
+        ䷶ ABOUND R1, 10
+        ䷩ INCREASE R0, R1
+        ䷶ ABOUND R2, 3
+        ䷩ INCREASE R0, R2
+        ䷋ HALT
+    }
+}

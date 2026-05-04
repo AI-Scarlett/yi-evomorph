@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@locus evoc.parser.parse_evolang {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷂ ALLOC
+        ䷍ ABUNDANCE
+        ䷁ RECV
+        ䷂ ALLOC
+        ䷍ ABUNDANCE
+        ䷾ SYNC
+    }
+}

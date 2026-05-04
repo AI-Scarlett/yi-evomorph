@@ -1,0 +1,5 @@
+; 测试输入文件 - 用于自举验证
+ABOUND R0, 5
+ABOUND R1, 10
+INCREASE R0, R1
+HALT

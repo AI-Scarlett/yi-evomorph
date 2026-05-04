@@ -1,0 +1,71 @@
+; ============================================================
+; 易衍·Evomorph 自举编译器 - 版本 3 (修正版)
+; 
+; 关键理解：
+; - ABOUND Rx, N 是加载立即数 N 到 Rx（N 是 0-255 的立即数）
+; - FELLOWSHIP Rx, Ry 是寄存器到寄存器传送
+; - INCREASE Rx, Ry 是寄存器加法
+; - DISPERSE Rx, Ry 是把 Ry 的值存储到 Rx 指向的内存
+; - PENETRATE Rx, Ry 是把 Rx 指向的内存加载到 Ry
+; ============================================================
+
+; ========== 常量定义 ==========
+SYS_OPEN    EQU 0
+SYS_READ    EQU 1
+SYS_WRITE   EQU 2
+SYS_CLOSE   EQU 3
+SYS_EXIT    EQU 255
+SYS_PRINT   EQU 40
+
+MODE_READ   EQU 0
+MODE_WRITE  EQU 1
+
+; ========== 程序目标 ==========
+; 1. 用 ALLOC 分配内存
+; 2. 用 ABOUND + DISPERSE 存储字符串 "OK\n"
+; 3. 调用 SYS_PRINT 打印
+; 4. 退出
+
+; ========== 实现说明 ==========
+; 要存储 "OK\n"：
+; 'O' = 79, 'K' = 75, '\n' = 10, 0 = 0
+; 这些值都可以用 ABOUND 直接加载
+
+; 分配 256 字节缓冲区
+ALLOC R0, 0                ; R0 = 堆地址 (256 字节)
+ABOUND R14, R0             ; R14 = 保存原始地址
+
+; 存储 'O' (79)
+ABOUND R1, 79              ; R1 = 79 ('O')
+DISPERSE R0, R1             ; *R0 = 'O'
+ABOUND R1, 1                ; R1 = 1
+INCREASE R0, R1             ; R0++
+
+; 存储 'K' (75)
+ABOUND R1, 75              ; R1 = 75 ('K')
+DISPERSE R0, R1             ; *R0 = 'K'
+ABOUND R1, 1
+INCREASE R0, R1
+
+; 存储 '\n' (10)
+ABOUND R1, 10               ; R1 = 10 ('\n')
+DISPERSE R0, R1             ; *R0 = '\n'
+ABOUND R1, 1
+INCREASE R0, R1
+
+; 存储 null terminator (0)
+ABOUND R1, 16               ; 先用 16，然后...
+ABOUND R2, 16
+REDUCE R1, R2               ; R1 = 0
+DISPERSE R0, R1             ; *R0 = 0
+
+; 调用 SYS_PRINT
+ABOUND R0, 40               ; SYS_PRINT = 40
+ABOUND R1, R14              ; R1 = 字符串地址
+RECV R0, 0                   ; 系统调用
+
+; 退出
+ABOUND R0, 255              ; SYS_EXIT = 255
+RECV R0, 0
+
+HALT

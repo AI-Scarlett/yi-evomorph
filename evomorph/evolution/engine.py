@@ -5,12 +5,6 @@ from enum import Enum
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Callable, Any
 
-try:
-    from ..vm.virtual_machine import IChingVM, VMState
-    HAS_VM = True
-except ImportError:
-    HAS_VM = False
-
 
 class SelectionMethod(Enum):
     ROULETTE = "roulette"
@@ -57,8 +51,6 @@ class Individual:
     age: int = 0
     origin: str = "initial"
     platform_scores: Dict[str, float] = field(default_factory=dict)
-    execution_metrics: Dict[str, float] = field(default_factory=dict)
-    compiled_instructions: List = field(default_factory=list)
 
     def clone(self):
         return Individual(
@@ -67,8 +59,6 @@ class Individual:
             age=self.age,
             origin=self.origin,
             platform_scores=dict(self.platform_scores),
-            execution_metrics=dict(self.execution_metrics) if self.execution_metrics else {},
-            compiled_instructions=list(self.compiled_instructions) if self.compiled_instructions else [],
         )
 
 
@@ -77,17 +67,11 @@ class EvolutionConfig:
     population_size: int = 64
     max_generations: int = 100
     mut_rate: float = 0.02
-    min_mut_rate: float = 0.001
-    max_mut_rate: float = 0.15
     crossover_rate: float = 0.7
     elite_count: int = 2
     selection_method: SelectionMethod = SelectionMethod.TOURNAMENT
     crossover_method: CrossoverMethod = CrossoverMethod.SINGLE_POINT
     tournament_size: int = 5
-    use_adaptive_mutation: bool = True
-    diversity_threshold_high: float = 0.7
-    diversity_threshold_low: float = 0.3
-    use_execution_based_fitness: bool = False
     fitness_weights: Dict[str, float] = field(default_factory=lambda: {
         "min_latency": 1.0,
         "max_throughput": 2.0,
@@ -102,8 +86,7 @@ class EvolutionConfig:
 class EvolutionEngine:
     def __init__(self, config: Optional[EvolutionConfig] = None,
                  fitness_evaluator: Optional[Callable] = None,
-                 platform_simulator: Optional[Any] = None,
-                 use_evomorph: bool = False):
+                 platform_simulator: Optional[Any] = None):
         self.config = config or EvolutionConfig()
         self.fitness_evaluator = fitness_evaluator
         self.platform_simulator = platform_simulator
@@ -113,26 +96,6 @@ class EvolutionEngine:
         self.best_ever: Optional[Individual] = None
         self.cross_pool: Dict[str, List[Individual]] = {}
         self._rng = random.Random()
-        
-        self._use_evomorph = use_evomorph
-        self._backend = None
-        
-        if use_evomorph:
-            try:
-                from evomorph.bootstrap import EvomorphBackend
-                self._backend = EvomorphBackend()
-            except ImportError:
-                self._use_evomorph = False
-
-    def set_mode(self, use_evomorph: bool):
-        """设置使用 Evomorph 实现还是 Python 实现"""
-        self._use_evomorph = use_evomorph
-        if use_evomorph and self._backend is None:
-            try:
-                from evomorph.bootstrap import EvomorphBackend
-                self._backend = EvomorphBackend()
-            except ImportError:
-                self._use_evomorph = False
 
     def initialize_population(self, seed_genes: List[GeneInstruction]) -> List[Individual]:
         self.population = []
@@ -175,98 +138,23 @@ class EvolutionEngine:
             individual.platform_scores[platform] = score
         return score
 
-    def _evaluate_on_vm(self, individual: Individual) -> Dict[str, float]:
-        if not HAS_VM or not individual.compiled_instructions:
-            return {}
-        
-        try:
-            vm = IChingVM()
-            
-            for i, instr in enumerate(individual.compiled_instructions[:256]):
-                if isinstance(instr, dict):
-                    opcode = instr.get("opcode", 0)
-                    operands = instr.get("operands", [])
-                    vm.memory[vm.registers.get("PC", 0) + i] = opcode
-                elif isinstance(instr, tuple):
-                    opcode = instr[0]
-                    vm.memory[vm.registers.get("PC", 0) + i] = opcode
-                elif isinstance(instr, int):
-                    vm.memory[vm.registers.get("PC", 0) + i] = instr
-            
-            max_cycles = 1000
-            cycles = 0
-            while cycles < max_cycles and vm.state == VMState.RUNNING:
-                try:
-                    vm.step()
-                    cycles += 1
-                except Exception:
-                    break
-            
-            metrics = {
-                "executed_cycles": float(cycles),
-                "instructions_executed": float(vm.registers.get("PC", 0)),
-                "halted": 1.0 if vm.state == VMState.HALTED else 0.0,
-                "error": 1.0 if vm.state == VMState.ERROR else 0.0,
-            }
-            
-            if hasattr(vm, 'energy_used'):
-                metrics["energy_used"] = float(vm.energy_used)
-            else:
-                metrics["energy_used"] = cycles * 0.1
-            
-            if hasattr(vm, 'memory_usage'):
-                metrics["memory_usage"] = float(vm.memory_usage)
-            else:
-                metrics["memory_usage"] = float(len([x for x in vm.memory if x != 0]))
-            
-            return metrics
-            
-        except Exception:
-            return {"error": 1.0}
-    
     def _default_fitness(self, individual: Individual, platform: Optional[str] = None) -> float:
         score = 0.0
         weights = self.config.fitness_weights
         n_genes = len(individual.genes)
         if n_genes == 0:
             return -1000.0
-        
-        use_execution_based = self.config.use_execution_based_fitness if hasattr(self.config, 'use_execution_based_fitness') else False
-        
-        if use_execution_based and HAS_VM:
-            metrics = self._evaluate_on_vm(individual)
-            
-            if metrics.get("error", 0.0) > 0.5:
-                return -2000.0
-            
-            latency_score = -metrics.get("executed_cycles", n_genes * 2.0) * 1.0
-            throughput_score = max(0, 100.0 - metrics.get("executed_cycles", n_genes * 2.0) * 0.5)
-            energy_score = -metrics.get("energy_used", n_genes * 0.1) * 0.5
-            size_score = -n_genes * 0.1
-            halt_bonus = 100.0 if metrics.get("halted", 0.0) > 0.5 else -50.0
-            
-            score = (weights.get("min_latency", 1.0) * latency_score +
-                     weights.get("max_throughput", 2.0) * throughput_score +
-                     weights.get("min_energy", 0.5) * energy_score +
-                     weights.get("min_size", 0.3) * size_score +
-                     halt_bonus)
-            
-            individual.execution_metrics = metrics
-            
-        else:
-            latency_score = -n_genes * 1.0
-            throughput_score = max(0, 10.0 - n_genes * 0.5)
-            energy_score = -sum(g.opcode for g in individual.genes) * 0.01
-            size_score = -n_genes * 0.1
-            score = (weights.get("min_latency", 1.0) * latency_score +
-                     weights.get("max_throughput", 2.0) * throughput_score +
-                     weights.get("min_energy", 0.5) * energy_score +
-                     weights.get("min_size", 0.3) * size_score)
-        
+        latency_score = -n_genes * 1.0
+        throughput_score = max(0, 10.0 - n_genes * 0.5)
+        energy_score = -sum(g.opcode for g in individual.genes) * 0.01
+        size_score = -n_genes * 0.1
+        score = (weights.get("min_latency", 1.0) * latency_score +
+                 weights.get("max_throughput", 2.0) * throughput_score +
+                 weights.get("min_energy", 0.5) * energy_score +
+                 weights.get("min_size", 0.3) * size_score)
         if platform and self.platform_simulator:
             platform_bonus = self.platform_simulator.evaluate(individual, platform)
             score += platform_bonus
-        
         return score
 
     def select(self, population: List[Individual]) -> Individual:
@@ -381,11 +269,6 @@ class EvolutionEngine:
         self.population.sort(key=lambda x: x.fitness, reverse=True)
         if self.best_ever is None or self.population[0].fitness > self.best_ever.fitness:
             self.best_ever = self.population[0].clone()
-        
-        current_diversity = self._calculate_diversity()
-        old_mut_rate = self.config.mut_rate
-        new_mut_rate = self._update_mutation_rate()
-        
         elites = [ind.clone() for ind in self.population[:self.config.elite_count]]
         new_population = list(elites)
         while len(new_population) < self.config.population_size:
@@ -401,32 +284,18 @@ class EvolutionEngine:
         self.generation += 1
         for ind in self.population:
             ind.age += 1
-        
-        new_diversity = self._calculate_diversity()
-        
         stats = {
             "generation": self.generation,
             "best_fitness": self.population[0].fitness if self.population else 0,
             "avg_fitness": sum(ind.fitness for ind in self.population) / max(len(self.population), 1),
             "worst_fitness": self.population[-1].fitness if self.population else 0,
-            "diversity": new_diversity,
-            "diversity_before_selection": current_diversity,
+            "diversity": self._calculate_diversity(),
             "population_size": len(self.population),
-            "mutation_rate": new_mut_rate,
-            "mutation_rate_change": new_mut_rate - old_mut_rate,
         }
-        
-        best_individual = self.population[0] if self.population else None
-        if best_individual and best_individual.execution_metrics:
-            stats["best_execution_metrics"] = dict(best_individual.execution_metrics)
-        
         self.history.append(stats)
         return stats
 
     def evolve(self, max_generations: Optional[int] = None, callback: Optional[Callable] = None) -> Individual:
-        if self._use_evomorph and self._backend and self._backend.is_evomorph_available("evolution"):
-            return self._evolve_using_evomorph(max_generations, callback)
-        
         gens = max_generations or self.config.max_generations
         for _ in range(gens):
             stats = self.evolve_one_generation()
@@ -434,47 +303,6 @@ class EvolutionEngine:
                 callback(stats)
             if self._converged():
                 break
-        return self.best_ever if self.best_ever else (self.population[0] if self.population else None)
-    
-    def _evolve_using_evomorph(self, max_generations: Optional[int], callback: Optional[Callable]) -> Individual:
-        """使用 Evomorph 实现进行进化"""
-        seed_genes_list = [
-            {"opcode": g.opcode, "modifier": g.modifier, "operands": list(g.operands)}
-            for g in self.population[0].genes
-        ] if self.population else []
-        
-        config = {
-            "population_size": self.config.population_size,
-            "max_generations": max_generations or self.config.max_generations,
-            "mut_rate": self.config.mut_rate,
-            "env_targets": list(self.config.env_targets),
-        }
-        
-        result = self._backend.evolve_population(seed_genes_list, config)
-        
-        if "error" in result:
-            return self.best_ever if self.best_ever else (self.population[0] if self.population else None)
-        
-        if "best_genes" in result:
-            best_genes = [
-                GeneInstruction(
-                    opcode=g.get("opcode", 0),
-                    modifier=g.get("modifier", 0),
-                    operands=[],
-                )
-                for g in result["best_genes"]
-            ]
-            best_individual = Individual(
-                genes=best_genes,
-                fitness=result.get("best_fitness", 0.0),
-                origin="evomorph_evolved",
-            )
-            
-            if self.best_ever is None or best_individual.fitness > self.best_ever.fitness:
-                self.best_ever = best_individual
-            
-            return best_individual
-        
         return self.best_ever if self.best_ever else (self.population[0] if self.population else None)
 
     def _converged(self, threshold=0.001, window=10) -> bool:
@@ -488,77 +316,9 @@ class EvolutionEngine:
     def _calculate_diversity(self) -> float:
         if len(self.population) < 2:
             return 0.0
-        
-        opcode_sequences = []
-        for ind in self.population:
-            seq = tuple(g.opcode for g in ind.genes)
-            opcode_sequences.append(seq)
-        
-        unique_sequences = len(set(opcode_sequences))
-        sequence_diversity = unique_sequences / len(self.population)
-        
-        opcode_counts = {}
-        total_opcodes = 0
-        for ind in self.population:
-            for g in ind.genes:
-                opcode_counts[g.opcode] = opcode_counts.get(g.opcode, 0) + 1
-                total_opcodes += 1
-        
-        if total_opcodes > 0:
-            unique_opcodes = len(opcode_counts)
-            opcode_diversity = unique_opcodes / 64.0
-        else:
-            opcode_diversity = 0.0
-        
-        fitness_values = [ind.fitness for ind in self.population]
-        if len(fitness_values) > 1:
-            avg_fitness = sum(fitness_values) / len(fitness_values)
-            variance = sum((f - avg_fitness) ** 2 for f in fitness_values) / len(fitness_values)
-            fitness_range = max(fitness_values) - min(fitness_values)
-            if fitness_range > 0:
-                fitness_diversity = min(1.0, variance / (fitness_range * fitness_range / 4 + 0.001))
-            else:
-                fitness_diversity = 0.0
-        else:
-            fitness_diversity = 0.0
-        
-        combined_diversity = (
-            0.4 * sequence_diversity + 
-            0.3 * opcode_diversity + 
-            0.3 * fitness_diversity
-        )
-        
-        return combined_diversity
-    
-    def _update_mutation_rate(self) -> float:
-        if not self.config.use_adaptive_mutation:
-            return self.config.mut_rate
-        
-        diversity = self._calculate_diversity()
-        
-        current_rate = self.config.mut_rate
-        min_rate = self.config.min_mut_rate
-        max_rate = self.config.max_mut_rate
-        
-        low_threshold = self.config.diversity_threshold_low
-        high_threshold = self.config.diversity_threshold_high
-        
-        if diversity < low_threshold:
-            factor = 1.0 + (low_threshold - diversity) * 2.0
-            new_rate = min(max_rate, current_rate * factor)
-        elif diversity > high_threshold:
-            factor = 0.5 + (diversity - high_threshold)
-            new_rate = max(min_rate, current_rate * factor)
-        else:
-            target_rate = (min_rate + max_rate) / 2
-            new_rate = current_rate + (target_rate - current_rate) * 0.1
-        
-        new_rate = max(min_rate, min(max_rate, new_rate))
-        
-        if abs(new_rate - current_rate) > 0.0001:
-            self.config.mut_rate = new_rate
-        
-        return new_rate
+        opcodes = [tuple(g.opcode for g in ind.genes) for ind in self.population]
+        unique = len(set(opcodes))
+        return unique / len(self.population)
 
     def register_cross_pool(self, name: str, individuals: List[Individual]):
         self.cross_pool[name] = individuals
@@ -609,17 +369,3 @@ class EvolutionEngine:
                 ],
             })
         return result
-
-    def get_backend_status(self):
-        """获取后端状态"""
-        if self._backend:
-            return {
-                "use_evomorph": self._use_evomorph,
-                "backend_available": self._backend.is_evomorph_available("evolution"),
-                "backend_status": self._backend.get_status(),
-            }
-        return {
-            "use_evomorph": self._use_evomorph,
-            "backend_available": False,
-            "message": "使用 Python 实现",
-        }

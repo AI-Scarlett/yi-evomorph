@@ -1,0 +1,151 @@
+; ============================================================
+; 易衍·Evomorph 自举编译器 - 简化版
+; 
+; 这是用 EvoASM 编写的简化汇编器，用于自举验证
+; 
+; 功能：
+;   - 读取简化汇编源文件
+;   - 编码核心指令
+;   - 写入原始字节码输出
+;
+; 注意：这是概念验证版本，只支持核心指令
+; ============================================================
+
+; ========== 常量定义 ==========
+; 系统调用号
+SYSCALL_OPEN    EQU 0
+SYSCALL_READ    EQU 1
+SYSCALL_WRITE   EQU 2
+SYSCALL_CLOSE   EQU 3
+SYSCALL_MALLOC  EQU 10
+SYSCALL_PRINT   EQU 40
+SYSCALL_EXIT    EQU 255
+
+; 操作码
+OPCODE_ABOUND   EQU 13
+OPCODE_INCREASE EQU 49
+OPCODE_REDUCE   EQU 35
+OPCODE_RECV     EQU 0
+OPCODE_HALT     EQU 0
+
+; 内存地址
+INPUT_BUF       EQU 0x00100000  ; 输入缓冲区 (1MB)
+OUTPUT_BUF      EQU 0x00110000  ; 输出缓冲区 (1MB)
+FILENAME_BUF    EQU 0x00120000  ; 文件名缓冲区
+OUT_FILENAME    EQU 0x00120100  ; 输出文件名
+
+; ========== 程序入口 ==========
+; 打印欢迎信息
+ABOUND R0, SYSCALL_PRINT
+ABOUND R1, 0x00120200   ; 欢迎信息地址
+RECV R0, 0
+
+; 分配内存
+ABOUND R0, SYSCALL_MALLOC
+ABOUND R1, 4096          ; 分配 4KB 缓冲区
+RECV R0, 0
+ABOUND R4, R0             ; R4 = 缓冲区地址
+
+; ========== 主循环：处理指令 ==========
+; 注意：这是简化版本，只处理固定的指令序列
+; 实际的完整汇编器需要词法分析、语法分析等
+
+; 指令 1: ABOUND R0, 5
+; 编码: opcode=13, modifier=0, op1=0, op2=5
+; byte1 = (13 << 2) | 0 = 52 = 0x34
+; byte2 = 0
+; byte3 = 0 (R0)
+; byte4 = 5 (立即数)
+ABOUND R0, 0x34
+ABOUND R1, R4
+PUSH_UP R0, R1             ; 存储 byte1
+
+ABOUND R0, 0x00
+ABOUND R1, R4
+INCREASE R1, 1
+PUSH_UP R0, R1             ; 存储 byte2
+
+ABOUND R0, 0x00
+ABOUND R1, R4
+INCREASE R1, 2
+PUSH_UP R0, R1             ; 存储 byte3 (R0)
+
+ABOUND R0, 0x05
+ABOUND R1, R4
+INCREASE R1, 3
+PUSH_UP R0, R1             ; 存储 byte4 (5)
+
+; 指令 2: ABOUND R1, 10
+ABOUND R0, 0x34
+ABOUND R1, R4
+INCREASE R1, 4
+PUSH_UP R0, R1
+
+ABOUND R0, 0x00
+ABOUND R1, R4
+INCREASE R1, 5
+PUSH_UP R0, R1
+
+ABOUND R0, 0x01
+ABOUND R1, R4
+INCREASE R1, 6
+PUSH_UP R0, R1             ; R1
+
+ABOUND R0, 0x0A
+ABOUND R1, R4
+INCREASE R1, 7
+PUSH_UP R0, R1             ; 10
+
+; 指令 3: INCREASE R0, R1
+; opcode = 49
+; byte1 = (49 << 2) | 0 = 196 = 0xC4
+ABOUND R0, 0xC4
+ABOUND R1, R4
+INCREASE R1, 8
+PUSH_UP R0, R1
+
+ABOUND R0, 0x00
+ABOUND R1, R4
+INCREASE R1, 9
+PUSH_UP R0, R1
+
+ABOUND R0, 0x00
+ABOUND R1, R4
+INCREASE R1, 10
+PUSH_UP R0, R1             ; R0
+
+ABOUND R0, 0x01
+ABOUND R1, R4
+INCREASE R1, 11
+PUSH_UP R0, R1             ; R1
+
+; ========== 写入输出文件 ==========
+; 打开输出文件
+ABOUND R0, SYSCALL_OPEN
+ABOUND R1, OUT_FILENAME    ; 输出文件名
+ABOUND R2, 1                ; 写入模式
+RECV R0, 0
+ABOUND R5, R0               ; R5 = 文件描述符
+
+; 写入字节码（12 字节 = 3 条指令）
+ABOUND R0, SYSCALL_WRITE
+ABOUND R1, R5
+ABOUND R2, R4
+ABOUND R3, 12               ; 写入 12 字节
+RECV R0, 0
+
+; 关闭文件
+ABOUND R0, SYSCALL_CLOSE
+ABOUND R1, R5
+RECV R0, 0
+
+; 打印完成信息
+ABOUND R0, SYSCALL_PRINT
+ABOUND R1, 0x00120300      ; 完成信息地址
+RECV R0, 0
+
+; 退出
+ABOUND R0, SYSCALL_EXIT
+RECV R0, 0
+
+HALT

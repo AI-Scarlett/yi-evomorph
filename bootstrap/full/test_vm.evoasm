@@ -1,0 +1,9 @@
+; 简单测试程序 - 验证虚拟机
+ABOUND R0, 5        ; R0 = 5
+ABOUND R1, 10       ; R1 = 10
+INCREASE R0, R1      ; R0 = R0 + R1 = 15
+ABOUND R2, 20       ; R2 = 20
+ABOUND R3, 5        ; R3 = 5
+REDUCE R2, R3        ; R2 = R2 - R3 = 15
+SHL R0, R3           ; R0 = 15 << 5 = 480
+HALT

@@ -1,0 +1,75 @@
+; ============================================================
+; 易衍·Evomorph EvoASM 增强功能测试
+; 测试：标签、跳转、宏、EQU 常量
+; ============================================================
+
+; ========== EQU 常量定义 ==========
+MAX_COUNT   EQU 10
+BUF_SIZE    EQU 256
+SYS_EXIT    EQU 255
+SYS_PRINT   EQU 40
+SYS_MALLOC  EQU 10
+
+; ========== 宏定义 ==========
+%macro PRINT_STR 1
+    ABOUND R0, SYS_PRINT
+    ABOUND R1, %1
+    RECV R0, 0
+%endmacro
+
+%macro ADD_REG 3
+    ABOUND R0, %1
+    ABOUND R1, %2
+    INCREASE R0, R1
+    FELLOWSHIP %3, R0
+%endmacro
+
+%macro SYS_CALL 2
+    ABOUND R0, %1
+    ABOUND R1, %2
+    RECV R0, 0
+%endmacro
+
+; ========== 程序入口 ==========
+; 测试 1: 简单算术运算
+ABOUND R0, 5
+ABOUND R1, 10
+INCREASE R0, R1      ; R0 = 15
+
+; 测试 2: 循环 (使用标签和跳转)
+ABOUND R2, 0         ; 计数器 = 0
+ABOUND R3, MAX_COUNT ; 最大值 = 10
+
+loop_start:
+    INCREASE R2, 1     ; 计数器++
+    CMP R2, R3         ; 比较
+    BRANCH R0, loop_start ; 如果 R0 != 0，继续循环
+
+; 测试 3: 宏调用
+ADD_REG 20, 30, R4   ; R4 = 20 + 30 = 50
+
+; 测试 4: 条件分支
+ABOUND R5, 0
+ABOUND R6, 1
+BRANCH R5, skip_increment
+INCREASE R6, 1       ; 应该被跳过，因为 R5 = 0
+skip_increment:
+
+; 测试 5: 嵌套标签
+outer_loop:
+    ABOUND R7, 0
+inner_loop:
+    INCREASE R7, 1
+    CMP R7, 5
+    BRANCH R0, inner_loop
+    ; 外层循环只执行一次
+    ABOUND R0, 0
+    BRANCH R0, outer_done
+outer_done:
+
+; 测试 6: 内存分配
+SYS_CALL SYS_MALLOC, BUF_SIZE
+ABOUND R8, R0         ; R8 = 分配的内存地址
+
+; 停止
+HALT

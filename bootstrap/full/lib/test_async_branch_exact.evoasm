@@ -1,0 +1,56 @@
+; ============================================================
+; 测试 .ASYNC BRANCH 寄存器间接长跳转
+; 
+; 手动计算的地址：
+; main:           0x0000
+; 指令 1-4:       0x0000 - 0x000F (16 字节)
+; .ASYNC BRANCH:  0x0010
+; fail_code:      0x0014 - 0x0023 (16 字节)
+; far_target:     0x0024
+; ============================================================
+
+SYS_EXIT    EQU 255
+
+main:
+    ; ===== 步骤 1: 设置 R0 = 1 (非零) 确保跳转 =====
+    ; 使用 REDUCE: R1 = 16, R2 = 15, R1 = 16 - 15 = 1
+    ABOUND R1, 16     ; 0x0000
+    ABOUND R2, 15     ; 0x0004
+    REDUCE R1, R2     ; 0x0008  (R1 = 1)
+    FELLOWSHIP R0, R1 ; 0x000C  (R0 = 1)
+    
+    ; ===== 步骤 2: 将目标地址 0x0020 (32) 加载到 R1 =====
+    ; far_target 地址 = 0x0020 = 32
+    ABOUND R1, 32     ; 0x0010
+    
+    ; ===== 步骤 3: 使用 .ASYNC BRANCH 进行寄存器间接跳转 =====
+    ; 这应该跳转到 far_target (0x0024)
+    .ASYNC BRANCH R0, R1  ; 0x0014
+    
+    ; ===== 如果跳转失败，执行这里 (fail_code) =====
+    ; 打印 'F' (70)
+    ABOUND R0, 70      ; 0x0018
+    ILLUMINATE R0       ; 0x001C
+    ; 然后退出
+    BRANCH R0, exit_program  ; 0x0020
+
+; ===== 远目标标签 (应该在 0x0024) =====
+far_target:
+    ; 打印 'L' (76), 'O' (79), 'K' (75), '!' (33), '\n' (10)
+    ABOUND R0, 76      ; 0x0024
+    ILLUMINATE R0       ; 0x0028
+    ABOUND R0, 79      ; 0x002C
+    ILLUMINATE R0       ; 0x0030
+    ABOUND R0, 75      ; 0x0034
+    ILLUMINATE R0       ; 0x0038
+    ABOUND R0, 33      ; 0x003C
+    ILLUMINATE R0       ; 0x0040
+    ABOUND R0, 10      ; 0x0044
+    ILLUMINATE R0       ; 0x0048
+
+exit_program:
+    ; ===== 退出 =====
+    ABOUND R0, SYS_EXIT  ; 0x004C
+    RECV R0, 0           ; 0x0050
+
+HALT                    ; 0x0054

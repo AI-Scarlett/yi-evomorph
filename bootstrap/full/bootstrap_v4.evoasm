@@ -1,0 +1,79 @@
+; ============================================================
+; 易衍·Evomorph 自举编译器 - 版本 4 (正确版)
+; 
+; 指令正确用法：
+; - ABOUND Rx, N     → Rx = N (N是立即数 0-255)
+; - FELLOWSHIP Rx, Ry → Rx = Ry (寄存器复制)
+; - INCREASE Rx, Ry   → Rx += Ry (寄存器加法)
+; - REDUCE Rx, Ry     → Rx -= Ry (寄存器减法)
+; - DISPERSE Rx, Ry   → *Rx = Ry (Ry是寄存器)
+; - PENETRATE Rx, Ry  → Ry = *Rx (Rx是寄存器)
+; - ALLOC Rx, N       → Rx = 堆地址 (分配N字节, N=0表示256)
+; ============================================================
+
+; ========== 常量定义 ==========
+SYS_OPEN    EQU 0
+SYS_READ    EQU 1
+SYS_WRITE   EQU 2
+SYS_CLOSE   EQU 3
+SYS_EXIT    EQU 255
+SYS_PRINT   EQU 40
+
+MODE_READ   EQU 0
+MODE_WRITE  EQU 1
+
+; ========== 测试程序 ==========
+; 目标：
+; 1. ALLOC 分配内存
+; 2. 存储 "OK\n" 到内存
+; 3. 调用 SYS_PRINT 打印
+; 4. 退出
+
+; 分配 256 字节缓冲区 (N=0 表示 256)
+ALLOC R0, 0                ; R0 = 堆地址 (256 字节)
+FELLOWSHIP R14, R0          ; R14 = R0 (保存原始地址)
+
+; 存储 'O' (79)
+ABOUND R1, 79               ; R1 = 79 ('O')
+DISPERSE R0, R1              ; *R0 = 'O'
+ABOUND R1, 16                ; R1 = 16
+ABOUND R2, 15                ; R2 = 15
+REDUCE R1, R2                ; R1 = 1
+INCREASE R0, R1              ; R0++
+
+; 存储 'K' (75)
+ABOUND R1, 75               ; R1 = 75 ('K')
+DISPERSE R0, R1              ; *R0 = 'K'
+ABOUND R1, 16
+ABOUND R2, 15
+REDUCE R1, R2
+INCREASE R0, R1              ; R0++
+
+; 存储 '\n' (10)
+ABOUND R1, 16                ; R1 = 16
+ABOUND R2, 6                 ; R2 = 6
+REDUCE R1, R2                ; R1 = 10 ('\n')
+DISPERSE R0, R1              ; *R0 = '\n'
+ABOUND R1, 16
+ABOUND R2, 15
+REDUCE R1, R2
+INCREASE R0, R1              ; R0++
+
+; 存储 null terminator (0)
+ABOUND R1, 16
+ABOUND R2, 16
+REDUCE R1, R2                ; R1 = 0
+DISPERSE R0, R1              ; *R0 = 0
+
+; 调用 SYS_PRINT
+; R0 = 40 (SYS_PRINT)
+; R1 = 字符串地址 (R14)
+ABOUND R0, 40
+FELLOWSHIP R1, R14
+RECV R0, 0                    ; 系统调用
+
+; 退出
+ABOUND R0, 255
+RECV R0, 0
+
+HALT

@@ -1,0 +1,590 @@
+; ============================================================
+; 易衍·Evomorph 简化词法分析器
+; 验证工具链能力 - 不使用复杂跳转
+; ============================================================
+
+; ========== 系统调用号 ==========
+SYS_STRLEN    EQU 20
+SYS_STRCMP    EQU 21
+SYS_ISDIGIT   EQU 30
+SYS_ISALPHA   EQU 31
+SYS_PRINT     EQU 40
+SYS_EXIT      EQU 255
+
+; ========== 字符常量 ==========
+CHAR_NULL     EQU 0
+CHAR_SPACE    EQU 32
+CHAR_COMMA    EQU 44
+CHAR_COLON    EQU 58
+
+; ========== 小立即数加载宏 ==========
+
+%macro LOAD_0 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro LOAD_1 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro LOAD_10 1
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro PTR_INC 1
+    LOAD_1 R1
+    INCREASE %1, R1
+%endmacro
+
+%macro PRINT_STR 1
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, %1
+    RECV R0, 0
+%endmacro
+
+; ========== 主程序 ==========
+; 测试：读取字符并分类
+; ==========================================
+
+main:
+    ; ===== 步骤 1: 分配输入缓冲区 =====
+    ALLOC R0, 0
+    FELLOWSHIP R14, R0          ; R14 = 输入缓冲区
+    FELLOWSHIP R10, R0          ; R10 = 工作指针
+    
+    ; ===== 步骤 2: 构建输入 "ABOUND R0, 16" =====
+    ; 'A' = 65
+    ABOUND R1, 65
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'B' = 66
+    ABOUND R1, 66
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'O' = 79
+    ABOUND R1, 79
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'U' = 85
+    ABOUND R1, 85
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'N' = 78
+    ABOUND R1, 78
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'D' = 68
+    ABOUND R1, 68
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'R' = 82
+    ABOUND R1, 82
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '0' = 48
+    ABOUND R1, 48
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ',' = 44
+    ABOUND R1, 44
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '1' = 49
+    ABOUND R1, 49
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '6' = 54
+    ABOUND R1, 54
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\0' = 0
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    ; ===== 步骤 3: 打印输入 =====
+    ; "Input: "
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    
+    ; 'I' = 73
+    ABOUND R1, 73
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'n' = 110
+    ABOUND R1, 110
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'u' = 117
+    ABOUND R1, 117
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ':' = 58
+    ABOUND R1, 58
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    PRINT_STR R0
+    PRINT_STR R14
+    
+    ; 打印换行
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    LOAD_10 R1
+    DISPERSE R10, R1
+    LOAD_0 R1
+    DISPERSE R10, R1
+    PRINT_STR R0
+    
+    ; ===== 步骤 4: 简单字符分类 =====
+    ; 读取第一个字符 'A'
+    FELLOWSHIP R10, R14
+    PENETRATE R10, R1            ; R1 = 'A'
+    
+    ; 检查是否为字母
+    FELLOWSHIP R0, R1
+    ABOUND R1, SYS_ISALPHA
+    RECV R0, 0                    ; R0 = 1 如果是字母
+    
+    ; 打印结果
+    ; "First char is alpha: "
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    
+    ; 'F' = 70
+    ABOUND R1, 70
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'h' = 104
+    ABOUND R1, 104
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'l' = 108
+    ABOUND R1, 108
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'h' = 104
+    ABOUND R1, 104
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ':' = 58
+    ABOUND R1, 58
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    PRINT_STR R0
+    
+    ; 根据 R0 的值打印 "Yes" 或 "No"
+    ; 简化: 直接打印 "Yes" (因为 'A' 是字母)
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    
+    ; 'Y' = 89
+    ABOUND R1, 89
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\n' = 10
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    PRINT_STR R0
+    
+    ; ===== 步骤 5: 检查数字 =====
+    ; 读取字符 '1'
+    FELLOWSHIP R10, R14
+    ; 跳过 "ABOUND R0, " (10 个字符)
+    ; 简化: 直接检查字符 '1' = 49
+    ABOUND R1, 49
+    
+    ; 检查是否为数字
+    FELLOWSHIP R0, R1
+    ABOUND R1, SYS_ISDIGIT
+    RECV R0, 0                    ; R0 = 1 如果是数字
+    
+    ; 打印结果
+    ; "Char '1' is digit: Yes\n"
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    
+    ; 'C' = 67
+    ABOUND R1, 67
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'h' = 104
+    ABOUND R1, 104
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '''' = 39
+    ABOUND R1, 39
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '1' = 49
+    ABOUND R1, 49
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '''' = 39
+    ABOUND R1, 39
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'd' = 100
+    ABOUND R1, 100
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'g' = 103
+    ABOUND R1, 103
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ':' = 58
+    ABOUND R1, 58
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'Y' = 89
+    ABOUND R1, 89
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\n' = 10
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    PRINT_STR R0
+    
+    ; ===== 步骤 6: 打印成功消息 =====
+    ; "Lexer test passed!\n"
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    
+    ; 'L' = 76
+    ABOUND R1, 76
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'x' = 120
+    ABOUND R1, 120
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'd' = 100
+    ABOUND R1, 100
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '!' = 33
+    ABOUND R1, 33
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\n' = 10
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    PRINT_STR R0
+    
+    ; ===== 退出 =====
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

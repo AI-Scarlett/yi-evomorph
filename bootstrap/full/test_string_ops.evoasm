@@ -1,0 +1,167 @@
+; ============================================================
+; 易衍·Evomorph EvoASM 字符串操作测试程序
+; 测试：STRLEN, STRCMP, STRCPY, STRCAT, 字符判断
+; ============================================================
+
+; ========== 常量定义 ==========
+SYS_STRLEN  EQU 20
+SYS_STRCMP  EQU 21
+SYS_STRCPY  EQU 22
+SYS_STRCAT  EQU 23
+SYS_STRCHR  EQU 24
+SYS_ISDIGIT EQU 30
+SYS_ISALPHA EQU 31
+SYS_ISALNUM EQU 32
+SYS_ISSPACE EQU 33
+SYS_TOUPPER EQU 34
+SYS_TOLOWER EQU 35
+SYS_ATOI    EQU 36
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+; ========== 内存地址 ==========
+STR1        EQU 0x00120000   ; "Hello"
+STR2        EQU 0x00120100   ; "World"
+STR3        EQU 0x00120200   ; 目标缓冲区
+STR4        EQU 0x00120300   ; "12345"
+MSG_PASS    EQU 0x00120400   ; "PASS\n"
+MSG_FAIL    EQU 0x00120500   ; "FAIL\n"
+
+; ========== 宏定义 ==========
+%macro PRINT_MSG 1
+    ABOUND R0, SYS_PRINT
+    ABOUND R1, %1
+    RECV R0, 0
+%endmacro
+
+%macro STR_TEST 3
+    ABOUND R0, %1
+    ABOUND R1, %2
+    RECV R0, 0
+    FELLOWSHIP %3, R0
+%endmacro
+
+; ========== 程序入口 ==========
+; 测试 1: STRLEN - 字符串长度
+; 预期: "Hello" = 5
+ABOUND R0, SYS_STRLEN
+ABOUND R1, STR1
+RECV R0, 0
+ABOUND R2, R0         ; R2 = 长度
+
+; 验证 R2 == 5
+ABOUND R3, 5
+CMP R2, R3
+BRANCH R0, test1_fail
+ABOUND R10, 1          ; R10 = 测试 1 通过
+BRANCH R10, test2_start
+
+test1_fail:
+ABOUND R10, 0          ; R10 = 测试 1 失败
+
+test2_start:
+; 测试 2: STRCMP - 字符串比较
+; 比较 "Hello" 和 "Hello" 应该相等 (返回 0)
+ABOUND R0, SYS_STRCMP
+ABOUND R1, STR1
+ABOUND R2, STR1
+RECV R0, 0
+ABOUND R4, R0         ; R4 = 比较结果
+
+; 验证 R4 == 0
+ABOUND R5, 0
+CMP R4, R5
+BRANCH R0, test2_fail
+ABOUND R11, 1          ; R11 = 测试 2 通过
+BRANCH R11, test3_start
+
+test2_fail:
+ABOUND R11, 0          ; R11 = 测试 2 失败
+
+test3_start:
+; 测试 3: STRCPY - 字符串复制
+; 复制 "Hello" 到 STR3
+ABOUND R0, SYS_STRCPY
+ABOUND R1, STR3
+ABOUND R2, STR1
+RECV R0, 0
+
+; 验证复制后长度
+ABOUND R0, SYS_STRLEN
+ABOUND R1, STR3
+RECV R0, 0
+ABOUND R6, R0         ; R6 = 复制后长度
+
+ABOUND R7, 5
+CMP R6, R7
+BRANCH R0, test3_fail
+ABOUND R12, 1          ; R12 = 测试 3 通过
+BRANCH R12, test4_start
+
+test3_fail:
+ABOUND R12, 0          ; R12 = 测试 3 失败
+
+test4_start:
+; 测试 4: ISDIGIT - 判断数字
+; '5' 是数字
+ABOUND R0, SYS_ISDIGIT
+ABOUND R1, 53          ; '5' = 53
+RECV R0, 0
+ABOUND R8, R0         ; R8 = 结果 (1)
+
+CMP R8, 0
+BRANCH R0, test4_fail  ; 如果是 0，失败
+ABOUND R13, 1          ; R13 = 测试 4 通过
+BRANCH R13, test5_start
+
+test4_fail:
+ABOUND R13, 0          ; R13 = 测试 4 失败
+
+test5_start:
+; 测试 5: ISALPHA - 判断字母
+; 'A' 是字母 (65)
+ABOUND R0, SYS_ISALPHA
+ABOUND R1, 65          ; 'A' = 65
+RECV R0, 0
+ABOUND R9, R0         ; R9 = 结果 (1)
+
+CMP R9, 0
+BRANCH R0, test5_fail  ; 如果是 0，失败
+ABOUND R14, 1          ; R14 = 测试 5 通过
+BRANCH R14, final_check
+
+test5_fail:
+ABOUND R14, 0          ; R14 = 测试 5 失败
+
+final_check:
+; 汇总所有测试结果
+; R10-R14 应该都是 1
+ABOUND R0, R10
+INCREASE R0, R11
+INCREASE R0, R12
+INCREASE R0, R13
+INCREASE R0, R14
+; R0 应该等于 5 (5 个测试都通过)
+
+ABOUND R1, 5
+CMP R0, R1
+BRANCH R0, all_fail
+
+; 全部通过！
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_PASS
+RECV R0, 0
+BRANCH R0, exit_program
+
+all_fail:
+; 有测试失败
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_FAIL
+RECV R0, 0
+
+exit_program:
+; 退出
+ABOUND R0, SYS_EXIT
+RECV R0, 0
+
+HALT

@@ -4,6 +4,42 @@
     "输入输出之基：接收万物之音，写回千川之流。适诸平台，轻快为本。"
 }
 
+@locus std.io.print {
+    mut_rate   = 0.01
+    cross_pool = "io_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 40
+        ䷾ SYNC
+    }
+}
+
+@locus std.io.println {
+    mut_rate   = 0.01
+    cross_pool = "io_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 41
+        ䷾ SYNC
+    }
+}
+
+@locus std.io.print_num {
+    mut_rate   = 0.02
+    cross_pool = "io_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷝ ILLUMINATE R0
+        ䷾ SYNC
+    }
+}
+
 @locus std.io.recv_byte {
     mut_rate   = 0.02
     cross_pool = "io_ops"
@@ -55,6 +91,54 @@
         ䷍ ABUNDANCE R0, R1
         ䷺ DISPERSION R0, R2
         ䷝ ILLUMINATE R0
+        ䷾ SYNC
+    }
+}
+
+@locus std.io.open {
+    mut_rate   = 0.02
+    cross_pool = "io_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+    }
+}
+
+@locus std.io.read {
+    mut_rate   = 0.02
+    cross_pool = "io_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 1
+        ䷾ SYNC
+    }
+}
+
+@locus std.io.write {
+    mut_rate   = 0.02
+    cross_pool = "io_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 2
+        ䷾ SYNC
+    }
+}
+
+@locus std.io.close {
+    mut_rate   = 0.01
+    cross_pool = "io_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 3
         ䷾ SYNC
     }
 }

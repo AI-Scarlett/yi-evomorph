@@ -1,0 +1,665 @@
+; ============================================================
+; 易衍·Evomorph 完全自举编译器
+; 用 EvoASM 编写的完整汇编器
+; ============================================================
+;
+; 功能：
+;   1. 读取 .evoasm 源文件
+;   2. 词法分析（Token 化）
+;   3. 指令编码（生成 4 字节指令）
+;   4. 输出 .raw 原始字节码
+;
+; 寄存器使用约定：
+;   R0-R3   = 临时 / 系统调用参数
+;   R4      = 源文件指针
+;   R5      = 当前 Token 类型
+;   R6      = 输出缓冲区指针
+;   R7      = 行号
+;   R8      = 列号
+;   R9-R11  = 保留
+;   R12     = 源文件起始
+;   R13     = 源文件结束
+;   R14     = 标志位
+;   R15     = 返回值 / 链接寄存器
+;
+; ============================================================
+
+; ========== 常量定义 ==========
+; 系统调用号
+SYS_OPEN    EQU 0
+SYS_READ    EQU 1
+SYS_WRITE   EQU 2
+SYS_CLOSE   EQU 3
+SYS_MALLOC  EQU 10
+SYS_FREE    EQU 11
+SYS_MEMCPY  EQU 12
+SYS_MEMSET  EQU 13
+SYS_MEMCMP  EQU 14
+SYS_STRLEN  EQU 20
+SYS_STRCMP  EQU 21
+SYS_STRCPY  EQU 22
+SYS_STRCAT  EQU 23
+SYS_STRCHR  EQU 24
+SYS_ISDIGIT EQU 30
+SYS_ISALPHA EQU 31
+SYS_ISALNUM EQU 32
+SYS_ISSPACE EQU 33
+SYS_TOUPPER EQU 34
+SYS_TOLOWER EQU 35
+SYS_ATOI    EQU 36
+SYS_PRINT   EQU 40
+SYS_PRINTLN EQU 41
+SYS_EXIT    EQU 255
+
+; 文件模式
+MODE_READ   EQU 0
+MODE_WRITE  EQU 1
+MODE_RW     EQU 2
+
+; Token 类型
+TOKEN_EOF       EQU 0
+TOKEN_MNEMONIC  EQU 1
+TOKEN_REGISTER  EQU 2
+TOKEN_NUMBER    EQU 3
+TOKEN_IDENTIFIER EQU 4
+TOKEN_LABEL     EQU 5
+TOKEN_COMMA     EQU 6
+TOKEN_COLON     EQU 7
+TOKEN_COMMENT   EQU 8
+TOKEN_ERROR     EQU 9
+TOKEN_MODIFIER  EQU 10
+TOKEN_EQU       EQU 11
+TOKEN_MACRO     EQU 12
+
+; 内存布局
+INPUT_BUFFER    EQU 0x00120000   ; 输入缓冲区 (64KB)
+OUTPUT_BUFFER   EQU 0x00130000   ; 输出缓冲区 (64KB)
+TOKEN_BUFFER    EQU 0x00140000   ; Token 值缓冲区 (256B)
+LABEL_TABLE     EQU 0x00141000   ; 标签表 (最多 256 个标签)
+MACRO_TABLE     EQU 0x00142000   ; 宏表
+SCRATCH_BUFFER  EQU 0x00143000   ; 临时缓冲区
+FILENAME_IN     EQU 0x00144000   ; 输入文件名
+FILENAME_OUT    EQU 0x00144100   ; 输出文件名
+MSG_BUFFER      EQU 0x00144200   ; 消息缓冲区
+
+; 助记符表位置
+MNEMONIC_TABLE  EQU 0x00145000   ; 助记符表
+
+; ========== 程序入口 ==========
+; 初始化
+ABOUND R7, 1                  ; 行号 = 1
+ABOUND R8, 1                  ; 列号 = 1
+ABOUND R12, INPUT_BUFFER      ; 源文件起始
+ABOUND R13, INPUT_BUFFER      ; 源文件结束 (待设置)
+ABOUND R4, R12                ; 当前指针 = 起始
+ABOUND R6, OUTPUT_BUFFER      ; 输出指针
+ABOUND R14, 0                 ; 标志位 = 0
+
+; 打印启动消息
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_START
+RECV R0, 0
+
+; ========== 阶段 1: 读取输入文件 ==========
+; 打开输入文件
+ABOUND R0, SYS_OPEN
+ABOUND R1, FILENAME_IN
+ABOUND R2, MODE_READ
+RECV R0, 0
+ABOUND R10, R0               ; R10 = 输入文件描述符
+
+; 检查是否打开成功
+CMP R10, 0
+BRANCH R0, open_input_success
+
+; 打开失败
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_OPEN_FAIL
+RECV R0, 0
+ABOUND R0, SYS_EXIT
+RECV R0, 0
+
+open_input_success:
+; 读取文件内容到 INPUT_BUFFER
+ABOUND R0, SYS_READ
+ABOUND R1, R10
+ABOUND R2, INPUT_BUFFER
+ABOUND R3, 65536              ; 最多 64KB
+RECV R0, 0
+ABOUND R11, R0                ; R11 = 读取的字节数
+
+; 关闭输入文件
+ABOUND R0, SYS_CLOSE
+ABOUND R1, R10
+RECV R0, 0
+
+; 设置源文件结束地址
+ABOUND R0, INPUT_BUFFER
+INCREASE R0, R11
+ABOUND R13, R0
+
+; 打印读取信息
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_READ_SUCCESS
+RECV R0, 0
+
+; ========== 阶段 2: 第一遍扫描（收集标签） ==========
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_PASS1
+RECV R0, 0
+
+; 重置指针
+ABOUND R4, R12
+ABOUND R7, 1
+ABOUND R8, 1
+ABOUND R9, 0                  ; R9 = 当前指令计数 (用于标签地址)
+
+pass1_loop:
+    ; 获取下一个 Token
+    BRANCH R0, next_token
+    
+    ; 检查是否是 EOF
+    CMP R5, TOKEN_EOF
+    BRANCH R0, pass1_done
+    
+    ; 检查是否是标签定义
+    CMP R5, TOKEN_LABEL
+    BRANCH R0, pass1_not_label
+    
+    ; 记录标签
+    ; TOKEN_BUFFER = 标签名
+    ; R9 = 地址 (指令计数 * 4)
+    BRANCH R0, add_label
+    
+pass1_not_label:
+    ; 检查是否是助记符 (需要增加指令计数)
+    CMP R5, TOKEN_MNEMONIC
+    BRANCH R0, pass1_not_mnemonic
+    
+    ; 是助记符，增加指令计数
+    INCREASE R9, 1
+    
+pass1_not_mnemonic:
+    BRANCH R0, pass1_loop
+
+pass1_done:
+
+; ========== 阶段 3: 第二遍扫描（生成代码） ==========
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_PASS2
+RECV R0, 0
+
+; 重置指针
+ABOUND R4, R12
+ABOUND R7, 1
+ABOUND R8, 1
+ABOUND R9, 0                  ; R9 = 当前指令计数
+ABOUND R6, OUTPUT_BUFFER      ; 重置输出指针
+
+pass2_loop:
+    ; 获取下一个 Token
+    BRANCH R0, next_token
+    
+    ; 检查是否是 EOF
+    CMP R5, TOKEN_EOF
+    BRANCH R0, pass2_done
+    
+    ; 检查是否是助记符
+    CMP R5, TOKEN_MNEMONIC
+    BRANCH R0, pass2_not_mnemonic
+    
+    ; 编码指令
+    BRANCH R0, encode_full_instruction
+    
+pass2_not_mnemonic:
+    ; 跳过其他 Token
+    BRANCH R0, pass2_loop
+
+pass2_done:
+
+; ========== 阶段 4: 写入输出文件 ==========
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_WRITE
+RECV R0, 0
+
+; 打开输出文件
+ABOUND R0, SYS_OPEN
+ABOUND R1, FILENAME_OUT
+ABOUND R2, MODE_WRITE
+RECV R0, 0
+ABOUND R10, R0               ; R10 = 输出文件描述符
+
+; 检查是否打开成功
+CMP R10, 0
+BRANCH R0, open_output_success
+
+; 打开失败
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_OPEN_FAIL
+RECV R0, 0
+ABOUND R0, SYS_EXIT
+RECV R0, 0
+
+open_output_success:
+; 计算输出字节数
+ABOUND R0, R6
+REDUCE R0, OUTPUT_BUFFER
+ABOUND R11, R0                ; R11 = 输出字节数
+
+; 写入输出文件
+ABOUND R0, SYS_WRITE
+ABOUND R1, R10
+ABOUND R2, OUTPUT_BUFFER
+ABOUND R3, R11
+RECV R0, 0
+
+; 关闭输出文件
+ABOUND R0, SYS_CLOSE
+ABOUND R1, R10
+RECV R0, 0
+
+; 打印成功消息
+ABOUND R0, SYS_PRINT
+ABOUND R1, MSG_SUCCESS
+RECV R0, 0
+
+; 退出
+ABOUND R0, SYS_EXIT
+RECV R0, 0
+
+HALT
+
+; ============================================================
+; 子程序: next_token
+; 从输入获取下一个 Token
+; 输出: R5 = Token 类型, TOKEN_BUFFER = Token 值
+; ============================================================
+next_token:
+    ; 跳过空白字符
+skip_whitespace:
+    ; 检查是否到达 EOF
+    CMP R4, R13
+    BRANCH R0, not_eof_skip
+    
+    ; EOF
+    ABOUND R5, TOKEN_EOF
+    RETURN
+
+not_eof_skip:
+    ; 读取当前字符
+    ABOUND R0, 0
+    ABOUND R1, R4
+    PENETRATE R0, R1              ; R0 = *R4
+    FELLOWSHIP R1, R0             ; R1 = 字符
+    
+    ; 检查是否是空白
+    ABOUND R0, SYS_ISSPACE
+    RECV R0, 0                    ; R0 = isspace(R1)
+    CMP R0, 0
+    BRANCH R0, whitespace_done
+    
+    ; 是空白，检查是否是换行
+    ABOUND R0, 10                 ; '\n'
+    CMP R1, R0
+    BRANCH R0, not_newline
+    
+    ; 是换行，增加行号
+    INCREASE R7, 1
+    ABOUND R8, 1
+
+not_newline:
+    ; 移动指针
+    INCREASE R4, 1
+    INCREASE R8, 1
+    BRANCH R0, skip_whitespace
+
+whitespace_done:
+    ; 检查是否到达 EOF
+    CMP R4, R13
+    BRANCH R0, not_eof
+    
+    ABOUND R5, TOKEN_EOF
+    RETURN
+
+not_eof:
+    ; 读取当前字符
+    ABOUND R0, 0
+    ABOUND R1, R4
+    PENETRATE R0, R1
+    FELLOWSHIP R1, R0
+    
+    ; 检查字符类型
+    ; 首先检查是否是注释 (;)
+    ABOUND R0, 59                 ; ';'
+    CMP R1, R0
+    BRANCH R0, not_comment
+    
+    ; 是注释，跳过直到行尾
+    BRANCH R0, skip_comment
+
+not_comment:
+    ; 检查是否是逗号
+    ABOUND R0, 44                 ; ','
+    CMP R1, R0
+    BRANCH R0, not_comma
+    
+    ; 逗号
+    INCREASE R4, 1
+    INCREASE R8, 1
+    ABOUND R5, TOKEN_COMMA
+    RETURN
+
+not_comma:
+    ; 检查是否是冒号
+    ABOUND R0, 58                 ; ':'
+    CMP R1, R0
+    BRANCH R0, not_colon
+    
+    ; 冒号
+    INCREASE R4, 1
+    INCREASE R8, 1
+    ABOUND R5, TOKEN_COLON
+    RETURN
+
+not_colon:
+    ; 检查是否是数字
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, not_number_token
+    
+    ; 解析数字
+    BRANCH R0, parse_number_token
+
+not_number_token:
+    ; 检查是否是字母 (标识符/助记符/寄存器)
+    ABOUND R0, SYS_ISALPHA
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, not_identifier_token
+    
+    ; 解析标识符
+    BRANCH R0, parse_identifier_token
+
+not_identifier_token:
+    ; 未知字符
+    INCREASE R4, 1
+    INCREASE R8, 1
+    ABOUND R5, TOKEN_ERROR
+    RETURN
+
+; ============================================================
+; 子程序: skip_comment
+; 跳过注释直到行尾
+; ============================================================
+skip_comment:
+skip_comment_loop:
+    ; 检查是否到达 EOF
+    CMP R4, R13
+    BRANCH R0, skip_comment_eof
+    
+    ; 读取当前字符
+    ABOUND R0, 0
+    ABOUND R1, R4
+    PENETRATE R0, R1
+    FELLOWSHIP R1, R0
+    
+    ; 检查是否是换行
+    ABOUND R0, 10
+    CMP R1, R0
+    BRANCH R0, skip_comment_not_nl
+    
+    ; 是换行
+    INCREASE R7, 1
+    ABOUND R8, 1
+    INCREASE R4, 1
+    BRANCH R0, skip_comment_done
+
+skip_comment_not_nl:
+    INCREASE R4, 1
+    INCREASE R8, 1
+    BRANCH R0, skip_comment_loop
+
+skip_comment_eof:
+    ABOUND R5, TOKEN_EOF
+    RETURN
+
+skip_comment_done:
+    ; 返回获取下一个 Token
+    BRANCH R0, next_token
+
+; ============================================================
+; 子程序: parse_number_token
+; 解析数字 Token
+; ============================================================
+parse_number_token:
+    ABOUND R0, TOKEN_BUFFER
+    ABOUND R2, R0                   ; R2 = 缓冲区指针
+
+parse_number_loop:
+    ; 检查是否到达 EOF
+    CMP R4, R13
+    BRANCH R0, parse_number_eof
+    
+    ; 读取当前字符
+    ABOUND R0, 0
+    ABOUND R1, R4
+    PENETRATE R0, R1
+    FELLOWSHIP R1, R0
+    
+    ; 检查是否是数字
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, parse_number_done
+    
+    ; 是数字，添加到缓冲区
+    DISPERSE R2, R1
+    INCREASE R2, 1
+    INCREASE R4, 1
+    INCREASE R8, 1
+    BRANCH R0, parse_number_loop
+
+parse_number_eof:
+parse_number_done:
+    ; 添加字符串结束符
+    ABOUND R0, 0
+    DISPERSE R2, R0
+    
+    ABOUND R5, TOKEN_NUMBER
+    RETURN
+
+; ============================================================
+; 子程序: parse_identifier_token
+; 解析标识符 Token
+; ============================================================
+parse_identifier_token:
+    ABOUND R0, TOKEN_BUFFER
+    ABOUND R2, R0                   ; R2 = 缓冲区指针
+
+parse_identifier_loop:
+    ; 检查是否到达 EOF
+    CMP R4, R13
+    BRANCH R0, parse_identifier_eof
+    
+    ; 读取当前字符
+    ABOUND R0, 0
+    ABOUND R1, R4
+    PENETRATE R0, R1
+    FELLOWSHIP R1, R0
+    
+    ; 检查是否是字母数字或下划线
+    ABOUND R0, SYS_ISALNUM
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, check_underscore
+    
+    ; 是字母数字，添加到缓冲区
+    DISPERSE R2, R1
+    INCREASE R2, 1
+    INCREASE R4, 1
+    INCREASE R8, 1
+    BRANCH R0, parse_identifier_loop
+
+check_underscore:
+    ; 检查是否是下划线
+    ABOUND R0, 95                 ; '_'
+    CMP R1, R0
+    BRANCH R0, parse_identifier_done
+    
+    ; 是下划线
+    DISPERSE R2, R1
+    INCREASE R2, 1
+    INCREASE R4, 1
+    INCREASE R8, 1
+    BRANCH R0, parse_identifier_loop
+
+parse_identifier_eof:
+parse_identifier_done:
+    ; 添加字符串结束符
+    ABOUND R0, 0
+    DISPERSE R2, R0
+    
+    ; 确定 Token 类型
+    ; 检查是否是寄存器 (R0-R15)
+    ABOUND R0, TOKEN_BUFFER
+    PENETRATE R1, R0                ; R1 = 第一个字符
+    ABOUND R0, 82                   ; 'R'
+    CMP R1, R0
+    BRANCH R0, not_register_token
+    
+    ; 检查第二个字符是否是数字
+    ABOUND R0, TOKEN_BUFFER
+    INCREASE R0, 1
+    PENETRATE R1, R0
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+    CMP R0, 0
+    BRANCH R0, not_register_token
+    
+    ; 是寄存器
+    ABOUND R5, TOKEN_REGISTER
+    
+    ; 检查下一个字符是否是冒号 (标签定义)
+    CMP R4, R13
+    BRANCH R0, return_register
+    
+    ABOUND R0, 0
+    ABOUND R1, R4
+    PENETRATE R0, R1
+    FELLOWSHIP R1, R0
+    ABOUND R0, 58                   ; ':'
+    CMP R1, R0
+    BRANCH R0, return_register
+    
+    ; 是冒号，这是标签定义
+    INCREASE R4, 1
+    INCREASE R8, 1
+    ABOUND R5, TOKEN_LABEL
+
+return_register:
+    RETURN
+
+not_register_token:
+    ; 假设是助记符
+    ; 实际实现需要查表
+    ABOUND R5, TOKEN_MNEMONIC
+    RETURN
+
+; ============================================================
+; 子程序: add_label
+; 添加标签到标签表
+; 输入: TOKEN_BUFFER = 标签名, R9 = 地址 (指令计数)
+; ============================================================
+add_label:
+    ; 简化：这里只示意
+    ; 实际实现需要:
+    ; 1. 查找标签表空位
+    ; 2. 复制标签名
+    ; 3. 存储地址
+    RETURN
+
+; ============================================================
+; 子程序: encode_full_instruction
+; 编码完整指令
+; 输入: TOKEN_BUFFER = 助记符
+; ============================================================
+encode_full_instruction:
+    ; 简化实现
+    ; 实际实现需要:
+    ; 1. 查找助记符获取操作码
+    ; 2. 读取操作数
+    ; 3. 编码为 4 字节
+    ; 4. 写入输出缓冲区
+    
+    ; 这里使用硬编码示例
+    ; ABOUND R0, 5 -> 34 00 00 05
+    
+    ; 临时：只处理已知的简单指令
+    ; 实际完整实现需要完整的查表逻辑
+    
+    ; 查找助记符
+    ; 简化：假设是 ABOUND (操作码 13)
+    ABOUND R5, 13                   ; opcode
+    ABOUND R6, 0                    ; modifier
+    
+    ; 读取操作数1 (下一个 Token 应该是寄存器或数字)
+    ; 简化：假设是 R0 (0)
+    ABOUND R7, 0
+    
+    ; 读取操作数2
+    ; 简化：假设是 5
+    ABOUND R8, 5
+    
+    ; 编码
+    BRANCH R0, emit_4bytes
+
+; ============================================================
+; 子程序: emit_4bytes
+; 输出 4 字节指令
+; 输入: R5=opcode, R6=modifier, R7=op1, R8=op2, R6=输出指针
+; ============================================================
+emit_4bytes:
+    ; byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+    ABOUND R0, R5
+    AND R0, 0x3F
+    SHL R0, 2
+    
+    ABOUND R1, R6
+    SHR R1, 4
+    AND R1, 0x03
+    
+    OR R0, R1
+    DISPERSE R6, R0
+    INCREASE R6, 1
+    
+    ; byte2 = modifier & 0x0F
+    ABOUND R0, R6
+    AND R0, 0x0F
+    DISPERSE R6, R0
+    INCREASE R6, 1
+    
+    ; byte3 = op1
+    DISPERSE R6, R7
+    INCREASE R6, 1
+    
+    ; byte4 = op2
+    DISPERSE R6, R8
+    INCREASE R6, 1
+    
+    ; 增加指令计数
+    INCREASE R9, 1
+    
+    RETURN
+
+; ============================================================
+; 数据区 (运行时加载)
+; ============================================================
+; 消息字符串 (在运行时需要初始化)
+MSG_START:      ; "易衍编译器启动...\n"
+MSG_OPEN_FAIL:  ; "无法打开文件\n"
+MSG_READ_SUCCESS: ; "读取源文件成功\n"
+MSG_PASS1:      ; "第一遍扫描...\n"
+MSG_PASS2:      ; "第二遍扫描...\n"
+MSG_WRITE:      ; "写入输出文件...\n"
+MSG_SUCCESS:    ; "编译成功！\n"

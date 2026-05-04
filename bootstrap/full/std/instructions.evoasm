@@ -1,0 +1,346 @@
+; ============================================================
+; 易衍·Evomorph 标准指令集
+; 六十四卦指令集 - 标准助记符表
+; ============================================================
+;
+; 重要说明：
+; 以下是虚拟机实际实现的指令和对应助记符。
+; 任何 .evoasm 程序都必须使用这些正确的助记符。
+;
+; 指令格式：
+;   MNEMONIC Rx, Ry  - 寄存器操作
+;   MNEMONIC Rx, N   - 立即数操作 (N >= 16 或通过计算获得)
+;
+; 小立即数技巧 (0-15):
+;   N = 0:  ABOUND R1, 16; ABOUND R2, 16; REDUCE R1, R2  → R1 = 0
+;   N = 1:  ABOUND R1, 16; ABOUND R2, 15; REDUCE R1, R2  → R1 = 1
+;   N = K:  ABOUND R1, 16; ABOUND R2, 16-K; REDUCE R1, R2 → R1 = K
+;
+; 编码格式 (4 字节/指令):
+;   byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+;   byte2 = modifier & 0x0F
+;   byte3 = operand1 (寄存器或立即数)
+;   byte4 = operand2 (寄存器或立即数)
+; ============================================================
+
+; ========== 指令索引 (按操作码排序) ==========
+
+; 操作码 00: ䷁ KUN - RECV
+; 功能: 系统调用 / 接收消息
+; 用法: RECV R0, 0  (R0 = 系统调用号, R1-R3 = 参数)
+; 系统调用号:
+;   OPEN=0, READ=1, WRITE=2, CLOSE=3,
+;   MALLOC=10, MEMCPY=12, MEMSET=13, MEMCMP=14,
+;   STRLEN=20, STRCMP=21, STRCPY=22,
+;   ISDIGIT=30, ISALPHA=31, ISSPACE=33,
+;   PRINT=40, EXIT=255
+RECV       EQU 0
+
+; 操作码 01: ䷗ FU - RETURN
+; 功能: 函数返回 (从栈弹出返回地址)
+RETURN     EQU 1
+
+; 操作码 02: ䷆ SHI - BRANCH
+; 功能: 条件跳转
+; 用法: BRANCH Rx, target  (如果 Rx != 0 则跳转到 target)
+BRANCH     EQU 2
+
+; 操作码 03: ䷃ LIN - APPROACH (AND)
+; 功能: 按位与
+; 用法: APPROACH Rx, Ry  → Rx = Rx & Ry
+APPROACH   EQU 3
+
+; 操作码 04: ䷩ QIANX - YIELD
+; 功能: 让出执行 / 释放资源
+YIELD      EQU 4
+
+; 操作码 05: ䷣ MINGYI - OBSCURE (NOT)
+; 功能: 按位取反
+; 用法: OBSCURE Rx, Ry  → Rx = ~Ry
+OBSCURE    EQU 5
+
+; 操作码 06: ䷤ SHENG - PUSH_UP
+; 功能: 入栈 / 上推
+PUSH_UP    EQU 6
+
+; 操作码 07: ䷊ TAI - FLUSH (SHR)
+; 功能: 逻辑右移
+; 用法: FLUSH Rx, Ry  → Rx = Rx >> (Ry & 0x1F)
+FLUSH      EQU 7
+
+; 操作码 08: ䷏ YU - SPECULATE
+; 功能: 预测分支 / 投机执行
+SPECULATE  EQU 8
+
+; 操作码 09: ䷲ ZHEN - SHOCK
+; 功能: 信号 / 中断触发
+SHOCK      EQU 9
+
+; 操作码 10: ䷧ JIE - UNLOCK
+; 功能: 解锁
+UNLOCK     EQU 10
+
+; 操作码 11: ䷵ GUIMEI - MISMATCH
+; 功能: 不匹配 / 错误处理
+MISMATCH   EQU 11
+
+; 操作码 12: ䷽ XIAOGUO - MICRO
+; 功能: 微调 / 微操作
+MICRO      EQU 12
+
+; 操作码 13: ䷶ FENG - ABOUND
+; 功能: 立即数加载
+; 用法: ABOUND Rx, N  → Rx = N (N 是立即数 0-255)
+; 注意: N < 16 时需要通过计算获得
+ABOUND     EQU 13
+
+; 操作码 14: ䷟ HENG - PERSIST
+; 功能: 持久化 / 循环
+PERSIST    EQU 14
+
+; 操作码 15: ䷡ DAZHUANG - THRUST
+; 功能: 推送 / 快速前进
+THRUST     EQU 15
+
+; 操作码 16: ䷇ BI - MERGE (OR)
+; 功能: 按位或
+; 用法: MERGE Rx, Ry  → Rx = Rx | Ry
+MERGE      EQU 16
+
+; 操作码 17: ䷂ ZHUN - ALLOC
+; 功能: 内存分配
+; 用法: ALLOC Rx, N  → Rx = 堆地址 (分配 N 字节, N=0 表示 256)
+ALLOC      EQU 17
+
+; 操作码 18: ䷜ KAN - TRAP
+; 功能: 陷阱 / 异常
+TRAP       EQU 18
+
+; 操作码 19: ䷿ JIEX - THROTTLE
+; 功能: 节流 / 限速
+THROTTLE   EQU 19
+
+; 操作码 20: ䷴ JIANX - LAME
+; 功能: 暂停 / 减速
+LAME       EQU 20
+
+; 操作码 21: ䷾ JIJI - SYNC
+; 功能: 同步屏障
+SYNC       EQU 21
+
+; 操作码 22: ䷯ JING - WELL
+; 功能: 阻塞读 / 管道
+WELL       EQU 22
+
+; 操作码 23: ䷄ XU - WAIT
+; 功能: 等待条件
+WAIT       EQU 23
+
+; 操作码 24: ䷬ CUI - GATHER
+; 功能: 收集 / 归约
+GATHER     EQU 24
+
+; 操作码 25: ䷐ SUI - FOLLOWING
+; 功能: 数据流跟踪
+FOLLOWING  EQU 25
+
+; 操作码 26: ䷮ KUNX - TRAPPED
+; 功能: 被困 / 等待
+TRAPPED    EQU 26
+
+; 操作码 27: ䷹ DUI - JOY
+; 功能: 回调 / 完成通知
+JOY        EQU 27
+
+; 操作码 28: ䷞ XIAN - SENSE
+; 功能: 感知 / 输入
+SENSE      EQU 28
+
+; 操作码 29: ䷰ GE - REPLACE
+; 功能: 替换 / 热更新
+REPLACE    EQU 29
+
+; 操作码 30: ䷛ DAGUO - OVERLOAD
+; 功能: 过载 / 错误
+OVERLOAD   EQU 30
+
+; 操作码 31: ䷫ GUAI - BREAK
+; 功能: 中断 / 跳出
+BREAK      EQU 31
+
+; 操作码 32: ䷖ BO - STRIP
+; 功能: 剥离 / 截断
+STRIP      EQU 32
+
+; 操作码 33: ䷤ YI - NOURISH
+; 功能: 滋养 / 初始化
+NOURISH    EQU 33
+
+; 操作码 34: ䷃ MENG - SPRT
+; 功能: 加载动态库 / 支持
+SPRT       EQU 34
+
+; 操作码 35: ䷨ SUN - REDUCE
+; 功能: 减法
+; 用法: REDUCE Rx, Ry  → Rx = Rx - Ry
+REDUCE     EQU 35
+
+; 操作码 36: ䷳ GEN - STILL
+; 功能: 暂停 / 冻结
+STILL      EQU 36
+
+; 操作码 37: ䷤ BIX - ADORN (XOR)
+; 功能: 按位异或
+; 用法: ADORN Rx, Ry  → Rx = Rx ^ Ry
+ADORN      EQU 37
+
+; 操作码 38: ䷑ GU - MUT
+; 功能: 强制变异
+MUT        EQU 38
+
+; 操作码 39: ䷙ DAXU - BARRIER
+; 功能: 内存屏障
+BARRIER    EQU 39
+
+; 操作码 40: ䷢ JIN - ADVANCE
+; 功能: 前进 / 步进
+ADVANCE    EQU 40
+
+; 操作码 41: ䷥ SHIHE - BITE
+; 功能: 断言 / 咬合
+BITE       EQU 41
+
+; 操作码 42: ䷿ WEIJI - FUTU
+; 功能: 异步占位符 / 未来值
+FUTU       EQU 42
+
+; 操作码 43: ䷨ KUI - CONVERT
+; 功能: 类型转换
+CONVERT    EQU 43
+
+; 操作码 44: ䷵ LVX - TRAVEL
+; 功能: 遍历 / 移动
+TRAVEL     EQU 44
+
+; 操作码 45: ䷣ LI - ILLUMINATE
+; 功能: 照亮 / 调试
+ILLUMINATE EQU 45
+
+; 操作码 46: ䷱ DING - CAST
+; 功能: 类型铸造
+CAST       EQU 46
+
+; 操作码 47: ䷍ DAYOU - ABUNDANCE
+; 功能: 写回 / 填充数据
+ABUNDANCE  EQU 47
+
+; 操作码 48: ䷓ GUAN - CONTEMPLATE
+; 功能: 观察 / 读取周期计数
+; 用法: CONTEMPLATE Rx  → Rx = 当前周期计数
+CONTEMPLATE EQU 48
+
+; 操作码 49: ䷩ YIX - INCREASE
+; 功能: 加法
+; 用法: INCREASE Rx, Ry  → Rx = Rx + Ry
+INCREASE   EQU 49
+
+; 操作码 50: ䷺ HUAN - DISPERSE
+; 功能: 内存存储
+; 用法: DISPERSE Rx, Ry  → *Rx = Ry (Ry 的值存储到 Rx 指向的内存)
+DISPERSE   EQU 50
+
+; 操作码 51: ䷼ ZHONGFU - TRUST
+; 功能: 签名 / 验证
+TRUST      EQU 51
+
+; 操作码 52: ䷴ JIANJ - GRADUAL
+; 功能: 逐步执行
+GRADUAL    EQU 52
+
+; 操作码 53: ䷤ JIAREN - BIND
+; 功能: 绑定 / 连接
+BIND       EQU 53
+
+; 操作码 54: ䷔ XUN - PENETRATE
+; 功能: 内存加载
+; 用法: PENETRATE Rx, Ry  → Ry = *Rx (Rx 指向的内存值加载到 Ry)
+PENETRATE  EQU 54
+
+; 操作码 55: ䷏ XIAOXU - PREFETCH (SHL)
+; 功能: 逻辑左移
+; 用法: PREFETCH Rx, Ry  → Rx = Rx << (Ry & 0x1F)
+PREFETCH   EQU 55
+
+; 操作码 56: ䷖ PI - HALT
+; 功能: 停止执行
+HALT       EQU 56
+
+; 操作码 57: ䷠ WUWANG - INTRINSIC
+; 功能: 内在 / 特殊操作
+INTRINSIC  EQU 57
+
+; 操作码 58: ䷅ SONG - LOCK
+; 功能: 互斥锁
+LOCK       EQU 58
+
+; 操作码 59: ䷳ LV - STEP
+; 功能: 步进 / 单步
+STEP       EQU 59
+
+; 操作码 60: ䷙ DUN - RETREAT
+; 功能: 后退 / 撤销
+RETREAT    EQU 60
+
+; 操作码 61: ䷌ TONGREN - FELLOWSHIP
+; 功能: 寄存器复制
+; 用法: FELLOWSHIP Rx, Ry  → Rx = Ry
+FELLOWSHIP EQU 61
+
+; 操作码 62: ䷴ GOU - MATE
+; 功能: 基因交叉重组
+MATE       EQU 62
+
+; 操作码 63: ䷀ QIAN - CREA
+; 功能: 创建新进程 / 线程
+CREA       EQU 63
+
+; ========== 修饰符 ==========
+MOD_ASYNC    EQU 0x10
+MOD_ATOMIC   EQU 0x20
+MOD_PRIV     EQU 0x40
+MOD_WEAK     EQU 0x01
+MOD_STRONG   EQU 0x02
+MOD_VOLATILE EQU 0x08
+
+; ========== 系统调用号 ==========
+SYS_OPEN     EQU 0
+SYS_READ     EQU 1
+SYS_WRITE    EQU 2
+SYS_CLOSE    EQU 3
+SYS_SEEK     EQU 4
+SYS_TELL     EQU 5
+SYS_MALLOC   EQU 10
+SYS_FREE     EQU 11
+SYS_MEMCPY   EQU 12
+SYS_MEMSET   EQU 13
+SYS_MEMCMP   EQU 14
+SYS_STRLEN   EQU 20
+SYS_STRCMP   EQU 21
+SYS_STRCPY   EQU 22
+SYS_STRCAT   EQU 23
+SYS_STRCHR   EQU 24
+SYS_ISDIGIT  EQU 30
+SYS_ISALPHA  EQU 31
+SYS_ISALNUM  EQU 32
+SYS_ISSPACE  EQU 33
+SYS_TOUPPER  EQU 34
+SYS_TOLOWER  EQU 35
+SYS_ATOI     EQU 36
+SYS_PRINT    EQU 40
+SYS_PRINTLN  EQU 41
+SYS_SCAN     EQU 42
+SYS_EXIT     EQU 255
+
+MODE_READ    EQU 0
+MODE_WRITE   EQU 1
+MODE_RW      EQU 2

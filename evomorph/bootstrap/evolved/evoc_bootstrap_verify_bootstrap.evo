@@ -1,0 +1,31 @@
+@evolang "3.0"
+
+@locus evoc.bootstrap.verify_bootstrap {
+    mut_rate   = 0.02
+    cross_pool = "bootstrap"
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷁ RECV
+        ䷂ ALLOC
+        ䷍ ABUNDANCE
+        ䷓ CONTEMPLATE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷍ ABUNDANCE
+        ䷗ RETURN
+        ䷁ RECV
+        ䷈ PREFETCH
+        ䷁ RECV
+        ䷈ PREFETCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷉ STEP
+        ䷉ STEP
+        ䷾ SYNC
+        ䷍ ABUNDANCE
+        ䷾ SYNC
+    }
+}

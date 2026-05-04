@@ -1,0 +1,242 @@
+; ============================================================
+; 易衍·Evomorph 数字操作库
+; 实现整数到字符串转换等功能
+; ============================================================
+
+; ========== 包含字符串库 ==========
+; 注意：需要先 include string.evoasm
+; 但由于汇编器不支持 include，这里直接定义必要的常量和宏
+
+; ========== 系统调用号 ==========
+SYS_STRLEN    EQU 20
+SYS_STRCMP    EQU 21
+SYS_ISDIGIT   EQU 30
+SYS_ATOI      EQU 36
+SYS_PRINT     EQU 40
+SYS_EXIT      EQU 255
+
+; ========== 小立即数加载宏 ==========
+
+; 加载 0
+%macro LOAD_0 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 1
+%macro LOAD_1 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 2
+%macro LOAD_2 1
+    ABOUND R1, 16
+    ABOUND R2, 14
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 10
+%macro LOAD_10 1
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 指针递增
+%macro PTR_INC 1
+    LOAD_1 R1
+    INCREASE %1, R1
+%endmacro
+
+; ========== 数字常量 ==========
+CHAR_0 EQU 48
+CHAR_9 EQU 57
+CHAR_A EQU 65
+CHAR_a EQU 97
+
+; ========== 整数到字符串转换 (ITOA) ==========
+; 输入:
+;   R1 = 整数 (有符号 32 位)
+;   R2 = 目标缓冲区地址
+;   R3 = 基数 (2, 8, 10, 16)
+; 输出:
+;   R0 = 字符串地址 (即 R2)
+;
+; 使用约定:
+;   R4-R9: 临时寄存器
+;   R10-R11: 保存重要值
+;   R12: 负数标志
+;   R13: 基数
+;   R14: 缓冲区指针
+;   R15: 数字计数
+
+; ============================================================
+; ITOA 子例程
+; ============================================================
+; 使用方式:
+;   ABOUND R1, 123      ; 数字
+;   ALLOC R0, 0          ; 缓冲区
+;   FELLOWSHIP R2, R0
+;   ABOUND R3, 10        ; 基数 10
+;   CALL itoa            ; 调用子例程
+;
+; 注意: 需要手动实现调用约定，因为没有 CALL 指令
+; 可以使用 BRANCH 和链接寄存器 (R14)
+
+; ============================================================
+; 简化版本: 正数十进制转换
+; ============================================================
+; 输入:
+;   R1 = 正整数
+;   R2 = 缓冲区地址
+; 输出:
+;   R0 = 字符串长度
+;
+; 算法:
+;   1. 重复: 数字 % 10 得到余数 (0-9)
+;   2. 余数 + '0' 得到 ASCII 字符
+;   3. 数字 = 数字 / 10
+;   4. 直到数字为 0
+;   5. 反转字符串 (因为我们从低位开始)
+;
+; 注意: 由于没有除法指令，我们需要用减法模拟
+; 或者使用系统调用 (如果有的话)
+
+; ========== 打印数字 (简化版) ==========
+; 对于 0-255 的数字，可以直接转换为字符并打印
+;
+; 输入: R1 = 数字 (0-255)
+; 输出: 无 (直接打印)
+;
+; 算法:
+;   1. 如果数字 < 10，直接打印数字 + '0'
+;   2. 否则分解为个位和十位
+;
+; 注意: 这只适用于 0-99 的数字
+
+; ========== 打印单个数字 ==========
+; 输入: R1 = 数字 (0-9)
+%macro PRINT_DIGIT 1
+    FELLOWSHIP R1, %1
+    ABOUND R2, CHAR_0
+    INCREASE R1, R2          ; R1 = 数字 + '0'
+    
+    ; 分配临时缓冲区
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0        ; R10 = 缓冲区
+    FELLOWSHIP R11, R0        ; R11 = 保存
+    
+    ; 存储字符
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 存储 null
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    ; 打印
+    PRINT R11
+%endmacro
+
+; ========== 打印 0-99 的数字 ==========
+; 输入: R1 = 数字 (0-99)
+; 输出: 无
+%macro PRINT_NUM_99 1
+    FELLOWSHIP R1, %1
+    
+    ; 分配缓冲区
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0        ; R10 = 工作指针
+    FELLOWSHIP R11, R0        ; R11 = 保存
+    
+    ; 检查是否为 0
+    FELLOWSHIP R2, R1
+    LOAD_0 R3
+    REDUCE R2, R3             ; R2 = R1 - 0 = R1
+    ; 如果 R2 == 0，直接打印 '0'
+    
+    ; 这里简化处理: 只处理 0-9
+    ; 对于编译器开发，暂时使用系统调用 ATOI 的反向
+    
+    ; 简化: 使用字符 '0' + 数字
+    ABOUND R3, CHAR_0
+    INCREASE R1, R3            ; R1 = 数字 + '0'
+    
+    ; 存储到缓冲区
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; null 终止
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    ; 打印
+    PRINT R11
+%endmacro
+
+; ========== 实际使用: 依赖系统调用 ==========
+; 由于 EvoASM 没有除法和乘法指令，
+; 完整的 itoa 实现比较复杂。
+;
+; 对于编译器开发，建议:
+; 1. 使用系统调用 (如果有 ITOA 系统调用)
+; 2. 或者在 Python 汇编器中实现，然后用 EvoASM 重写
+; 3. 或者使用查表法
+
+; ========== 简化: 使用字符串拼接 ==========
+; 对于已知的小数字，可以预定义字符串
+
+; 数字字符串表 (0-15)
+; 使用时: 根据数字索引到对应的字符串
+
+; ========== 实用宏 ==========
+
+; 检查是否为数字字符
+; 输入: R1 = 字符
+; 输出: R0 = 1(是) 或 0(否)
+%macro IS_DIGIT_CHAR 1
+    FELLOWSHIP R1, %1
+    
+    ; 检查 >= '0'
+    ABOUND R2, CHAR_0
+    FELLOWSHIP R3, R1
+    REDUCE R3, R2              ; R3 = R1 - '0'
+    ; 如果 R3 < 0，不是数字
+    
+    ; 检查 <= '9'
+    ABOUND R2, CHAR_9
+    FELLOWSHIP R4, R2
+    REDUCE R4, R1              ; R4 = '9' - R1
+    ; 如果 R4 < 0，不是数字
+    
+    ; 简化: 使用系统调用
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+%endmacro
+
+; 字符转数字
+; 输入: R1 = 字符 ('0'-'9')
+; 输出: R0 = 数字 (0-9)
+%macro CHAR_TO_DIGIT 1
+    FELLOWSHIP R1, %1
+    ABOUND R2, CHAR_0
+    REDUCE R1, R2              ; R1 = 字符 - '0'
+    FELLOWSHIP R0, R1
+%endmacro
+
+; 数字转字符
+; 输入: R1 = 数字 (0-9)
+; 输出: R0 = 字符 ('0'-'9')
+%macro DIGIT_TO_CHAR 1
+    FELLOWSHIP R1, %1
+    ABOUND R2, CHAR_0
+    INCREASE R1, R2             ; R1 = 数字 + '0'
+    FELLOWSHIP R0, R1
+%endmacro

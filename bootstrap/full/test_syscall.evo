@@ -1,0 +1,22 @@
+@evolang "3.0"
+
+@xiangci {
+    "系统调用测试：验证文件IO和字符串操作"
+}
+
+@locus test_syscall {
+    mut_rate = 0.005
+    fitness = min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷶ ABOUND R0, 40
+        ䷁ RECV R0, 0
+
+        ䷶ ABOUND R0, 5
+        ䷶ ABOUND R1, 0
+        ䷶ ABOUND R2, 0
+        ䷶ ABOUND R3, 0
+        ䷋ HALT
+    }
+}

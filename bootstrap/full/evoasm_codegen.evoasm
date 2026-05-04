@@ -1,0 +1,384 @@
+; ============================================================
+; 易衍·Evomorph EvoASM 指令编码器
+; 用 EvoASM 编写的完整代码生成器
+; ============================================================
+;
+; 指令编码格式:
+;   byte1: ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+;   byte2: modifier & 0x0F
+;   byte3: operand1 (寄存器或立即数)
+;   byte4: operand2 (寄存器或立即数)
+;
+; 寄存器使用:
+;   R0  = 临时 / 系统调用号
+;   R1  = 参数1
+;   R2  = 参数2
+;   R3  = 参数3
+;   R4  = 当前 Token 类型
+;   R5  = 操作码
+;   R6  = modifier
+;   R7  = operand1
+;   R8  = operand2
+;   R9  = 输出缓冲区指针
+;   R10 = 输出长度计数
+;   R11 = 助记符表指针
+;   R12 = 临时保存
+;   R13 = 临时保存
+;   R14 = 标志位
+;   R15 = 返回值
+;
+; ============================================================
+
+; ========== 常量定义 ==========
+SYS_MEMCPY  EQU 12
+SYS_MEMSET  EQU 13
+SYS_MEMCMP  EQU 14
+SYS_STRLEN  EQU 20
+SYS_STRCMP  EQU 21
+SYS_STRCPY  EQU 22
+SYS_ISDIGIT EQU 30
+SYS_ISALPHA EQU 31
+SYS_ISALNUM EQU 32
+SYS_TOUPPER EQU 34
+SYS_TOLOWER EQU 35
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+; Token 类型 (与词法分析器一致)
+TOKEN_EOF       EQU 0
+TOKEN_MNEMONIC  EQU 1
+TOKEN_REGISTER  EQU 2
+TOKEN_NUMBER    EQU 3
+TOKEN_IDENTIFIER EQU 4
+TOKEN_LABEL     EQU 5
+TOKEN_COMMA     EQU 6
+TOKEN_COLON     EQU 7
+TOKEN_COMMENT   EQU 8
+TOKEN_ERROR     EQU 9
+
+; ========== 内存布局 ==========
+MNEMONIC_TABLE  EQU 0x00120000   ; 助记符表
+OUTPUT_BUFFER   EQU 0x00121000   ; 输出缓冲区 (64KB)
+LABEL_TABLE     EQU 0x00122000   ; 标签表
+TOKEN_BUFFER    EQU 0x00123000   ; Token 值缓冲区
+SCRATCH_BUFFER  EQU 0x00124000   ; 临时缓冲区
+
+; ========== 助记符表格式 ==========
+; 每个条目 16 字节:
+;   字节 0-11: 助记符名称 (ASCII, 0 结束)
+;   字节 12:   操作码
+;   字节 13:   操作数数量 (0, 1, 2)
+;   字节 14-15: 保留
+
+; ========== 程序入口 ==========
+; 初始化
+ABOUND R9, OUTPUT_BUFFER     ; R9 = 输出指针
+ABOUND R10, 0                 ; R10 = 输出计数 = 0
+
+; 初始化助记符表
+; 注意：实际运行时需要填充这个表
+; 这里使用硬编码的助记符识别
+
+; ========== 主编码循环 ==========
+codegen_main_loop:
+    ; 获取下一个 Token (从词法分析器)
+    ; 简化版本：假设 Token 已经在 TOKEN_BUFFER 中
+    ; R4 = Token 类型
+    
+    ; 检查是否是 EOF
+    CMP R4, TOKEN_EOF
+    BRANCH R0, codegen_not_eof
+    
+    ; EOF，结束
+    BRANCH R0, codegen_done
+
+codegen_not_eof:
+    ; 检查 Token 类型
+    CMP R4, TOKEN_MNEMONIC
+    BRANCH R0, not_mnemonic
+    
+    ; 这是助记符，开始编码指令
+    BRANCH R0, encode_instruction
+
+not_mnemonic:
+    ; 检查是否是标签定义
+    CMP R4, TOKEN_LABEL
+    BRANCH R0, not_label
+    
+    ; 记录标签
+    BRANCH R0, record_label
+
+not_label:
+    ; 其他 Token，跳过 (注释、逗号等)
+    ; 获取下一个 Token
+    BRANCH R0, codegen_main_loop
+
+; ========== 编码单条指令 ==========
+encode_instruction:
+    ; 输入:
+    ;   TOKEN_BUFFER = 助记符字符串
+    ; 输出:
+    ;   R5 = 操作码
+    ;   后续操作数需要读取
+    
+    ; 首先查找助记符
+    ; 简化版本：使用硬编码比较
+    ; 实际实现需要查表
+    
+    ; 保存助记符字符串地址到 R1
+    ABOUND R1, TOKEN_BUFFER
+    
+    ; 检查是否是 "ABOUND"
+    ; 比较字符串 "ABOUND"
+    ABOUND R2, SCRATCH_BUFFER
+    ; "ABOUND" = 0x41, 0x42, 0x4F, 0x55, 0x4E, 0x44, 0x00
+    ; 这里简化处理，假设已经通过其他方式确定是 ABOUND
+    
+    ; 临时：硬编码 ABOUND 操作码 = 13
+    ABOUND R5, 13              ; opcode = 13 (ABOUND)
+    ABOUND R6, 0                ; modifier = 0
+    
+    ; 读取操作数1
+    ; 应该是下一个 Token (寄存器或数字)
+    ; 简化：假设已经在 R7
+    ABOUND R7, 0                ; operand1 待填
+    
+    ; 读取操作数2
+    ABOUND R8, 0                ; operand2 待填
+    
+    ; 编码并输出
+    BRANCH R0, emit_instruction
+
+; ========== 记录标签 ==========
+record_label:
+    ; 输入:
+    ;   TOKEN_BUFFER = 标签名称
+    ;   R10 = 当前输出地址 (标签值)
+    
+    ; 保存标签到标签表
+    ; 标签表格式:
+    ;   每个条目 32 字节:
+    ;     0-23: 标签名称
+    ;     24-27: 地址 (little-endian)
+    ;     28-31: 保留
+    
+    ; 简化版本：这里只记录，不实际写入
+    ; 实际实现需要遍历标签表查找空位
+    
+    ; 获取下一个 Token
+    BRANCH R0, codegen_main_loop
+
+; ========== 解析操作数 ==========
+parse_operand:
+    ; 输入:
+    ;   TOKEN_BUFFER = 操作数字符串
+    ;   R4 = Token 类型
+    ; 输出:
+    ;   R0 = 操作数值 (0-255)
+    ;   标志位 = 是否是标签引用
+    
+    ; 检查是否是寄存器
+    CMP R4, TOKEN_REGISTER
+    BRANCH R0, not_register_operand
+    
+    ; 寄存器: R0-R15
+    ; 字符串是 "R0" 到 "R15"
+    ; 提取数字部分
+    ABOUND R1, TOKEN_BUFFER
+    INCREASE R1, 1               ; 跳过 'R'
+    
+    ; 将字符串转换为数字
+    ; 简化：假设是单个数字
+    ABOUND R0, TOKEN_BUFFER
+    INCREASE R0, 1
+    PENETRATE R1, R0              ; R1 = 字符
+    REDUCE R1, 48                 ; '0' = 48
+    FELLOWSHIP R0, R1             ; R0 = 寄存器号
+    
+    BRANCH R0, operand_done
+
+not_register_operand:
+    ; 检查是否是数字
+    CMP R4, TOKEN_NUMBER
+    BRANCH R0, not_number_operand
+    
+    ; 数字：转换为整数
+    ABOUND R1, TOKEN_BUFFER
+    ; 简化：使用 ATOI 系统调用
+    ABOUND R0, SYS_ATOI
+    RECV R0, 0
+    ; R0 = 数字值
+    
+    ; 只取低 8 位
+    ABOUND R1, 0xFF
+    AND R0, R1
+    
+    BRANCH R0, operand_done
+
+not_number_operand:
+    ; 可能是标签引用或常量
+    ; 标记为待处理
+    ; R14 = 1 表示标签引用
+    ABOUND R14, 1
+    
+    ; 临时返回 0
+    ABOUND R0, 0
+
+operand_done:
+    ; 返回
+    ; R0 = 操作数值
+    ; R14 = 1 如果是标签引用
+    RETURN
+
+; ========== 输出编码后的指令 ==========
+emit_instruction:
+    ; 输入:
+    ;   R5 = opcode (6 位)
+    ;   R6 = modifier (8 位)
+    ;   R7 = operand1 (8 位)
+    ;   R8 = operand2 (8 位)
+    ;   R9 = 输出缓冲区指针
+    ; 输出:
+    ;   R9 += 4
+    ;   R10 += 4
+    
+    ; byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+    ABOUND R0, R5
+    AND R0, 0x3F               ; opcode & 0x3F
+    SHL R0, 2                  ; << 2
+    
+    ABOUND R1, R6
+    SHR R1, 4                  ; modifier >> 4
+    AND R1, 0x03               ; & 0x03
+    
+    OR R0, R1                   ; byte1 = R0 | R1
+    
+    ; 存储 byte1
+    DISPERSE R9, R0
+    INCREASE R9, 1
+    
+    ; byte2 = modifier & 0x0F
+    ABOUND R0, R6
+    AND R0, 0x0F
+    DISPERSE R9, R0
+    INCREASE R9, 1
+    
+    ; byte3 = operand1
+    DISPERSE R9, R7
+    INCREASE R9, 1
+    
+    ; byte4 = operand2
+    DISPERSE R9, R8
+    INCREASE R9, 1
+    
+    ; 增加计数
+    INCREASE R10, 4
+    
+    ; 获取下一个 Token
+    BRANCH R0, codegen_main_loop
+
+; ========== 标签重定位 (第二遍) ==========
+relocate_labels:
+    ; 第一遍已经完成，现在处理标签引用
+    ; 遍历所有待处理的标签引用
+    
+    ; 简化版本：这里只示意
+    ; 实际实现需要:
+    ; 1. 遍历所有指令
+    ; 2. 检查是否有标签引用
+    ; 3. 在标签表中查找
+    ; 4. 修正操作数字段
+    
+    RETURN
+
+; ========== 助记符查找表 (预留) ==========
+; 实际实现需要构建一个表，包含:
+;   "ABOUND"   -> 13
+;   "INCREASE" -> 49
+;   "REDUCE"   -> 35
+;   "BRANCH"   -> 2
+;   "CMP"      -> 37
+;   "HALT"     -> 56
+;   "RECV"     -> 0
+;   "CREA"     -> 63
+;   "ALLOC"    -> 17
+;   "SPRT"     -> 34
+;   "WAIT"     -> 23
+;   "LOCK"     -> 58
+;   "MERGE"    -> 16
+;   "FELLOWSHIP" -> 61
+;   "ABUNDANCE" -> 47
+;   "YIELD"    -> 4
+;   "SPECULATE" -> 8
+;   "FOLLOWING" -> 25
+;   "MUT"      -> 38
+;   "RETURN"   -> 1
+;   "BARRIER"  -> 39
+;   "MATE"     -> 62
+;   "GATHER"   -> 24
+;   "PUSH_UP"  -> 6
+;   "WELL"     -> 22
+;   "REPLACE"  -> 29
+;   "CAST"     -> 46
+;   "SHOCK"    -> 9
+;   "STILL"    -> 36
+;   "GRADUAL"  -> 52
+;   "JOY"      -> 27
+;   "DISPERSE" -> 50
+;   "TRUST"    -> 51
+;   "MICRO"    -> 12
+;   "SYNC"     -> 21
+;   "FUTU"     -> 42
+;   "SHL"      -> 55
+;   "SHR"      -> 7
+;   "AND"      -> 3
+;   "OR"       -> 16
+;   "XOR"      -> 37
+;   "PENETRATE" -> 54
+
+; ========== 结束 ==========
+codegen_done:
+    ; 代码生成完成
+    ; R9 = 输出结束指针
+    ; R10 = 输出字节数
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT
+
+; ========== 简化的指令编码示例 ==========
+; 以下是一些常见指令的硬编码逻辑：
+
+; ABOUND R0, 5
+; opcode = 13, modifier = 0
+; byte1 = (13 << 2) | 0 = 52 = 0x34
+; byte2 = 0
+; byte3 = 0 (R0)
+; byte4 = 5
+; 编码: 34 00 00 05
+
+; INCREASE R0, R1
+; opcode = 49
+; byte1 = (49 << 2) = 196 = 0xC4
+; byte2 = 0
+; byte3 = 0 (R0)
+; byte4 = 1 (R1)
+; 编码: C4 00 00 01
+
+; BRANCH R0, label
+; opcode = 2
+; byte1 = (2 << 2) = 8 = 0x08
+; byte2 = 0
+; byte3 = 0 (条件寄存器 R0)
+; byte4 = 标签地址 (待填)
+; 编码: 08 00 00 ??
+
+; HALT
+; opcode = 56
+; byte1 = (56 << 2) = 224 = 0xE0
+; byte2 = 0
+; byte3 = 0
+; byte4 = 0
+; 编码: E0 00 00 00

@@ -1,0 +1,77 @@
+@evolang "3.0"
+
+@locus evoc.vm.dispatch_opcode {
+    mut_rate   = 0.02
+    cross_pool = "vm_core"
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷓ CONTEMPLATE
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷾ SYNC
+    }
+}

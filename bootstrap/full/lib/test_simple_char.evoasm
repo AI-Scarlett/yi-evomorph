@@ -1,0 +1,42 @@
+; ============================================================
+; 易衍·Evomorph 简单测试
+; 不使用宏，直接展开代码
+; ============================================================
+
+; ========== 常量定义 ==========
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+; ========== 主程序 ==========
+main:
+    ; ===== 分配缓冲区 =====
+    ALLOC R0, 0                 ; R0 = 缓冲区 (256 字节)
+    FELLOWSHIP R14, R0          ; R14 = 保存地址
+    FELLOWSHIP R10, R0          ; R10 = 工作指针
+    
+    ; ===== 存储 "A" =====
+    ABOUND R1, 65                ; R1 = 65 ('A')
+    DISPERSE R10, R1             ; *R10 = 'A'
+    
+    ; 指针加 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2                ; R1 = 1
+    INCREASE R10, R1             ; R10++
+    
+    ; ===== 存储 null =====
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2                ; R1 = 0
+    DISPERSE R10, R1             ; *R10 = 0
+    
+    ; ===== 打印 =====
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R14
+    RECV R0, 0
+    
+    ; ===== 退出 =====
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

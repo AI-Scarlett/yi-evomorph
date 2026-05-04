@@ -1,7 +1,7 @@
 @evolang "3.0"
 
 @xiangci {
-    "算术之基：加减乘除，矢量张量，借平台之力而极速。"
+    "算术之基：加减乘除，与或非异，移位比较，借平台之力而极速。"
 }
 
 @locus std.math.add {
@@ -12,7 +12,7 @@
 
     卦序: {
         ䷩ INCREASE R0, R1
-        ䷗ RETURN
+        ䷗ RETURN R0
     }
 }
 
@@ -24,7 +24,103 @@
 
     卦序: {
         ䷨ REDUCE R0, R1
-        ䷗ RETURN
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.math.and {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷒ APPROACH R0, R1
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.math.or {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷇ MERGE R0, R1
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.math.xor {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷕ ADORN R0, R1
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.math.shl {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷈ PREFETCH R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.math.shr {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷊ FLUSH R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.math.not {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷆ OBSCURE R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.math.inc {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷠ ADVANCE R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.math.micro_add {
+    mut_rate   = 0.01
+    cross_pool = "math_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷽ MICRO R0, R1
+        ䷗ RETURN R0
     }
 }
 

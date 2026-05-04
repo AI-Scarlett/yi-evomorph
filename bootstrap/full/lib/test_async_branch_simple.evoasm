@@ -1,0 +1,100 @@
+; ============================================================
+; 测试 .ASYNC BRANCH 寄存器间接长跳转
+; 
+; 方法：
+; 1. 使用 ABOUND 加载低 8 位
+; 2. 使用 SHL 左移构建高 8 位
+; 3. 使用 GATHER (加法) 合并
+; 4. 使用 .ASYNC BRANCH 进行寄存器间接跳转
+; ============================================================
+
+SYS_EXIT    EQU 255
+
+; 常量：我们要跳转到的地址
+; far_target 地址 = 0x0060 (96)
+; 让我们计算：0x0060 = 96
+
+main:
+    ; ===== 步骤 1: 设置 R0 = 1 (非零) 确保跳转 =====
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2      ; R1 = 16 - 15 = 1
+    FELLOWSHIP R0, R1   ; R0 = 1
+    
+    ; ===== 步骤 2: 将目标地址 0x0060 (96) 加载到 R1 =====
+    ; 方法：直接用 ABOUND 加载 96 (0x60)
+    ABOUND R1, 96
+    
+    ; ===== 步骤 3: 使用 .ASYNC BRANCH 进行寄存器间接跳转 =====
+    ; 语法: .ASYNC BRANCH cond_reg, target_reg
+    ; 虚拟机将从 target_reg 读取完整的 32 位地址
+    .ASYNC BRANCH R0, R1
+    
+    ; ===== 如果跳转失败，这里会执行 =====
+    ; 打印 "Jump FAILED\n" (通过 ILLUMINATE 打印字符)
+    ; 'F' = 70
+    ABOUND R0, 70
+    ILLUMINATE R0
+    
+    ; '\n' = 10
+    ABOUND R0, 10
+    ILLUMINATE R0
+    
+    BRANCH R0, exit_program
+
+; ===== 填充指令使 far_target 超过 255？不，让我们先测试短地址 =====
+; 先测试 .ASYNC BRANCH 是否能正常工作
+; 我们使用一个小地址来验证机制
+
+; ===== 填充一些指令 =====
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+
+; ===== 远目标标签 (现在应该在 0x0060 = 96) =====
+far_target:
+    ; 打印 "Long jump OK!\n"
+    ; 'L' = 76
+    ABOUND R0, 76
+    ILLUMINATE R0
+    
+    ; 'O' = 79
+    ABOUND R0, 79
+    ILLUMINATE R0
+    
+    ; 'K' = 75
+    ABOUND R0, 75
+    ILLUMINATE R0
+    
+    ; '!' = 33
+    ABOUND R0, 33
+    ILLUMINATE R0
+    
+    ; '\n' = 10
+    ABOUND R0, 10
+    ILLUMINATE R0
+
+exit_program:
+    ; ===== 退出 =====
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

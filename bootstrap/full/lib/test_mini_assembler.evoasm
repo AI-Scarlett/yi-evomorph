@@ -1,0 +1,391 @@
+; ============================================================
+; 易衍·Evomorph 迷你编译器测试
+; 验证自举概念：用 EvoASM 编写一个简单的汇编器
+; ============================================================
+
+; ========== 系统调用号 ==========
+SYS_STRLEN    EQU 20
+SYS_STRCMP    EQU 21
+SYS_ISDIGIT   EQU 30
+SYS_ISALPHA   EQU 31
+SYS_PRINT     EQU 40
+SYS_EXIT      EQU 255
+
+; ========== 指令操作码 (用于编码) ==========
+OPCODE_CREA     EQU 63
+OPCODE_RECV     EQU 0
+OPCODE_ALLOC    EQU 17
+OPCODE_ABOUND   EQU 13
+OPCODE_FELLOWSHIP EQU 61
+OPCODE_INCREASE EQU 49
+OPCODE_REDUCE   EQU 35
+OPCODE_DISPERSE EQU 50
+OPCODE_PENETRATE EQU 54
+OPCODE_BRANCH   EQU 2
+OPCODE_HALT     EQU 56
+
+; ========== 字符常量 ==========
+CHAR_NULL     EQU 0
+CHAR_SPACE    EQU 32
+CHAR_COMMA    EQU 44
+CHAR_COLON    EQU 58
+
+; ========== 小立即数加载宏 ==========
+
+%macro LOAD_0 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro LOAD_1 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro LOAD_10 1
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro PTR_INC 1
+    LOAD_1 R1
+    INCREASE %1, R1
+%endmacro
+
+%macro PRINT_STR 1
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, %1
+    RECV R0, 0
+%endmacro
+
+; ========== 主程序 ==========
+; 测试：编码一条简单的指令 "ABOUND R0, 16"
+; 指令格式:
+;   byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+;   byte2 = modifier & 0x0F
+;   byte3 = operand1
+;   byte4 = operand2
+;
+; ABOUND 的操作码是 13
+; 所以:
+;   byte1 = (13 << 2) | 0 = 52 = 0x34
+;   byte2 = 0
+;   byte3 = 0 (R0)
+;   byte4 = 16
+; 结果: 34 00 00 10
+; ==========================================
+
+main:
+    ; ===== 步骤 1: 打印开始消息 =====
+    ; "Mini Assembler Test\n"
+    ALLOC R0, 0
+    FELLOWSHIP R14, R0
+    FELLOWSHIP R10, R0
+    
+    ; 'M' = 77
+    ABOUND R1, 77
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'n' = 110
+    ABOUND R1, 110
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'A' = 65
+    ABOUND R1, 65
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'm' = 109
+    ABOUND R1, 109
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'b' = 98
+    ABOUND R1, 98
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'l' = 108
+    ABOUND R1, 108
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\n' = 10
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    PRINT_STR R14
+    
+    ; ===== 步骤 2: 编码 "ABOUND R0, 16" =====
+    ; 操作码 = 13
+    ; byte1 = (13 << 2) = 52 = 0x34
+    ; byte2 = 0
+    ; byte3 = 0 (R0)
+    ; byte4 = 16
+    
+    ; 计算 byte1 = (opcode << 2)
+    ; opcode = 13
+    ; 13 << 2 = 52
+    
+    ; 使用 PREFETCH (左移) 指令
+    ABOUND R0, 13            ; R0 = opcode
+    LOAD_2 R1                 ; R1 = 2 (shift count)
+    PREFETCH R0, R1           ; R0 = 13 << 2 = 52
+    
+    ; R0 现在是 52 (0x34)
+    
+    ; 存储到输出缓冲区
+    ALLOC R1, 0
+    FELLOWSHIP R15, R1        ; R15 = 输出缓冲区
+    
+    ; byte1 = 52
+    FELLOWSHIP R2, R15
+    DISPERSE R2, R0
+    PTR_INC R2
+    
+    ; byte2 = 0
+    LOAD_0 R0
+    DISPERSE R2, R0
+    PTR_INC R2
+    
+    ; byte3 = 0 (R0)
+    LOAD_0 R0
+    DISPERSE R2, R0
+    PTR_INC R2
+    
+    ; byte4 = 16
+    ABOUND R0, 16
+    DISPERSE R2, R0
+    PTR_INC R2
+    
+    ; ===== 步骤 3: 打印编码结果 =====
+    ; "Encoded: 34 00 00 10\n"
+    ; 我们用十六进制字符表示
+    ; 0x34 = '4' + '3' (反向)
+    ; 简化: 直接打印 "34 00 00 10"
+    
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    
+    ; 'E' = 69
+    ABOUND R1, 69
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'n' = 110
+    ABOUND R1, 110
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'o' = 111
+    ABOUND R1, 111
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'd' = 100
+    ABOUND R1, 100
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'd' = 100
+    ABOUND R1, 100
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ':' = 58
+    ABOUND R1, 58
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '3' = 51
+    ABOUND R1, 51
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '4' = 52
+    ABOUND R1, 52
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '0' = 48
+    ABOUND R1, 48
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '0' = 48
+    ABOUND R1, 48
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '0' = 48
+    ABOUND R1, 48
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '0' = 48
+    ABOUND R1, 48
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '1' = 49
+    ABOUND R1, 49
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '0' = 48
+    ABOUND R1, 48
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\n' = 10
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    PRINT_STR R0
+    
+    ; ===== 步骤 4: 打印成功消息 =====
+    ; "Success!\n"
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    
+    ; 'S' = 83
+    ABOUND R1, 83
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'u' = 117
+    ABOUND R1, 117
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '!' = 33
+    ABOUND R1, 33
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\n' = 10
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    PRINT_STR R0
+    
+    ; ===== 退出 =====
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

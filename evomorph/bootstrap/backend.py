@@ -129,29 +129,39 @@ class EvomorphBackend:
     
     def _compile_using_evomorph(self, source: str, output_format: str) -> Dict[str, Any]:
         """使用 Evomorph 实现编译源代码"""
+        self.runtime.bind_env("SOURCE", source)
         self.runtime.bind_env("SOURCE_CODE", source)
         self.runtime.bind_env("OUTPUT_FORMAT", output_format)
         
-        lexer_result = self.execute_locus("evoc.lexer.full_pass", max_cycles=1000)
+        lexer_result = self.execute_locus("evoc.lexer.full_pass", max_cycles=10000)
         if "error" in lexer_result:
             return {"error": f"词法分析失败: {lexer_result['error']}"}
         
         tokens = lexer_result.get("registers", {}).get("R0", [])
+        if not tokens:
+            tokens = lexer_result.get("registers", {}).get("R4", [])
         self.runtime.bind_env("TOKENS", tokens)
+        self.runtime.bind_env("TOKEN_STREAM", tokens)
         
-        parser_result = self.execute_locus("evoc.parser.parse", max_cycles=1000)
+        parser_result = self.execute_locus("evoc.parser.full_pass", max_cycles=10000)
         if "error" in parser_result:
             return {"error": f"语法分析失败: {parser_result['error']}"}
         
         ast = parser_result.get("registers", {}).get("R0", {})
+        if not ast:
+            ast = parser_result.get("registers", {}).get("R2", {})
         self.runtime.bind_env("AST", ast)
         self.runtime.bind_env("OUTPUT_FORMAT", output_format)
         
-        codegen_result = self.execute_locus("evoc.codegen.full_pass", max_cycles=1000)
+        codegen_result = self.execute_locus("evoc.codegen.full_pass", max_cycles=10000)
         if "error" in codegen_result:
             return {"error": f"代码生成失败: {codegen_result['error']}"}
         
-        return codegen_result.get("registers", {}).get("R0", {})
+        output = codegen_result.get("registers", {}).get("R0", {})
+        if not output:
+            output = codegen_result.get("registers", {}).get("R4", {})
+        
+        return output if output else {"error": "代码生成未产生输出"}
     
     def execute_program(self, program: List[Dict[str, Any]], max_cycles: int = 10000) -> Dict[str, Any]:
         """

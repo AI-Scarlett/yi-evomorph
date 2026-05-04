@@ -1,0 +1,17 @@
+; 易衍·Evomorph EvoASM 测试程序
+; 这是简化的汇编语法，用于自举测试
+
+; 测试：5 + 10 = 15, 20 - 5 = 15
+ABOUND R0, 5       ; R0 = 5
+ABOUND R1, 10      ; R1 = 10
+INCREASE R0, R1     ; R0 = R0 + R1 = 15
+ABOUND R2, 20      ; R2 = 20
+ABOUND R3, 5       ; R3 = 5
+REDUCE R2, R3       ; R2 = R2 - R3 = 15
+
+; 测试系统调用
+ABOUND R0, PRINT    ; 系统调用号 40 = PRINT
+ABOUND R1, 0        ; 字符串地址（暂用 0）
+RECV R0, 0          ; 调用系统调用
+
+HALT

@@ -1,0 +1,47 @@
+; ============================================================
+; 测试 .ASYNC BRANCH 寄存器间接跳转
+; 
+; 测试逻辑：
+; 1. 设置 R0 = 1 (非零) 确保跳转
+; 2. 将 target_ok 地址加载到 R1
+; 3. 使用 .ASYNC BRANCH R0, R1
+; 4. 如果跳转成功：执行 target_ok，设置 R0 = 99, R1 = 88, R2 = 77
+; 5. 如果跳转失败：执行 fail_code，设置 R0 = 66, R1 = 55, R2 = 44
+; 6. HALT，检查寄存器值
+; ============================================================
+
+main:
+    ; ===== 步骤 1: 设置 R0 = 1 (非零) 确保跳转 =====
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2      ; R1 = 1
+    FELLOWSHIP R0, R1   ; R0 = 1
+    
+    ; ===== 步骤 2: 将 target_ok 地址加载到 R1 =====
+    ; target_ok 在地址 56 (0x38)
+    ABOUND R1, 56
+    
+    ; ===== 步骤 3: 使用 .ASYNC BRANCH =====
+    .ASYNC BRANCH R0, R1
+
+; ===== 跳转失败时执行这里 =====
+fail_code:
+    ; 设置失败标记：R0=66, R1=55, R2=44
+    ABOUND R0, 66
+    ABOUND R1, 55
+    ABOUND R2, 44
+    HALT
+
+; ===== 填充一些指令使 target_ok 不在短范围内 =====
+ABOUND R3, 0
+ABOUND R3, 0
+ABOUND R3, 0
+ABOUND R3, 0
+
+; ===== 跳转成功时执行这里 =====
+target_ok:
+    ; 设置成功标记：R0=99, R1=88, R2=77
+    ABOUND R0, 99
+    ABOUND R1, 88
+    ABOUND R2, 77
+    HALT

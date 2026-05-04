@@ -1,0 +1,20 @@
+@evolang "3.0"
+
+@locus evoc.bootstrap.self_compile {
+    mut_rate   = 0.02
+    cross_pool = "bootstrap"
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷂ ALLOC
+        ䷂ ALLOC
+        ䷂ ALLOC
+        ䷂ ALLOC
+        ䷍ ABUNDANCE
+        ䷍ ABUNDANCE
+        ䷍ ABUNDANCE
+        ䷍ ABUNDANCE
+        ䷗ RETURN
+    }
+}

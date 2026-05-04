@@ -1,0 +1,355 @@
+; ============================================================
+; 易衍·Evomorph 字符串库
+; 用 EvoASM 实现的字符串操作函数
+; ============================================================
+;
+; 函数约定：
+;   输入参数: R1, R2, R3, ...
+;   返回值: R0
+;   破坏: R0, R1, R2, R3 (调用者需保存)
+;
+; ============================================================
+
+; ========== 常量定义 ==========
+SYS_STRLEN  EQU 20
+SYS_STRCMP  EQU 21
+SYS_STRCPY  EQU 22
+SYS_ISDIGIT EQU 30
+SYS_ISALPHA EQU 31
+SYS_ISALNUM EQU 32
+SYS_ISSPACE EQU 33
+SYS_TOUPPER EQU 34
+SYS_TOLOWER EQU 35
+SYS_ATOI    EQU 36
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+; ========== 宏：加载小立即数 ==========
+%macro LOAD_0 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro LOAD_1 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro PTR_INC 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE %1, R1
+%endmacro
+
+; ========== 函数: string_length ==========
+; 计算字符串长度
+; 输入: R1 = 字符串地址
+; 输出: R0 = 长度 (不包括 null 终止符)
+; 破坏: R0, R1, R2, R3
+; ==========================================
+string_length:
+    FELLOWSHIP R3, R1          ; R3 = 保存原始地址
+    LOAD_0 R0                   ; R0 = 0 (计数)
+
+string_length_loop:
+    ; 检查 *ptr == 0?
+    PENETRATE R1, R2            ; R2 = *R1
+    
+    ; 比较 R2 和 0
+    LOAD_0 R1
+    CMP_REGS:
+    REDUCE R2, R1               ; 如果 R2 == 0，R2 变成 0，设置 zero flag
+    
+    ; 如果 R2 == 0，跳转到结束
+    ; 注意: BRANCH 是非零时跳转
+    ; 所以如果 R2 == 0，我们不跳转，继续执行
+    ; 这正好是我们需要的
+    BRANCH R2, string_length_continue
+    
+    ; 到达这里意味着 R2 == 0
+    ; 计算长度 = 当前 ptr - 原始 ptr
+    FELLOWSHIP R0, R1
+    LOAD_0 R0                   ; 重置 R0 = 0
+    FELLOWSHIP R1, R3           ; 恢复原始地址
+    
+    ; 现在需要 R1 (原始) 和当前指针的差
+    ; 但当前指针在 R1 被覆盖了...
+    ; 简化: 使用系统调用 SYS_STRLEN
+    
+    ; 重新实现: 使用系统调用更简单
+    ABOUND R0, SYS_STRLEN
+    RECV R0, 0
+    RETURN
+
+string_length_continue:
+    ; 计数++
+    INCREASE R0, R1             ; R0++
+    
+    ; ptr++
+    PTR_INC R1
+    
+    BRANCH R0, string_length_loop
+
+; ========== 简化版本：使用系统调用 ==========
+; 实际上，虚拟机已经通过系统调用实现了这些功能
+; 我们直接封装它们
+
+; ========== 函数: sys_strlen ==========
+; 使用系统调用计算字符串长度
+; 输入: R1 = 字符串地址
+; 输出: R0 = 长度
+sys_strlen:
+    ABOUND R0, SYS_STRLEN
+    RECV R0, 0
+    RETURN
+
+; ========== 函数: sys_strcmp ==========
+; 比较两个字符串
+; 输入: R1 = s1, R2 = s2
+; 输出: R0 = 0 相等, <0 s1<s2, >0 s1>s2
+sys_strcmp:
+    ABOUND R0, SYS_STRCMP
+    RECV R0, 0
+    RETURN
+
+; ========== 函数: sys_strcpy ==========
+; 复制字符串
+; 输入: R1 = dst, R2 = src
+; 输出: R0 = dst
+sys_strcpy:
+    ABOUND R0, SYS_STRCPY
+    RECV R0, 0
+    RETURN
+
+; ========== 函数: sys_isdigit ==========
+; 检查字符是否是数字
+; 输入: R1 = 字符
+; 输出: R0 = 1 是数字, 0 不是
+sys_isdigit:
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+    RETURN
+
+; ========== 函数: sys_isalpha ==========
+; 检查字符是否是字母
+; 输入: R1 = 字符
+; 输出: R0 = 1 是字母, 0 不是
+sys_isalpha:
+    ABOUND R0, SYS_ISALPHA
+    RECV R0, 0
+    RETURN
+
+; ========== 函数: sys_isalnum ==========
+; 检查字符是否是字母数字
+; 输入: R1 = 字符
+; 输出: R0 = 1 是, 0 不是
+sys_isalnum:
+    ABOUND R0, SYS_ISALNUM
+    RECV R0, 0
+    RETURN
+
+; ========== 函数: sys_isspace ==========
+; 检查字符是否是空白
+; 输入: R1 = 字符
+; 输出: R0 = 1 是, 0 不是
+sys_isspace:
+    ABOUND R0, SYS_ISSPACE
+    RECV R0, 0
+    RETURN
+
+; ========== 函数: sys_toupper ==========
+; 字符转大写
+; 输入: R1 = 字符
+; 输出: R0 = 大写字符
+sys_toupper:
+    ABOUND R0, SYS_TOUPPER
+    RECV R0, 0
+    RETURN
+
+; ========== 函数: sys_tolower ==========
+; 字符转小写
+; 输入: R1 = 字符
+; 输出: R0 = 小写字符
+sys_tolower:
+    ABOUND R0, SYS_TOLOWER
+    RECV R0, 0
+    RETURN
+
+; ========== 函数: sys_atoi ==========
+; 字符串转整数
+; 输入: R1 = 字符串
+; 输出: R0 = 整数值
+sys_atoi:
+    ABOUND R0, SYS_ATOI
+    RECV R0, 0
+    RETURN
+
+; ========== 测试程序 ==========
+; 测试字符串库函数
+; ==========================================
+
+; 测试字符串
+TEST_STR1:  ; "Hello"
+
+; ========== 主程序 ==========
+main:
+    ; 分配缓冲区
+    LOAD_0 R1
+    ALLOC R0, R1               ; R0 = 缓冲区 (256 字节)
+    FELLOWSHIP R14, R0          ; R14 = 保存缓冲区地址
+    
+    ; 构建测试字符串 "OK\n"
+    ; 'O' = 79, 'K' = 75, '\n' = 10, 0
+    
+    ; 存储 'O'
+    ABOUND R1, 79
+    DISPERSE R0, R1
+    PTR_INC R0
+    
+    ; 存储 'K'
+    ABOUND R1, 75
+    DISPERSE R0, R1
+    PTR_INC R0
+    
+    ; 存储 '\n'
+    LOAD_10 R1:
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    DISPERSE R0, R1
+    PTR_INC R0
+    
+    ; 存储 null
+    LOAD_0 R1
+    DISPERSE R0, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R14
+    RECV R0, 0
+    
+    ; 测试 strlen
+    ; R14 = "OK\n"
+    FELLOWSHIP R1, R14
+    ABOUND R0, SYS_STRLEN
+    RECV R0, 0
+    ; R0 应该是 3 (不包括 null)
+    
+    ; 构建另一个字符串 "OK\n" 用于比较
+    LOAD_0 R1
+    ALLOC R0, R1
+    FELLOWSHIP R15, R0          ; R15 = 第二个缓冲区
+    
+    ABOUND R1, 79
+    DISPERSE R0, R1
+    PTR_INC R0
+    
+    ABOUND R1, 75
+    DISPERSE R0, R1
+    PTR_INC R0
+    
+    LOAD_10 R1:
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    DISPERSE R0, R1
+    PTR_INC R0
+    
+    LOAD_0 R1
+    DISPERSE R0, R1
+    
+    ; 比较 R14 和 R15
+    FELLOWSHIP R1, R14
+    FELLOWSHIP R2, R15
+    ABOUND R0, SYS_STRCMP
+    RECV R0, 0
+    ; R0 应该是 0 (相等)
+    
+    ; 如果 R0 == 0，打印 "PASS"
+    ; 否则打印 "FAIL"
+    
+    ; 构建结果字符串
+    LOAD_0 R1
+    ALLOC R10, R1               ; R10 = 结果缓冲区
+    FELLOWSHIP R11, R10         ; R11 = 保存地址
+    
+    ; 检查 R0 == 0
+    BRANCH R0, test_failed
+    
+    ; R0 == 0，相等，打印 "PASS\n"
+    ; 'P' = 80, 'A' = 65, 'S' = 83, 'S' = 83, '\n' = 10
+    
+    ABOUND R1, 80
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 65
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 83
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 83
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_10 R1:
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    BRANCH R0, print_result
+
+test_failed:
+    ; 打印 "FAIL\n"
+    ; 'F' = 70, 'A' = 65, 'I' = 73, 'L' = 76, '\n' = 10
+    
+    ABOUND R1, 70
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 65
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 73
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 76
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_10 R1:
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1
+
+print_result:
+    ; 打印结果
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R11
+    RECV R0, 0
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

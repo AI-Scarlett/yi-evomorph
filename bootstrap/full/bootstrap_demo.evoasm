@@ -1,0 +1,79 @@
+; 易衍·Evomorph 自举演示
+; 简化的汇编器 - 用 EvoASM 编写
+;
+; 这是一个概念验证，展示如何用 Evomorph 编写编译器
+; 实际的完整编译器需要更多功能
+
+; ========== 常量定义 ==========
+; 系统调用号
+; OPEN = 0, READ = 1, WRITE = 2, CLOSE = 3
+; MALLOC = 10, STRLEN = 20, PRINT = 40, EXIT = 255
+
+; 操作码
+; RECV = 0, ABOUND = 13, INCREASE = 49, HALT = 0
+
+; ========== 程序入口 ==========
+; 打印欢迎信息
+ABOUND R0, PRINT
+ABOUND R1, 1024
+RECV R0, 0
+
+; 分配内存
+ABOUND R0, MALLOC
+ABOUND R1, 1024
+RECV R0, 0
+
+; 保存内存地址到 R4
+ABOUND R4, R0
+
+; 简单的指令编码演示
+; 编码 ABOUND R0, 5 指令
+; opcode = 13 (ABOUND), modifier = 0
+; byte1 = (13 << 2) | 0 = 52 = 0x34
+; byte2 = 0
+; byte3 = 0 (R0)
+; byte4 = 5 (立即数)
+
+; 存储字节到内存
+ABOUND R0, 0x34
+ABOUND R1, R4
+PUSH_UP R0, R1
+
+ABOUND R0, 0x00
+ABOUND R1, R4
+INCREASE R1, 1
+PUSH_UP R0, R1
+
+ABOUND R0, 0x00
+ABOUND R1, R4
+INCREASE R1, 2
+PUSH_UP R0, R1
+
+ABOUND R0, 0x05
+ABOUND R1, R4
+INCREASE R1, 3
+PUSH_UP R0, R1
+
+; 写入输出文件
+ABOUND R0, OPEN
+ABOUND R1, 2048
+ABOUND R2, 1
+RECV R0, 0
+
+ABOUND R5, R0
+
+ABOUND R0, WRITE
+ABOUND R1, R5
+ABOUND R2, R4
+ABOUND R3, 4
+RECV R0, 0
+
+ABOUND R0, CLOSE
+ABOUND R1, R5
+RECV R0, 0
+
+; 退出
+ABOUND R0, EXIT
+RECV R0, 0
+
+HALT

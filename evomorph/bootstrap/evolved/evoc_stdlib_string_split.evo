@@ -1,0 +1,29 @@
+@evolang "3.0"
+
+@locus evoc.stdlib.string.split {
+    mut_rate   = 0.01
+    cross_pool = "stdlib"
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷁ RECV
+        ䷂ ALLOC
+        ䷂ ALLOC
+        ䷍ ABUNDANCE
+        ䷓ CONTEMPLATE
+        ䷆ BRANCH
+        ䷍ ABUNDANCE
+        ䷗ RETURN
+        ䷁ RECV
+        ䷈ PREFETCH
+        ䷁ RECV
+        ䷈ PREFETCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷍ ABUNDANCE
+        ䷉ STEP
+        ䷉ STEP
+        ䷾ SYNC
+    }
+}

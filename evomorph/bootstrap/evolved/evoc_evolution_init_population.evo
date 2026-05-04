@@ -1,0 +1,23 @@
+@evolang "3.0"
+
+@locus evoc.evolution.init_population {
+    mut_rate   = 0.01
+    cross_pool = "evolution_core"
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷁ RECV
+        ䷂ ALLOC
+        ䷌ FELLOWSHIP
+        ䷉ STEP
+        ䷓ CONTEMPLATE
+        ䷆ BRANCH
+        ䷗ RETURN
+        ䷀ CREA
+        ䷑ MUT
+        ䷍ ABUNDANCE
+        ䷉ STEP
+        ䷾ SYNC
+    }
+}

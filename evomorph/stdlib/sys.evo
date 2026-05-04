@@ -1,0 +1,108 @@
+@evolang "3.0"
+
+@xiangci {
+    "系统之基：进程、环境、参数、退出，程序与操作系统之桥梁。"
+}
+
+@locus std.sys.args_count {
+    mut_rate   = 0.01
+    cross_pool = "sys_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::ARGC
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.sys.args_get {
+    mut_rate   = 0.01
+    cross_pool = "sys_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::ARGV
+        ䷑ MUT R0, @index
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.sys.env_get {
+    mut_rate   = 0.01
+    cross_pool = "sys_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::ENV_KEY
+        ䷓ CONTEMPLATE R0
+        ䷗ RETURN R1
+    }
+}
+
+@locus std.sys.exit {
+    mut_rate   = 0.01
+    cross_pool = "sys_ops"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷾ SYNC
+    }
+}
+
+@locus std.sys.shellexec {
+    mut_rate   = 0.02
+    cross_pool = "sys_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷀ CREA R0, @process
+        ䷁ RECV R1, env::CMD
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+        ䷁ RECV R2, R0
+        ䷗ RETURN R2
+    }
+}
+
+@locus std.sys.time {
+    mut_rate   = 0.01
+    cross_pool = "sys_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.sys.rand {
+    mut_rate   = 0.02
+    cross_pool = "sys_ops"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷑ MUT R0, @rand_seed
+        ䷓ CONTEMPLATE R0
+        ䷗ RETURN R0
+    }
+}
+
+@locus std.sys.sleep {
+    mut_rate   = 0.01
+    cross_pool = "sys_ops"
+    fitness    = min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷄ WAIT R0
+        ䷾ SYNC
+    }
+}

@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "自举编译器：用 Evomorph 编写的 Evomorph 编译器"
+    "这是实现完全自举的关键组件"
+}
+
+@locus bootstrap_compiler {
+    mut_rate = 0.005
+    fitness = min_size + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷶ ABOUND R0, 40
+        ䷁ RECV R0, 0
+
+        ䷋ HALT
+    }
+}

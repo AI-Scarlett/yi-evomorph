@@ -1,0 +1,456 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 增强自举工具"
+    "道枢自举：编译器用自身之语言书写自身"
+    "此程序包含：编译、进化优化、一致性验证、最小可信计算基操作、状态查看"
+}
+
+@meta_locus 增强自举.全局配置 {
+    mut_rate = 0.001
+    fitness  = max_throughput + min_size + min_latency
+
+    卦序: {
+        ䷂ ALLOC R0, 0x04
+        ䷍ ABUNDANCE R0, 0x03
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.init {
+    mut_rate   = 0.001
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x100
+        ䷂ ALLOC R1, 0x100
+        ䷂ ALLOC R2, 0x100
+        ䷂ ALLOC R3, 0x100
+        ䷍ ABUNDANCE R0, 0x00
+        ䷍ ABUNDANCE R1, 0x00
+        ䷍ ABUNDANCE R2, 0x00
+        ䷍ ABUNDANCE R3, 0x00
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.cli.parse_args {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷁ RECV
+        ䷂ ALLOC
+        ䷍ ABUNDANCE
+        ䷓ CONTEMPLATE
+        ䷆ BRANCH
+        ䷗ RETURN
+        ䷁ RECV
+        ䷈ PREFETCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷆ BRANCH
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.cli.help {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 40
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.compile.gen0 {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_FILE
+        ䷂ ALLOC R1, 0x10000
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.compile.gen1 {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_FILE
+        ䷀ CREA R1, @gen1_compiler
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.compile.gen2 {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_FILE
+        ䷀ CREA R1, @gen2_compiler
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.compile.auto {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_FILE
+        ䷆ BRANCH R_try_gen2
+        ䷆ BRANCH R_try_gen1
+        ䷆ BRANCH R_use_gen0
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.evolve.locus {
+    mut_rate   = 0.02
+    cross_pool = "bootstrap_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_NAME
+        ䷁ RECV R1, env::EVOLVE_MODE
+        ䷂ ALLOC R2, 0x100
+        ䷌ FELLOWSHIP R0, R2
+        ䷓ CONTEMPLATE R2
+        ䷑ MUT R3, @mutation
+        ䷫ MATE R2, R3
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.evolve.all {
+    mut_rate   = 0.02
+    cross_pool = "bootstrap_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLVE_MODE
+        ䷂ ALLOC R1, 0x1000
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_evolve_loop
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.verify.consistency {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_FILE
+        ䷁ RECV R1, env::GEN1_RESULT
+        ䷁ RECV R2, env::GEN2_RESULT
+        ䷨ REDUCE R1, R2
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_check_match
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.verify.batch {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::FILE_LIST
+        ䷂ ALLOC R1, 0x1000
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_verify_loop
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.tcb.status {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TCB_PATH
+        ䷂ ALLOC R1, 0x100
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_check_vm
+        ䷆ BRANCH R_check_assembler
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.tcb.build {
+    mut_rate   = 0.02
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::C_SOURCE
+        ䷁ RECV R1, env::OUTPUT_PATH
+        ䷀ CREA R2, @gcc_compile
+        ䷌ FELLOWSHIP R0, R2
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.tcb.compile {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVO_SOURCE
+        ䷁ RECV R1, env::ASM_OUTPUT
+        ䷁ RECV R2, env::RAW_OUTPUT
+        ䷂ ALLOC R3, 0x10000
+        ䷌ FELLOWSHIP R0, R3
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.status {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x400
+        ䷍ ABUNDANCE R0, 0x00
+        ䷁ RECV R1, env::GEN0_AVAILABLE
+        ䷁ RECV R2, env::GEN1_AVAILABLE
+        ䷁ RECV R3, env::GEN2_AVAILABLE
+        ䷁ RECV R4, env::TCB_AVAILABLE
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.cli.command_compile {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_ARG
+        ䷁ RECV R1, env::GENERATION_ARG
+        ䷆ BRANCH R_compile_gen0
+        ䷆ BRANCH R_compile_gen1
+        ䷆ BRANCH R_compile_gen2
+        ䷆ BRANCH R_compile_auto
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.cli.command_evolve {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_ARG
+        ䷁ RECV R1, env::MODE_ARG
+        ䷆ BRANCH R_evolve_single
+        ䷆ BRANCH R_evolve_all
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.cli.command_verify {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::FILES_ARG
+        ䷆ BRANCH R_verify_single
+        ䷆ BRANCH R_verify_batch
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.cli.command_tcb {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::ACTION_ARG
+        ䷆ BRANCH R_tcb_status
+        ䷆ BRANCH R_tcb_build
+        ䷆ BRANCH R_tcb_compile
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.cli.main {
+    mut_rate   = 0.02
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷁ RECV
+        ䷂ ALLOC
+        ䷂ ALLOC
+        ䷍ ABUNDANCE
+        ䷍ ABUNDANCE
+        ䷓ CONTEMPLATE
+        ䷆ BRANCH
+        ䷆ BRANCH
+        ䷆ BRANCH
+        ䷆ BRANCH
+        ䷗ RETURN
+        ䷂ ALLOC
+        ䷍ ABUNDANCE
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.evolution.config_quick {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷍ ABUNDANCE R0, 16
+        ䷍ ABUNDANCE R1, 10
+        ䷍ ABUNDANCE R2, 0x02
+        ䷍ ABUNDANCE R3, 3
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.evolution.config_standard {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷍ ABUNDANCE R0, 32
+        ䷍ ABUNDANCE R1, 50
+        ䷍ ABUNDANCE R2, 0x02
+        ䷍ ABUNDANCE R3, 5
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.evolution.config_deep {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷍ ABUNDANCE R0, 64
+        ䷍ ABUNDANCE R1, 200
+        ䷍ ABUNDANCE R2, 0x01
+        ䷍ ABUNDANCE R3, 7
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.evolution.config_extreme {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷍ ABUNDANCE R0, 128
+        ䷍ ABUNDANCE R1, 500
+        ䷍ ABUNDANCE R2, 0x01
+        ䷍ ABUNDANCE R3, 10
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.compiler.gen3.evolve {
+    mut_rate   = 0.001
+    cross_pool = "bootstrap_core"
+    fitness    = max_throughput + min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::GEN2_MODULES
+        ䷂ ALLOC R1, 0x10000
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R1
+        ䷑ MUT R2, @adaptive_mutation
+        ䷫ MATE R1, R2
+        ䷬ GATHER R3, R1
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.compiler.gen3.compile {
+    mut_rate   = 0.001
+    cross_pool = "bootstrap_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_CODE
+        ䷀ CREA R1, @gen3_lexer
+        ䷀ CREA R2, @gen3_parser
+        ䷀ CREA R3, @gen3_codegen
+        ䷌ FELLOWSHIP R0, R1
+        ䷌ FELLOWSHIP R1, R2
+        ䷌ FELLOWSHIP R2, R3
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.entry {
+    mut_rate   = 0.001
+    cross_pool = "bootstrap_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x100
+        ䷂ ALLOC R1, 0x100
+        ䷍ ABUNDANCE R0, 0x00
+        ䷍ ABUNDANCE R1, 0x00
+        ䷾ SYNC
+    }
+}

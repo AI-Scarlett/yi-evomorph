@@ -1,0 +1,35 @@
+@evolang "3.0"
+
+@locus evoc.lexer.tokenize {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV
+        ䷀ CREA
+        ䷓ CONTEMPLATE
+        ䷆ BRANCH
+        ䷗ RETURN
+        ䷁ RECV
+        ䷈ PREFETCH
+        ䷀ CREA
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷀ CREA
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷀ CREA
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷀ CREA
+        ䷔ BITE
+        ䷆ BRANCH
+        ䷉ STEP
+        ䷾ SYNC
+    }
+}

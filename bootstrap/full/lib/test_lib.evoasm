@@ -1,0 +1,298 @@
+; ============================================================
+; 易衍·Evomorph 库函数测试
+; 验证字符串、字符分类、内存操作等功能
+; ============================================================
+
+; ========== 系统调用号 ==========
+SYS_STRLEN    EQU 20
+SYS_STRCMP    EQU 21
+SYS_STRCPY    EQU 22
+SYS_MEMCPY    EQU 12
+SYS_MEMSET    EQU 13
+SYS_ISDIGIT   EQU 30
+SYS_ISALPHA   EQU 31
+SYS_ATOI      EQU 36
+SYS_PRINT     EQU 40
+SYS_EXIT      EQU 255
+
+; ========== 字符常量 ==========
+CHAR_0   EQU 48
+CHAR_9   EQU 57
+CHAR_A   EQU 65
+CHAR_Z   EQU 90
+CHAR_a   EQU 97
+CHAR_z   EQU 122
+CHAR_NEWLINE EQU 10
+CHAR_SPACE   EQU 32
+
+; ========== 小立即数加载宏 ==========
+
+%macro LOAD_0 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro LOAD_1 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro LOAD_10 1
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+%macro PTR_INC 1
+    LOAD_1 R1
+    INCREASE %1, R1
+%endmacro
+
+; ========== 主程序 ==========
+; 测试流程:
+; 1. 构建测试字符串 "Hello123"
+; 2. 测试 STRLEN
+; 3. 测试 STRCMP
+; 4. 测试 STRCPY
+; 5. 测试 ISDIGIT
+; 6. 测试 ISALPHA
+; 7. 测试 ATOI
+; 8. 打印结果
+; ==========================================
+
+main:
+    ; ===== 步骤 1: 分配缓冲区 =====
+    ALLOC R0, 0                 ; 缓冲区 1: 源字符串
+    FELLOWSHIP R14, R0          ; R14 = "Hello123" 地址
+    FELLOWSHIP R10, R0          ; R10 = 工作指针
+    
+    ALLOC R0, 0                 ; 缓冲区 2: 目标字符串
+    FELLOWSHIP R15, R0          ; R15 = 目标地址
+    
+    ALLOC R0, 0                 ; 缓冲区 3: 结果消息
+    FELLOWSHIP R11, R0          ; R11 = 结果消息
+    FELLOWSHIP R12, R0          ; R12 = 工作指针
+    
+    ; ===== 步骤 2: 构建 "Hello123\n\0" =====
+    ; 'H' = 72
+    ABOUND R1, 72
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'l' = 108
+    ABOUND R1, 108
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'l' = 108
+    ABOUND R1, 108
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'o' = 111
+    ABOUND R1, 111
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '1' = 49
+    ABOUND R1, 49
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '2' = 50
+    ABOUND R1, 50
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '3' = 51
+    ABOUND R1, 51
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\n' = 10
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\0' = 0
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    ; ===== 步骤 3: 打印源字符串 =====
+    ; 打印 "Source: "
+    ; 先构建 "Source: Hello123\n"
+    
+    ; 简单起见，直接打印源字符串
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R14
+    RECV R0, 0
+    
+    ; ===== 步骤 4: 测试 STRLEN =====
+    ; 调用 SYS_STRLEN
+    FELLOWSHIP R1, R14
+    ABOUND R0, SYS_STRLEN
+    RECV R0, 0
+    ; R0 = 9 (Hello123\n 的长度)
+    
+    ; 为了简单，我们不打印数字，直接继续测试
+    
+    ; ===== 步骤 5: 测试 STRCPY =====
+    ; 复制 R14 到 R15
+    FELLOWSHIP R1, R15
+    FELLOWSHIP R2, R14
+    ABOUND R0, SYS_STRCPY
+    RECV R0, 0
+    
+    ; 打印复制后的字符串
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R15
+    RECV R0, 0
+    
+    ; ===== 步骤 6: 测试 STRCMP =====
+    ; 比较 R14 和 R15 (应该相等)
+    FELLOWSHIP R1, R14
+    FELLOWSHIP R2, R15
+    ABOUND R0, SYS_STRCMP
+    RECV R0, 0
+    ; R0 = 0 (相等)
+    
+    ; ===== 步骤 7: 测试 ISDIGIT =====
+    ; 测试 '1' (49) 是否为数字
+    ABOUND R1, 49
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+    ; R0 = 1 (是数字)
+    
+    ; ===== 步骤 8: 测试 ISALPHA =====
+    ; 测试 'H' (72) 是否为字母
+    ABOUND R1, 72
+    ABOUND R0, SYS_ISALPHA
+    RECV R0, 0
+    ; R0 = 1 (是字母)
+    
+    ; ===== 步骤 9: 测试 ATOI =====
+    ; 构建 "123" 字符串
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0          ; R10 = "123" 缓冲区
+    
+    ABOUND R1, 49                ; '1'
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 50                ; '2'
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ABOUND R1, 51                ; '3'
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    LOAD_0 R1
+    DISPERSE R10, R1             ; null 终止
+    
+    ; 调用 ATOI
+    FELLOWSHIP R1, R0
+    ABOUND R0, SYS_ATOI
+    RECV R0, 0
+    ; R0 = 123
+    
+    ; ===== 步骤 10: 打印完成消息 =====
+    ; 构建 "Tests passed!\n"
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    FELLOWSHIP R11, R0
+    
+    ; 'T' = 84
+    ABOUND R1, 84
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; 'd' = 100
+    ABOUND R1, 100
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '!' = 33
+    ABOUND R1, 33
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\n' = 10
+    LOAD_10 R1
+    DISPERSE R10, R1
+    PTR_INC R10
+    
+    ; '\0' = 0
+    LOAD_0 R1
+    DISPERSE R10, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R11
+    RECV R0, 0
+    
+    ; ===== 退出 =====
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

@@ -1,0 +1,59 @@
+; 易衍·Evomorph 增强自举测试程序
+; 用 C 汇编器编译，在 C 虚拟机上运行
+; 测试：算术运算 + 位运算 + 条件分支
+
+; 初始化寄存器
+ABOUND R0, 0
+ABOUND R1, 0
+ABOUND R2, 0
+ABOUND R3, 0
+ABOUND R4, 0
+ABOUND R5, 0
+ABOUND R6, 0
+ABOUND R7, 0
+ABOUND R8, 0
+ABOUND R9, 0
+ABOUND R10, 0
+ABOUND R11, 0
+ABOUND R12, 0
+ABOUND R13, 65536
+ABOUND R14, 0
+ABOUND R15, 0
+
+; 加法: 5 + 10 = 15
+ABOUND R0, 5
+ABOUND R1, 10
+INCREASE R0, R1
+
+; 减法: 20 - 5 = 15
+ABOUND R1, 20
+ABOUND R2, 5
+REDUCE R1, R2
+
+; 左移: 1 << 3 = 8
+ABOUND R2, 1
+ABOUND R3, 3
+SHL R2, R3
+
+; 右移: 16 >> 2 = 4
+ABOUND R3, 16
+ABOUND R4, 2
+SHR R3, R4
+
+; 按位与: 0xFF & 0x0F = 15
+ABOUND R4, 255
+ABOUND R5, 15
+AND R4, R5
+
+; 按位或: 0xF0 | 0x0F = 255
+ABOUND R5, 240
+ABOUND R6, 15
+OR R5, R6
+
+; 按位异或: 0xFF ^ 0x0F = 240
+ABOUND R6, 255
+ABOUND R7, 15
+XOR R6, R7
+
+; 停止
+HALT

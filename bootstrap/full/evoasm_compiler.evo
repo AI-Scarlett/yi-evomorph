@@ -1,0 +1,50 @@
+@evolang "3.0"
+
+@xiangci {
+    "EvoASM 简化汇编器：用 Evomorph 编写的最小编译器"
+    "这是实现完全自举的第一阶段"
+    "功能：读取汇编文件 -> 解析指令 -> 生成原始字节码"
+}
+
+@locus evoasm_compiler {
+    mut_rate = 0.005
+    fitness = min_size + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷶ ABOUND R0, 40
+        ䷁ RECV R0, 0
+
+        ䷶ ABOUND R0, 0
+        ䷶ ABOUND R1, 2
+        ䷁ RECV R0, 0
+
+        ䷶ ABOUND R0, 10
+        ䷶ ABOUND R1, 1024
+        ䷁ RECV R0, 0
+
+        ䷶ ABOUND R1, 0
+        ䷶ ABOUND R2, 1024
+        ䷶ ABOUND R3, 1
+        ䷶ ABOUND R0, 1
+        ䷁ RECV R0, 0
+
+        ䷶ ABOUND R4, R0
+
+        ䷶ ABOUND R0, 40
+        ䷁ RECV R0, 0
+
+        ䷶ ABOUND R0, 3
+        ䷶ ABOUND R1, 1
+        ䷁ RECV R0, 0
+
+        ䷶ ABOUND R0, 3
+        ䷶ ABOUND R1, 2
+        ䷁ RECV R0, 0
+
+        ䷶ ABOUND R0, 255
+        ䷁ RECV R0, 0
+
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,358 @@
+; ============================================================
+; 易衍·Evomorph 宏库
+; 常用操作的宏定义，简化编程
+; ============================================================
+
+; ========== 小立即数加载宏 ==========
+; 注意：ABOUND 只能直接加载 >= 16 的立即数
+; 0-15 需要通过计算获得
+
+; 加载 0 到寄存器
+%macro LOAD_0 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 1 到寄存器
+%macro LOAD_1 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 2 到寄存器
+%macro LOAD_2 1
+    ABOUND R1, 16
+    ABOUND R2, 14
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 3 到寄存器
+%macro LOAD_3 1
+    ABOUND R1, 16
+    ABOUND R2, 13
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 4 到寄存器
+%macro LOAD_4 1
+    ABOUND R1, 16
+    ABOUND R2, 12
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 5 到寄存器
+%macro LOAD_5 1
+    ABOUND R1, 16
+    ABOUND R2, 11
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 6 到寄存器
+%macro LOAD_6 1
+    ABOUND R1, 16
+    ABOUND R2, 10
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 7 到寄存器
+%macro LOAD_7 1
+    ABOUND R1, 16
+    ABOUND R2, 9
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 8 到寄存器
+%macro LOAD_8 1
+    ABOUND R1, 16
+    ABOUND R2, 8
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 9 到寄存器
+%macro LOAD_9 1
+    ABOUND R1, 16
+    ABOUND R2, 7
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 10 到寄存器
+%macro LOAD_10 1
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 11 到寄存器
+%macro LOAD_11 1
+    ABOUND R1, 16
+    ABOUND R2, 5
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 12 到寄存器
+%macro LOAD_12 1
+    ABOUND R1, 16
+    ABOUND R2, 4
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 13 到寄存器
+%macro LOAD_13 1
+    ABOUND R1, 16
+    ABOUND R2, 3
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 14 到寄存器
+%macro LOAD_14 1
+    ABOUND R1, 16
+    ABOUND R2, 2
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 15 到寄存器
+%macro LOAD_15 1
+    ABOUND R1, 16
+    ABOUND R2, 1
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 通用加载：加载 0-15
+; %1 = 目标寄存器
+; %2 = 值 (0-15)
+%macro LOAD_SMALL 2
+    ABOUND R1, 16
+    ABOUND R2, 16-%2
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; ========== 指针操作宏 ==========
+
+; 指针递增 1
+; %1 = 指针寄存器
+%macro PTR_INC 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE %1, R1
+%endmacro
+
+; 指针递增 N (N >= 16)
+; %1 = 指针寄存器
+; %2 = N
+%macro PTR_ADD 2
+    ABOUND R1, %2
+    INCREASE %1, R1
+%endmacro
+
+; ========== 内存操作宏 ==========
+
+; 存储字节到内存
+; %1 = 地址寄存器
+; %2 = 值寄存器或 >= 16 的立即数
+%macro STORE_BYTE 2
+    DISPERSE %1, %2
+%endmacro
+
+; 加载字节从内存
+; %1 = 地址寄存器
+; %2 = 目标寄存器
+%macro LOAD_BYTE 2
+    PENETRATE %1, %2
+%endmacro
+
+; 存储字符串结束符 (0)
+; %1 = 地址寄存器
+%macro STORE_NULL 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    DISPERSE %1, R1
+%endmacro
+
+; ========== 比较宏 ==========
+
+; 比较两个寄存器 (设置标志位)
+; 注意：这会修改 %1
+; %1 = 第一个寄存器 (会被修改为 %1 - %2)
+; %2 = 第二个寄存器
+%macro CMP_REGS 2
+    REDUCE %1, %2
+%endmacro
+
+; 比较寄存器和 0
+; %1 = 寄存器
+%macro CMP_ZERO 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    REDUCE %1, R1
+%endmacro
+
+; ========== 条件跳转宏 ==========
+
+; 如果等于 0 则跳转
+; %1 = 寄存器 (检查是否为 0)
+; %2 = 目标标签
+%macro JE 2
+    BRANCH %1, %2
+%endmacro
+
+; 如果不等于 0 则跳转
+; 注意：需要先用 MERGE 确保非零值
+; %1 = 寄存器
+; %2 = 目标标签
+%macro JNE 2
+    FELLOWSHIP Rtmp, %1
+    MERGE Rtmp, Rtmp
+    BRANCH Rtmp, %2
+%endmacro
+
+; ========== 系统调用宏 ==========
+
+; 打印字符串
+; %1 = 字符串地址
+%macro PRINT 1
+    ABOUND R0, 40
+    FELLOWSHIP R1, %1
+    RECV R0, 0
+%endmacro
+
+; 退出程序
+%macro EXIT 0
+    ABOUND R0, 255
+    RECV R0, 0
+%endmacro
+
+; 分配内存 (256 字节)
+; %1 = 目标寄存器
+%macro ALLOC_256 1
+    LOAD_0 R1
+    ALLOC %1, R1
+%endmacro
+
+; ========== 常用字符常量 ==========
+CHAR_NULL     EQU 0
+CHAR_TAB       EQU 9
+CHAR_NEWLINE   EQU 10
+CHAR_CR        EQU 13
+CHAR_SPACE     EQU 32
+CHAR_EXCLAM    EQU 33
+CHAR_DQUOTE    EQU 34
+CHAR_HASH      EQU 35
+CHAR_DOLLAR    EQU 36
+CHAR_PERCENT   EQU 37
+CHAR_AMPERSAND EQU 38
+CHAR_SQUOTE    EQU 39
+CHAR_LPAREN    EQU 40
+CHAR_RPAREN    EQU 41
+CHAR_STAR      EQU 42
+CHAR_PLUS      EQU 43
+CHAR_COMMA     EQU 44
+CHAR_MINUS     EQU 45
+CHAR_DOT       EQU 46
+CHAR_SLASH     EQU 47
+CHAR_COLON     EQU 58
+CHAR_SEMICOLON EQU 59
+CHAR_LT        EQU 60
+CHAR_EQ        EQU 61
+CHAR_GT        EQU 62
+CHAR_QUESTION  EQU 63
+CHAR_AT        EQU 64
+CHAR_LBRACKET  EQU 91
+CHAR_BACKSLASH EQU 92
+CHAR_RBRACKET  EQU 93
+CHAR_CARET     EQU 94
+CHAR_UNDER     EQU 95
+CHAR_BACKTICK  EQU 96
+CHAR_LBRACE    EQU 123
+CHAR_PIPE      EQU 124
+CHAR_RBRACE    EQU 125
+CHAR_TILDE     EQU 126
+
+; 数字范围
+CHAR_0 EQU 48
+CHAR_1 EQU 49
+CHAR_2 EQU 50
+CHAR_3 EQU 51
+CHAR_4 EQU 52
+CHAR_5 EQU 53
+CHAR_6 EQU 54
+CHAR_7 EQU 55
+CHAR_8 EQU 56
+CHAR_9 EQU 57
+
+; 大写字母
+CHAR_A EQU 65
+CHAR_B EQU 66
+CHAR_C EQU 67
+CHAR_D EQU 68
+CHAR_E EQU 69
+CHAR_F EQU 70
+CHAR_G EQU 71
+CHAR_H EQU 72
+CHAR_I EQU 73
+CHAR_J EQU 74
+CHAR_K EQU 75
+CHAR_L EQU 76
+CHAR_M EQU 77
+CHAR_N EQU 78
+CHAR_O EQU 79
+CHAR_P EQU 80
+CHAR_Q EQU 81
+CHAR_R EQU 82
+CHAR_S EQU 83
+CHAR_T EQU 84
+CHAR_U EQU 85
+CHAR_V EQU 86
+CHAR_W EQU 87
+CHAR_X EQU 88
+CHAR_Y EQU 89
+CHAR_Z EQU 90
+
+; 小写字母
+CHAR_a EQU 97
+CHAR_b EQU 98
+CHAR_c EQU 99
+CHAR_d EQU 100
+CHAR_e EQU 101
+CHAR_f EQU 102
+CHAR_g EQU 103
+CHAR_h EQU 104
+CHAR_i EQU 105
+CHAR_j EQU 106
+CHAR_k EQU 107
+CHAR_l EQU 108
+CHAR_m EQU 109
+CHAR_n EQU 110
+CHAR_o EQU 111
+CHAR_p EQU 112
+CHAR_q EQU 113
+CHAR_r EQU 114
+CHAR_s EQU 115
+CHAR_t EQU 116
+CHAR_u EQU 117
+CHAR_v EQU 118
+CHAR_w EQU 119
+CHAR_x EQU 120
+CHAR_y EQU 121
+CHAR_z EQU 122

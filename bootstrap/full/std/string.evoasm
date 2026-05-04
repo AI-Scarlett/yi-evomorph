@@ -1,0 +1,257 @@
+; ============================================================
+; 易衍·Evomorph 字符串操作库
+; 使用系统调用实现字符串操作
+; ============================================================
+
+; ========== 系统调用号 ==========
+SYS_OPEN      EQU 0
+SYS_READ      EQU 1
+SYS_WRITE     EQU 2
+SYS_CLOSE     EQU 3
+SYS_MALLOC    EQU 10
+SYS_FREE      EQU 11
+SYS_MEMCPY    EQU 12
+SYS_MEMSET    EQU 13
+SYS_MEMCMP    EQU 14
+SYS_STRLEN    EQU 20
+SYS_STRCMP    EQU 21
+SYS_STRCPY    EQU 22
+SYS_STRCAT    EQU 23
+SYS_STRCHR    EQU 24
+SYS_ISDIGIT   EQU 30
+SYS_ISALPHA   EQU 31
+SYS_ISALNUM   EQU 32
+SYS_ISSPACE   EQU 33
+SYS_TOUPPER   EQU 34
+SYS_TOLOWER   EQU 35
+SYS_ATOI      EQU 36
+SYS_PRINT     EQU 40
+SYS_PRINTLN   EQU 41
+SYS_EXIT      EQU 255
+
+; ========== 小立即数加载宏 ==========
+; 注意：ABOUND 只能直接加载 >= 16 的立即数
+; 0-15 需要通过计算获得
+
+; 加载 0 到寄存器
+%macro LOAD_0 1
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 1 到寄存器
+%macro LOAD_1 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; 加载 10 到寄存器
+%macro LOAD_10 1
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    FELLOWSHIP %1, R1
+%endmacro
+
+; ========== 指针操作宏 ==========
+
+; 指针递增 1
+%macro PTR_INC 1
+    LOAD_1 R1
+    INCREASE %1, R1
+%endmacro
+
+; ========== 字符串函数宏 ==========
+
+; 获取字符串长度
+; 输入: R1 = 字符串地址
+; 输出: R0 = 长度
+%macro STRLEN 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_STRLEN
+    RECV R0, 0
+%endmacro
+
+; 字符串比较
+; 输入: R1 = 字符串1地址, R2 = 字符串2地址
+; 输出: R0 = 0(相等), <0(s1<s2), >0(s1>s2)
+%macro STRCMP 2
+    FELLOWSHIP R1, %1
+    FELLOWSHIP R2, %2
+    ABOUND R0, SYS_STRCMP
+    RECV R0, 0
+%endmacro
+
+; 字符串复制
+; 输入: R1 = 目标地址, R2 = 源地址
+; 输出: R0 = 目标地址
+%macro STRCPY 2
+    FELLOWSHIP R1, %1
+    FELLOWSHIP R2, %2
+    ABOUND R0, SYS_STRCPY
+    RECV R0, 0
+%endmacro
+
+; 字符串连接
+; 输入: R1 = 目标地址, R2 = 源地址
+; 输出: R0 = 目标地址
+%macro STRCAT 2
+    FELLOWSHIP R1, %1
+    FELLOWSHIP R2, %2
+    ABOUND R0, SYS_STRCAT
+    RECV R0, 0
+%endmacro
+
+; 查找字符
+; 输入: R1 = 字符串地址, R2 = 字符
+; 输出: R0 = 找到的位置或 0
+%macro STRCHR 2
+    FELLOWSHIP R1, %1
+    FELLOWSHIP R2, %2
+    ABOUND R0, SYS_STRCHR
+    RECV R0, 0
+%endmacro
+
+; ========== 字符分类宏 ==========
+
+; 检查是否为数字
+; 输入: R1 = 字符
+; 输出: R0 = 1(是) 或 0(否)
+%macro ISDIGIT 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_ISDIGIT
+    RECV R0, 0
+%endmacro
+
+; 检查是否为字母
+%macro ISALPHA 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_ISALPHA
+    RECV R0, 0
+%endmacro
+
+; 检查是否为字母数字
+%macro ISALNUM 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_ISALNUM
+    RECV R0, 0
+%endmacro
+
+; 检查是否为空白字符
+%macro ISSPACE 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_ISSPACE
+    RECV R0, 0
+%endmacro
+
+; 转大写
+%macro TOUPPER 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_TOUPPER
+    RECV R0, 0
+%endmacro
+
+; 转小写
+%macro TOLOWER 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_TOLOWER
+    RECV R0, 0
+%endmacro
+
+; ========== 数字转换宏 ==========
+
+; 字符串转整数
+; 输入: R1 = 字符串地址
+; 输出: R0 = 整数
+%macro ATOI 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_ATOI
+    RECV R0, 0
+%endmacro
+
+; ========== 内存操作宏 ==========
+
+; 内存复制
+; 输入: R1 = 目标, R2 = 源, R3 = 长度
+; 输出: R0 = 目标地址
+%macro MEMCPY 3
+    FELLOWSHIP R1, %1
+    FELLOWSHIP R2, %2
+    FELLOWSHIP R3, %3
+    ABOUND R0, SYS_MEMCPY
+    RECV R0, 0
+%endmacro
+
+; 内存设置
+; 输入: R1 = 目标, R2 = 值, R3 = 长度
+; 输出: R0 = 目标地址
+%macro MEMSET 3
+    FELLOWSHIP R1, %1
+    FELLOWSHIP R2, %2
+    FELLOWSHIP R3, %3
+    ABOUND R0, SYS_MEMSET
+    RECV R0, 0
+%endmacro
+
+; 内存比较
+; 输入: R1 = 块1, R2 = 块2, R3 = 长度
+; 输出: R0 = 比较结果
+%macro MEMCMP 3
+    FELLOWSHIP R1, %1
+    FELLOWSHIP R2, %2
+    FELLOWSHIP R3, %3
+    ABOUND R0, SYS_MEMCMP
+    RECV R0, 0
+%endmacro
+
+; ========== 输出宏 ==========
+
+; 打印字符串
+; 输入: R1 = 字符串地址
+%macro PRINT 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_PRINT
+    RECV R0, 0
+%endmacro
+
+; 打印字符串并换行
+%macro PRINTLN 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_PRINTLN
+    RECV R0, 0
+%endmacro
+
+; 打印换行符
+%macro PRINT_NEWLINE 0
+    ABOUND R0, SYS_PRINTLN
+    LOAD_0 R1
+    RECV R0, 0
+%endmacro
+
+; ========== 退出宏 ==========
+%macro EXIT 0
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+%endmacro
+
+; ========== 分配内存宏 ==========
+; 分配 N 字节
+; 输入: R1 = 大小
+; 输出: R0 = 地址
+%macro MALLOC 1
+    FELLOWSHIP R1, %1
+    ABOUND R0, SYS_MALLOC
+    RECV R0, 0
+%endmacro
+
+; 分配 256 字节
+%macro ALLOC_256 1
+    ABOUND R1, 256
+    ABOUND R0, SYS_MALLOC
+    RECV R0, 0
+    FELLOWSHIP %1, R0
+%endmacro

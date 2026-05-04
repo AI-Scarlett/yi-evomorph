@@ -1,0 +1,86 @@
+; ============================================================
+; 测试 .ASYNC BRANCH 寄存器间接跳转
+; 
+; 测试逻辑：
+; 1. 设置 R0 = 1 (非零) 确保跳转
+; 2. 将 target_ok 地址加载到 R1
+; 3. 使用 .ASYNC BRANCH R0, R1
+; 4. 如果跳转成功：执行 target_ok，设置 R0 = 99
+; 5. 如果跳转失败：执行 fail_code，设置 R0 = 66
+; 6. 检查 R0 的最终值
+; ============================================================
+
+SYS_EXIT    EQU 255
+
+main:
+    ; ===== 步骤 1: 设置 R0 = 1 (非零) 确保跳转 =====
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2      ; R1 = 1
+    FELLOWSHIP R0, R1   ; R0 = 1
+    
+    ; ===== 步骤 2: 预先设置 R0 = 66 (失败默认值) =====
+    ; 如果跳转失败，这个值会保留
+    ABOUND R0, 66
+    
+    ; ===== 步骤 3: 将 target_ok 地址加载到 R1 =====
+    ; 我们需要知道 target_ok 的准确地址
+    ; 让我们先计算：
+    ; main: 0x0000
+    ; 指令 1-5: 0x0000-0x0013 (20 字节)
+    ; .ASYNC BRANCH: 0x0014
+    ; fail_code: 0x0018
+    ; target_ok: 0x0028
+    ; 
+    ; 让我们用相对简单的方式：先运行一次获取地址
+    
+    ; 临时：我们手动设置一个已知地址
+    ; target_ok 应该在 fail_code 之后
+    ; fail_code 有 4 条指令 = 16 字节
+    ; 所以 target_ok = 当前 PC + 4 (.ASYNC BRANCH) + 16 (fail_code)
+    ; 当前 PC 在 .ASYNC BRANCH 之前是 0x0014
+    ; 所以 target_ok = 0x0014 + 4 + 16 = 0x0028 = 40
+    
+    ; 但让我们先使用一个简单方法：
+    ; 让 fail_code 跳转到 exit，而 target_ok 直接在后面
+    
+    ; 重新设计：
+    ; .ASYNC BRANCH 在 0x0014
+    ; 如果跳转失败，执行 0x0018 的指令
+    ; 我们让 0x0018 的指令设置 R0 = 66 然后退出
+    ; target_ok 在更远的位置
+    
+    ; ===== 修正：让我们用更简单的方式 =====
+    ; 先编译一次获取标签地址，然后手动填充
+    
+    ; ===== 修正：TARGET_OK 在地址 56 (0x38) =====
+    ABOUND R1, 56
+    
+    ; ===== 步骤 4: 使用 .ASYNC BRANCH =====
+    .ASYNC BRANCH R0, R1
+
+; ===== 跳转失败时执行这里 =====
+fail_code:
+    ; 设置 R0 = 66 ('B')
+    ABOUND R0, 66
+    ; 跳转到 exit
+    ABOUND R1, 56   ; exit 地址
+    BRANCH R1, exit_program  ; 使用 R1 = 56 作为条件 (非零)
+
+; ===== 填充一些指令 =====
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+ABOUND R2, 0
+
+; ===== 跳转成功时执行这里 (应该在 0x0028 = 40) =====
+target_ok:
+    ; 设置 R0 = 99 ('c')
+    ABOUND R0, 99
+
+exit_program:
+    ; ===== 退出 =====
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

@@ -1,0 +1,122 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 简单命令行测试程序"
+    "测试：打印欢迎消息、执行基本运算、显示系统状态"
+}
+
+@locus bootstrap.test.hello {
+    mut_rate   = 0.01
+    cross_pool = "test"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "darwin-23.x"]
+
+    卦序: {
+        ䷶ ABOUND R0, 0
+        ䷶ ABOUND R1, 1
+        ䷶ ABOUND R2, 2
+        ䷶ ABOUND R3, 3
+        ䷶ ABOUND R4, 4
+        ䷶ ABOUND R5, 5
+        ䷶ ABOUND R6, 6
+        ䷶ ABOUND R7, 7
+        ䷶ ABOUND R8, 8
+        ䷶ ABOUND R9, 9
+        ䷶ ABOUND R10, 10
+        ䷶ ABOUND R11, 11
+        ䷶ ABOUND R14, 0
+        ䷶ ABOUND R15, 0
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.test.math {
+    mut_rate   = 0.01
+    cross_pool = "test"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "darwin-23.x"]
+
+    卦序: {
+        ䷶ ABOUND R0, 5
+        ䷶ ABOUND R1, 10
+        ䷩ INCREASE R0, R1
+        ䷶ ABOUND R1, 20
+        ䷶ ABOUND R2, 5
+        ䷨ REDUCE R1, R2
+        ䷶ ABOUND R2, 1
+        ䷶ ABOUND R3, 3
+        ䷈ SHL R2, R3
+        ䷶ ABOUND R3, 16
+        ䷶ ABOUND R4, 2
+        ䷊ SHR R3, R4
+        ䷶ ABOUND R4, 255
+        ䷶ ABOUND R5, 15
+        ䷒ AND R4, R5
+        ䷶ ABOUND R5, 240
+        ䷶ ABOUND R6, 15
+        ䷇ OR R5, R6
+        ䷶ ABOUND R6, 255
+        ䷶ ABOUND R7, 15
+        ䷕ XOR R6, R7
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.test.main {
+    mut_rate   = 0.01
+    cross_pool = "test"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "darwin-23.x"]
+
+    卦序: {
+        ䷶ ABOUND R0, 0
+        ䷶ ABOUND R1, 1
+        ䷶ ABOUND R2, 2
+        ䷶ ABOUND R3, 3
+        ䷶ ABOUND R4, 4
+        ䷶ ABOUND R5, 5
+        ䷶ ABOUND R6, 6
+        ䷶ ABOUND R7, 7
+        ䷶ ABOUND R8, 8
+        ䷶ ABOUND R9, 9
+        ䷶ ABOUND R10, 10
+        ䷶ ABOUND R11, 11
+        ䷶ ABOUND R12, 0
+        ䷶ ABOUND R13, 65536
+        ䷶ ABOUND R14, 0
+        ䷶ ABOUND R15, 0
+        ䷾ SYNC
+    }
+}
+
+@locus bootstrap.entry {
+    mut_rate   = 0.01
+    cross_pool = "test"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "darwin-23.x"]
+
+    卦序: {
+        ䷶ ABOUND R0, 5
+        ䷶ ABOUND R1, 10
+        ䷩ INCREASE R0, R1
+        ䷶ ABOUND R1, 20
+        ䷶ ABOUND R2, 5
+        ䷨ REDUCE R1, R2
+        ䷶ ABOUND R2, 1
+        ䷶ ABOUND R3, 3
+        ䷈ SHL R2, R3
+        ䷶ ABOUND R3, 16
+        ䷶ ABOUND R4, 2
+        ䷊ SHR R3, R4
+        ䷶ ABOUND R4, 255
+        ䷶ ABOUND R5, 15
+        ䷒ AND R4, R5
+        ䷶ ABOUND R5, 240
+        ䷶ ABOUND R6, 15
+        ䷇ OR R5, R6
+        ䷶ ABOUND R6, 255
+        ䷶ ABOUND R7, 15
+        ䷕ XOR R6, R7
+        ䷾ SYNC
+    }
+}
