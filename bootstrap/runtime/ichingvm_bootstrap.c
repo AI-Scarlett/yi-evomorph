@@ -937,28 +937,26 @@ static VMState vm_run(IChingVM *vm, uint32_t max_cycles) {
     }
     
     uint32_t cycles_remaining = max_cycles;
-    uint32_t pc = vm->pc;
     uint8_t *memory = vm->memory;
-    uint32_t *registers = vm->registers;
     uint32_t cycle_count = vm->cycle_count;
     double energy_cost = vm->energy_cost;
     
     while (vm->state == VM_RUNNING && cycles_remaining > 0) {
-        if (pc + 3 >= 0x01000000) {
+        if (vm->pc + 3 >= 0x01000000) {
             vm->state = VM_HALTED;
             break;
         }
         
-        uint8_t byte1 = memory[pc];
-        uint8_t byte2 = memory[pc + 1];
-        uint8_t operand1 = memory[pc + 2];
-        uint8_t operand2 = memory[pc + 3];
+        uint8_t byte1 = memory[vm->pc];
+        uint8_t byte2 = memory[vm->pc + 1];
+        uint8_t operand1 = memory[vm->pc + 2];
+        uint8_t operand2 = memory[vm->pc + 3];
         
         uint8_t opcode = decode_opcode(byte1);
         uint8_t modifier = decode_modifier(byte1, byte2);
         uint8_t operands[2] = {operand1, operand2};
         
-        pc += 4;
+        vm->pc += 4;
         
         if (opcode < 64 && opcode_handlers[opcode]) {
             opcode_handlers[opcode](vm, modifier, operands);
@@ -971,7 +969,6 @@ static VMState vm_run(IChingVM *vm, uint32_t max_cycles) {
         cycles_remaining--;
     }
     
-    vm->pc = pc;
     vm->cycle_count = cycle_count;
     vm->energy_cost = energy_cost;
     
