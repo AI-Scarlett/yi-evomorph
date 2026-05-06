@@ -1,9 +1,9 @@
 @evolang "3.0"
 
 @xiangci {
-    易衍象辞模板数据 — 从 Python xiangci.py 提取
-    包含: 系统提示词 + 三种编译模板 (并行/IO/计算)
-    供 IChing 编译器在象辞→基因座翻译阶段使用
+    易衍象辞模板数据 — 原始 3 模板 (已扩展)
+    完整 24 模板库见: xiangci_templates.evo
+    本文件保留用于向后兼容
 }
 
 @locus xiangci_system_prompt {

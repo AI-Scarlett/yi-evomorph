@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Legacy — 增强自举接口 (v0.0.4 过渡代码)
+# 主编译路径已迁移到 IChing EVB 自举编译器 (compiler.evoasm)
 """
 增强自举模块 - 支持第2代编译器使用、进化优化、一致性验证、最小可信计算基
 

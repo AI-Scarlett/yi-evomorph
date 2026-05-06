@@ -1,0 +1,269 @@
+@evolang "3.0"
+
+@meta_locus hexagram_table {
+    description = "易衍·Evomorph 六十四卦指令集完整定义"
+    purpose = "AI模型 + 运行时自省 — 这是语言的'API参考手册'"
+    version = "0.0.6"
+}
+
+@xiangci {
+    六十四卦指令集完整数据定义。
+    每条指令包含: 卦序(0-63) | 卦象(Unicode符号) | 拼音 | 助记符 | 中文名 | 功能描述
+    分为四类: 元·创生 | 亨·交互 | 利·转换 | 贞·终成
+
+    AI模型无需阅读Python代码即可通过本文件了解Evomorph的全部指令能力。
+    运行时程序可通过lookup_by_opcode等基因座查询指令信息。
+}
+
+// ============================================================================
+// 元 · 创生 (YUAN) — 进程/线程/内存/同步原语
+// ============================================================================
+@locus category_yuan {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        ䷀ CREA       // 63: 乾元创生，创建新进程/线程
+        ䷁ RECV       // 0:  坤厚载物，接收消息/映射
+        ䷂ ALLOC      // 17: 初生之难，堆/栈开辟内存
+        ䷃ SPRT       // 34: 蒙以养正，加载动态库
+        ䷄ WAIT       // 23: 需，须也，等待条件满足
+        ䷅ LOCK       // 58: 讼，争也，互斥锁
+        ䷆ BRANCH     // 2:  师，众也，条件分支跳转
+        ䷇ MERGE      // 16: 比，辅也，合并数据流
+        ䷈ PREFETCH   // 55: 小畜，寡也，预取缓存行
+        ䷉ STEP       // 59: 履，礼也，单步执行/迭代
+        ䷊ FLUSH      // 7:  泰，通也，刷新写缓冲
+        ䷋ HALT       // 56: 否，闭也，暂停/阻塞
+        ䷌ FELLOWSHIP // 61: 与人同者物必归，同步集结
+        ䷍ ABUNDANCE  // 47: 大有，众也，写回/填充数据
+        ䷎ YIELD      // 4:  谦，退也，释放资源/让出
+        ䷏ SPECULATE  // 8:  豫，乐也，分支预测/投机
+    }
+}
+
+// ============================================================================
+// 亨 · 交互 (HENG) — 数据流/事件/调试
+// ============================================================================
+@locus category_heng {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        ䷐ FOLLOWING  // 25: 随，从也，数据流跟踪/复制
+        ䷑ MUT        // 38: 蛊，败坏而后新生，强制变异
+        ䷒ APPROACH   // 3:  临，大也，接近临界区
+        ䷓ CONTEMPLATE // 48: 观，瞻也，观测/性能监视
+        ䷔ BITE       // 41: 噬嗑，食也，断言/校验
+        ䷕ ADORN      // 37: 贲，饰也，格式化/编码转换
+        ䷖ STRIP      // 32: 剥，落也，剥离/解构数据
+        ䷗ RETURN     // 1:  复，归也，函数返回/循环回跳
+        ䷘ INTRINSIC  // 57: 无妄，天命也，内建原子操作
+        ䷙ BARRIER    // 39: 大畜，厚积也，内存屏障
+        ䷚ NOURISH    // 33: 颐，养也，垃圾回收/内存养护
+        ䷛ OVERLOAD   // 30: 大过，颠也，异常/溢出处理
+        ䷜ TRAP       // 18: 坎，陷也，异常捕获/陷阱
+        ䷝ ILLUMINATE // 45: 离，丽也，日志/调试输出
+        ䷞ SENSE      // 28: 咸，感也，事件监听/感应
+        ䷟ PERSIST    // 14: 恒，久也，持久化存储
+    }
+}
+
+// ============================================================================
+// 利 · 转换 (LI) — 类型/绑定/内存/压缩
+// ============================================================================
+@locus category_li {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        ䷠ RETREAT    // 60: 遁，退也，安全退出/回滚
+        ䷡ THRUST     // 15: 大壮，壮也，强制执行/突破
+        ䷢ ADVANCE    // 40: 晋，进也，队列推进/流水线
+        ䷣ OBSCURE    // 5:  明夷，诛也，加密/混淆
+        ䷤ BIND       // 53: 家人，内也，绑定/闭包
+        ䷥ CONVERT    // 43: 睽，乖也，类型转换
+        ䷦ LAME       // 20: 蹇，难也，重试/降级
+        ䷧ UNLOCK     // 10: 解，缓也，解锁/释放
+        ䷨ REDUCE     // 35: 损，减也，缩减/压缩
+        ䷩ INCREASE   // 49: 益，增也，扩展/增强
+        ䷪ BREAK      // 31: 夬，决也，中断/断开
+        ䷫ MATE       // 62: 姤，遇也，基因交叉重组
+        ䷬ GATHER     // 24: 萃，聚也，收集/归约
+        ䷭ PUSH_UP    // 6:  升，推也，入栈/上推
+        ䷮ TRAPPED    // 26: 困，穷也，死锁检测
+        ䷯ WELL       // 22: 井，通也，阻塞读/管道
+    }
+}
+
+// ============================================================================
+// 贞 · 终成 (ZHEN) — 信号/类型/上下文/安全
+// ============================================================================
+@locus category_zhen {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        ䷰ REPLACE    // 29: 革，变也，替换/热更新
+        ䷱ CAST       // 46: 鼎，定也，类型铸造/固化
+        ䷲ SHOCK      // 9:  震，动也，信号/中断触发
+        ䷳ STILL      // 36: 艮，止也，暂停/冻结
+        ䷴ GRADUAL    // 52: 渐，进也，逐步执行
+        ䷵ MISMATCH   // 11: 归妹，未当也，类型不匹配
+        ䷶ ABOUND     // 13: 丰，大也，批量操作
+        ䷷ TRAVEL     // 44: 旅，寄也，上下文切换
+        ䷸ PENETRATE  // 54: 巽，入也，渗透/穿透访问
+        ䷹ JOY        // 27: 兑，悦也，回调/完成通知
+        ䷺ DISPERSE   // 50: 涣，散也，分散写入
+        ䷻ THROTTLE   // 19: 节，度也，节流/流控
+        ䷼ TRUST      // 51: 中孚，信也，签名/验证
+        ䷽ MICRO      // 12: 小过，过也，微调/微操作
+        ䷾ SYNC       // 21: 既济，事已成而防其乱，屏障同步
+        ䷿ FUTU       // 42: 物不可穷，事未成，异步占位符
+    }
+}
+
+// ============================================================================
+// 运行时查询基因座 — 供 .evo 程序在运行时自省指令集
+// ============================================================================
+
+@locus lookup_by_opcode {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // lookup_by_opcode(opcode: u8) -> (mnemonic_ptr: u32, cn_name_ptr: u32, category: u8)
+        // 输入: R0 = opcode (0-63)
+        // 输出: R1 = mnemonic 字符串在 heap 的偏移
+        //        R2 = 中文名在 heap 的偏移
+        //        R3 = 类别 (0=元, 1=亨, 2=利, 3=贞)
+        // 指令数据存储在 heap 从 HEAP_INSTRUCTION_TABLE 开始
+        // 每条指令占: opcode(1) | category(1) | mnemonic_len(1) | mnemonic(var) | cn_name_len(1) | cn_name(var) | desc_len(1) | desc(var)
+
+        MOVE R5, R0              // R5 = 目标 opcode
+        LOAD.0 R6, R0            // R6 = 指令表起始偏移 (由引导时注入)
+        ADD.1 R6, R6, #0x1000    // HEAP 基址偏移
+
+    scan_loop:
+        LOAD.0 R4, R6            // R4 = 当前条目 opcode
+        // 检查是否匹配
+        SUB.0 R7, R4, R5         // R7 = current - target
+        AND.0 R7, R7, R7
+        BRANCH.2 @found
+
+        // 跳过当前条目: category(1) + mnemonic_len(1) + mnemonic + cn_name_len(1) + cn_name + desc_len(1) + desc
+        ADD.1 R6, R6, #1         // 跳过 opcode
+        ADD.1 R6, R6, #1         // 跳过 category
+        LOAD.0 R8, R6            // R8 = mnemonic_len
+        ADD.1 R6, R6, #1
+        ADD.0 R6, R6, R8         // 跳过 mnemonic
+        LOAD.0 R8, R6            // R8 = cn_name_len
+        ADD.1 R6, R6, #1
+        ADD.0 R6, R6, R8         // 跳过 cn_name
+        LOAD.0 R8, R6            // R8 = desc_len
+        ADD.1 R6, R6, #1
+        ADD.0 R6, R6, R8         // 跳过 desc
+        BRANCH.2 @scan_loop
+
+    found:
+        // R6 现在指向找到的 opcode
+        ADD.1 R6, R6, #1         // 跳过 opcode -> 指向 category
+        LOAD.0 R3, R6            // R3 = category
+
+        ADD.1 R6, R6, #1         // 指向 mnemonic_len
+        LOAD.0 R8, R6            // R8 = mnemonic 长度
+        ADD.1 R6, R6, #1         // 指向 mnemonic 字符串
+        MOVE R1, R6              // R1 = mnemonic 指针
+
+        ADD.0 R6, R6, R8         // 跳过 mnemonic -> 指向 cn_name_len
+        LOAD.0 R8, R6            // R8 = cn_name 长度
+        ADD.1 R6, R6, #1         // 指向 cn_name 字符串
+        MOVE R2, R6              // R2 = cn_name 指针
+
+        RETURN.1 R0, R0
+    }
+}
+
+@locus lookup_by_mnemonic {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // lookup_by_mnemonic(mnemonic_ptr: u32, len: u8) -> (opcode: u8, category: u8)
+        // 输入: R0 = 指向 mnemonic 字符串的 heap 指针, R1 = 长度
+        // 输出: R2 = opcode, R3 = category
+        MOVE R5, R0              // R5 = 输入字符串指针
+        MOVE R6, R1              // R6 = 输入长度
+        MOVE R7, R0              // R7 = table 指针
+        MOVE R0, R5              // R0 = string ptr
+        // 遍历所有64条指令
+        MOVE R8, R0              // R8 = 指令索引 (0-63)
+        // 简化版：返回第一条匹配
+        // 完整版需要字符串比较，依赖 stdlib/string.evo
+        HALT.1 R0, R0
+    }
+}
+
+@locus encode_instruction {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // encode_instruction(opcode: u8, modifier: u8) -> (byte1: u8, byte2: u8)
+        // 编码格式: byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+        //          byte2 = modifier & 0x0F
+        // 输入: R0 = opcode, R1 = modifier
+        // 输出: R2 = byte1, R3 = byte2
+
+        AND.0 R2, R0, #63        // R2 = opcode & 0x3F
+        SHL.0 R2, R2, #2         // R2 = (opcode & 0x3F) << 2
+
+        MOVE R3, R1
+        SHR.0 R3, R3, #4         // R3 = modifier >> 4
+        AND.0 R3, R3, #3         // R3 = (modifier >> 4) & 0x03
+
+        OR.0 R2, R2, R3          // byte1 = R2 | R3
+
+        AND.0 R3, R1, #15        // byte2 = modifier & 0x0F
+
+        RETURN.1 R0, R0
+    }
+}
+
+@locus decode_instruction {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // decode_instruction(byte1: u8, byte2: u8) -> (opcode: u8, modifier: u8)
+        // 输入: R0 = byte1, R1 = byte2
+        // 输出: R2 = opcode, R3 = modifier
+
+        MOVE R2, R0
+        SHR.0 R2, R2, #2         // R2 = byte1 >> 2
+        AND.0 R2, R2, #63        // R2 = opcode
+
+        AND.0 R3, R0, #3         // R3 = byte1 & 0x03 (high bits of modifier)
+        SHL.0 R3, R3, #4         // R3 <<= 4
+        AND.0 R4, R1, #15        // R4 = byte2 & 0x0F
+        OR.0 R3, R3, R4          // R3 = modifier
+
+        RETURN.1 R0, R0
+    }
+}

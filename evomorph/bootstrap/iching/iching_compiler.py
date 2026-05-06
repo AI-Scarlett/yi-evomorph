@@ -1941,20 +1941,8 @@ def test_all():
     elif result['output_size'] > 0:
         print(f"  EVOB头部错误: {result['output_bytes'][:4]}")
 
-    print("\n[2] 与传统CPU汇编编译器对比测试")
-    try:
-        from evomorph.bootstrap.native.bootstrap_compiler import BootstrapCompiler
-        old_compiler = BootstrapCompiler()
-        old_result = old_compiler.compile_source(test_source)
-        print(f"  传统汇编编译器: success={old_result['success']}, tokens={old_result['token_count']}, loci={old_result.get('locus_count', 'N/A')}")
-        print(f"  IChing编译器: success={result['success']}, tokens={result['token_count']}, loci={result.get('locus_count', 'N/A')}")
-        if result.get('evob_valid') and old_result.get('evob_valid'):
-            if result.get('evob_locus_count') == old_result.get('evob_locus_count'):
-                print(f"  基因座数量一致!")
-            else:
-                print(f"  基因座数量不一致: IChing={result.get('evob_locus_count')}, 传统={old_result.get('evob_locus_count')}")
-    except Exception as e:
-        print(f"  传统编译器不可用: {e}")
+    # [2] 传统CPU汇编编译器已废弃 (bootstrap/native/ 已删除)
+    # 编译路径现在唯一: compiler.evoasm → compiler.evob → ExtendedIChingVM2
 
     print("\n" + "=" * 60)
     print("测试完成")

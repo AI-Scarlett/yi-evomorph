@@ -59,34 +59,242 @@ SYSTEM_PROMPT = """你是易衍·Evomorph 编程语言的象辞编译器。
 """
 
 
+# =============================================================================
+# 象辞模板库 — 24个预定义编程模式
+# =============================================================================
+# .evo 等价文件: xiangci_templates.evo (完整的 24 个模板基因座)
+# AI 模型可阅读该 .evo 文件选择模板，本 Python dict 用于 SDK 的模板匹配引擎。
+# =============================================================================
 XIANCI_TEMPLATES = {
+    # 并发原语
     "parallel": {
-        "pattern": r"(并行|并发|分治|多线程|多核)",
+        "pattern": r"(并行|并发|分治|多线程|多核|parallel|concurrent)",
         "template_instructions": [
-            {"opcode": 63, "mnemonic": "CREA"},
-            {"opcode": 61, "mnemonic": "FELLOWSHIP"},
-            {"opcode": 21, "mnemonic": "SYNC"},
-            {"opcode": 0, "mnemonic": "RECV"},
+            {"opcode": 63, "mnemonic": "CREA"}, {"opcode": 61, "mnemonic": "FELLOWSHIP"},
+            {"opcode": 21, "mnemonic": "SYNC"}, {"opcode": 0, "mnemonic": "RECV"},
         ],
         "fitness_hint": "min_latency + max_throughput",
     },
+    "mutex_guard": {
+        "pattern": r"(互斥|锁|临界区|guard|mutex|lock)",
+        "template_instructions": [
+            {"opcode": 58, "mnemonic": "LOCK"}, {"opcode": 17, "mnemonic": "ALLOC"},
+            {"opcode": 10, "mnemonic": "UNLOCK"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency",
+    },
+    "atomic_op": {
+        "pattern": r"(原子|atomic|不可中断|CAS|compare.and.swap)",
+        "template_instructions": [
+            {"opcode": 57, "mnemonic": "INTRINSIC"}, {"opcode": 58, "mnemonic": "LOCK"},
+            {"opcode": 59, "mnemonic": "STEP"}, {"opcode": 10, "mnemonic": "UNLOCK"},
+            {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency + correctness",
+    },
+    "barrier_sync": {
+        "pattern": r"(屏障|同步点|barrier|rendezvous|集结)",
+        "template_instructions": [
+            {"opcode": 61, "mnemonic": "FELLOWSHIP"}, {"opcode": 21, "mnemonic": "SYNC"},
+            {"opcode": 39, "mnemonic": "BARRIER"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency",
+    },
+    "fork_join": {
+        "pattern": r"(fork|join|分叉|汇合|spawn|派生)",
+        "template_instructions": [
+            {"opcode": 63, "mnemonic": "CREA"}, {"opcode": 63, "mnemonic": "CREA"},
+            {"opcode": 61, "mnemonic": "FELLOWSHIP"}, {"opcode": 24, "mnemonic": "GATHER"},
+            {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "max_throughput + min_latency",
+    },
+    # 数据处理
+    "map_reduce": {
+        "pattern": r"(map|reduce|映射|归约|分布式|mapreduce)",
+        "template_instructions": [
+            {"opcode": 63, "mnemonic": "CREA"}, {"opcode": 24, "mnemonic": "GATHER"},
+            {"opcode": 35, "mnemonic": "REDUCE"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "max_throughput + min_latency",
+    },
+    "pipeline": {
+        "pattern": r"(流水线|管道|pipeline|链式|stage|阶段)",
+        "template_instructions": [
+            {"opcode": 0, "mnemonic": "RECV"}, {"opcode": 40, "mnemonic": "ADVANCE"},
+            {"opcode": 47, "mnemonic": "ABUNDANCE"}, {"opcode": 59, "mnemonic": "STEP"},
+            {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "max_throughput",
+    },
+    "batch_process": {
+        "pattern": r"(批量|batch|chunk|块|批处理)",
+        "template_instructions": [
+            {"opcode": 13, "mnemonic": "ABOUND"}, {"opcode": 59, "mnemonic": "STEP"},
+            {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "max_throughput + min_energy",
+    },
+    "data_transform": {
+        "pattern": r"(转换|transform|格式化|编码|序列化|encode|decode)",
+        "template_instructions": [
+            {"opcode": 0, "mnemonic": "RECV"}, {"opcode": 37, "mnemonic": "ADORN"},
+            {"opcode": 47, "mnemonic": "ABUNDANCE"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency",
+    },
+    "stream_filter": {
+        "pattern": r"(流|stream|过滤|filter|筛选|条件)",
+        "template_instructions": [
+            {"opcode": 54, "mnemonic": "PENETRATE"}, {"opcode": 2, "mnemonic": "BRANCH"},
+            {"opcode": 47, "mnemonic": "ABUNDANCE"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "max_throughput",
+    },
+    # IO操作
     "io_bound": {
         "pattern": r"(输入|输出|读写|IO|文件|网络)",
         "template_instructions": [
-            {"opcode": 0, "mnemonic": "RECV"},
-            {"opcode": 17, "mnemonic": "ALLOC"},
+            {"opcode": 0, "mnemonic": "RECV"}, {"opcode": 17, "mnemonic": "ALLOC"},
             {"opcode": 47, "mnemonic": "ABUNDANCE"},
         ],
         "fitness_hint": "min_energy + min_latency",
     },
-    "compute": {
-        "pattern": r"(计算|运算|处理|算法|数学)",
+    "cache_access": {
+        "pattern": r"(缓存|cache|预取|prefetch|热数据)",
         "template_instructions": [
-            {"opcode": 63, "mnemonic": "CREA"},
-            {"opcode": 59, "mnemonic": "STEP"},
+            {"opcode": 55, "mnemonic": "PREFETCH"}, {"opcode": 3, "mnemonic": "APPROACH"},
+            {"opcode": 47, "mnemonic": "ABUNDANCE"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency",
+    },
+    "log_writer": {
+        "pattern": r"(日志|log|记录|追踪|trace|debug|调试)",
+        "template_instructions": [
+            {"opcode": 45, "mnemonic": "ILLUMINATE"}, {"opcode": 14, "mnemonic": "PERSIST"},
+            {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency",
+    },
+    "disperse_write": {
+        "pattern": r"(分散写|scatter|分布|disperse|多路)",
+        "template_instructions": [
+            {"opcode": 50, "mnemonic": "DISPERSE"}, {"opcode": 7, "mnemonic": "FLUSH"},
+            {"opcode": 21, "mnemonic": "SYNC"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "max_throughput",
+    },
+    # 计算
+    "compute": {
+        "pattern": r"(计算|运算|处理|算法|数学|compute|math)",
+        "template_instructions": [
+            {"opcode": 63, "mnemonic": "CREA"}, {"opcode": 59, "mnemonic": "STEP"},
             {"opcode": 1, "mnemonic": "RETURN"},
         ],
         "fitness_hint": "max_throughput",
+    },
+    # 容错恢复
+    "retry_loop": {
+        "pattern": r"(重试|retry|重来|重新|再次尝试)",
+        "template_instructions": [
+            {"opcode": 20, "mnemonic": "LAME"}, {"opcode": 2, "mnemonic": "BRANCH"},
+            {"opcode": 59, "mnemonic": "STEP"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency",
+    },
+    "degrade_fallback": {
+        "pattern": r"(降级|回退|fallback|degrade|备选|兜底)",
+        "template_instructions": [
+            {"opcode": 2, "mnemonic": "BRANCH"}, {"opcode": 2, "mnemonic": "BRANCH"},
+            {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "correctness",
+    },
+    "trap_handler": {
+        "pattern": r"(异常|错误|exception|error|trap|catch|捕获)",
+        "template_instructions": [
+            {"opcode": 18, "mnemonic": "TRAP"}, {"opcode": 45, "mnemonic": "ILLUMINATE"},
+            {"opcode": 60, "mnemonic": "RETREAT"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "correctness + min_latency",
+    },
+    # 安全
+    "crypto_ops": {
+        "pattern": r"(加密|解密|密码|crypto|签名|哈希|hash|安全)",
+        "template_instructions": [
+            {"opcode": 5, "mnemonic": "OBSCURE"}, {"opcode": 53, "mnemonic": "BIND"},
+            {"opcode": 51, "mnemonic": "TRUST"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "correctness",
+    },
+    "throttle_limit": {
+        "pattern": r"(限流|节流|throttle|rate.limit|频率|qps)",
+        "template_instructions": [
+            {"opcode": 19, "mnemonic": "THROTTLE"}, {"opcode": 23, "mnemonic": "WAIT"},
+            {"opcode": 59, "mnemonic": "STEP"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "correctness + min_latency",
+    },
+    "trust_verify": {
+        "pattern": r"(验证|校验|verify|签名|认证|信任)",
+        "template_instructions": [
+            {"opcode": 51, "mnemonic": "TRUST"}, {"opcode": 41, "mnemonic": "BITE"},
+            {"opcode": 2, "mnemonic": "BRANCH"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "correctness",
+    },
+    # 内存管理
+    "mem_pool": {
+        "pattern": r"(内存池|内存|pool|alloc|分配|管理|mem)",
+        "template_instructions": [
+            {"opcode": 17, "mnemonic": "ALLOC"}, {"opcode": 33, "mnemonic": "NOURISH"},
+            {"opcode": 47, "mnemonic": "ABUNDANCE"}, {"opcode": 4, "mnemonic": "YIELD"},
+            {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency + min_energy",
+    },
+    "context_switch": {
+        "pattern": r"(上下文|切换|context|switch|调度|schedule)",
+        "template_instructions": [
+            {"opcode": 44, "mnemonic": "TRAVEL"}, {"opcode": 6, "mnemonic": "PUSH_UP"},
+            {"opcode": 14, "mnemonic": "PERSIST"}, {"opcode": 4, "mnemonic": "YIELD"},
+            {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency",
+    },
+    # 生命周期
+    "event_loop": {
+        "pattern": r"(事件循环|消息循环|event.loop|消息泵|主循环)",
+        "template_instructions": [
+            {"opcode": 28, "mnemonic": "SENSE"}, {"opcode": 0, "mnemonic": "RECV"},
+            {"opcode": 2, "mnemonic": "BRANCH"}, {"opcode": 59, "mnemonic": "STEP"},
+            {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "max_throughput",
+    },
+    "hot_reload": {
+        "pattern": r"(热更新|热加载|hot.reload|热替换|在线更新)",
+        "template_instructions": [
+            {"opcode": 29, "mnemonic": "REPLACE"}, {"opcode": 46, "mnemonic": "CAST"},
+            {"opcode": 15, "mnemonic": "THRUST"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency + correctness",
+    },
+    "signal_handler": {
+        "pattern": r"(信号|中断|signal|interrupt|事件|event)",
+        "template_instructions": [
+            {"opcode": 28, "mnemonic": "SENSE"}, {"opcode": 9, "mnemonic": "SHOCK"},
+            {"opcode": 2, "mnemonic": "BRANCH"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "min_latency",
+    },
+    "type_convert": {
+        "pattern": r"(类型转换|cast|类型|转换|convert|coerce)",
+        "template_instructions": [
+            {"opcode": 43, "mnemonic": "CONVERT"}, {"opcode": 41, "mnemonic": "BITE"},
+            {"opcode": 47, "mnemonic": "ABUNDANCE"}, {"opcode": 1, "mnemonic": "RETURN"},
+        ],
+        "fitness_hint": "correctness",
     },
 }
 

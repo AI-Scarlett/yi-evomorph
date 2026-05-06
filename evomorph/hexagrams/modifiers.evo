@@ -1,0 +1,130 @@
+@evolang "3.0"
+
+@meta_locus hexagram_modifiers {
+    description = "指令修饰符标志位定义"
+    purpose = "运行时修饰符的编码/解码，AI模型了解指令的可选修饰能力"
+}
+
+@xiangci {
+    每条 IChing 指令可附加一个 6位修饰符(modifier)，控制语义行为:
+    - .ASYNC(0b100000): 异步执行，不等待完成即返回
+    - .ATOMIC(0b010000): 原子执行，不可中断
+    - .PRIV(0b001000): 特权执行，需要内核模式
+    - .WEAK(0b000100): 弱序，内存序放松
+    - .STRONG(0b000010): 强序，严格内存序
+    - .VOLATILE(0b000001): 易变，禁止编译器优化
+
+    编码: 修饰符高2位编码在 byte1 低2位，低4位在 byte2 低4位
+}
+
+@locus modifier_flags {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 定义修饰符常量到寄存器
+        // R0 = .ASYNC    = 0b100000 = 32
+        // R1 = .ATOMIC   = 0b010000 = 16
+        // R2 = .PRIV     = 0b001000 = 8
+        // R3 = .WEAK     = 0b000100 = 4
+        // R4 = .STRONG   = 0b000010 = 2
+        // R5 = .VOLATILE = 0b000001 = 1
+        CREA.1 R0, R0, #32
+        CREA.1 R1, R1, #16
+        CREA.1 R2, R2, #8
+        CREA.1 R3, R3, #4
+        CREA.1 R4, R4, #2
+        CREA.1 R5, R5, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus encode_modifier {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 将修饰符编码到指令字节中
+        // 输入: R0 = opcode (0-63), R1 = modifier (0-63)
+        // 输出: R2 = byte1, R3 = byte2
+        // byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+        // byte2 = modifier & 0x0F
+
+        AND.0 R2, R0, #63        // R2 = opcode & 0x3F
+        SHL.0 R2, R2, #2         // R2 = opcode << 2
+
+        MOVE R3, R1
+        SHR.0 R3, R3, #4         // R3 = modifier >> 4
+        AND.0 R3, R3, #3         // R3 = (modifier >> 4) & 0x03
+
+        OR.0 R2, R2, R3          // byte1 = R2 | R3
+
+        AND.0 R3, R1, #15        // byte2 = modifier & 0x0F
+
+        RETURN.1 R0, R0
+    }
+}
+
+@locus decode_modifier {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 从指令字节中解码修饰符
+        // 输入: R0 = byte1, R1 = byte2
+        // 输出: R2 = modifier (0-63)
+
+        AND.0 R2, R0, #3         // R2 = byte1 & 0x03 (high bits)
+        SHL.0 R2, R2, #4         // R2 <<= 4
+        AND.0 R3, R1, #15        // R3 = byte2 & 0x0F
+        OR.0 R2, R2, R3          // R2 = modifier
+
+        RETURN.1 R0, R0
+    }
+}
+
+@locus has_modifier_flag {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 检查修饰符是否包含指定标志
+        // 输入: R0 = modifier (0-63), R1 = flag (1,2,4,8,16,32)
+        // 输出: R2 = 1 (有) / 0 (无)
+
+        AND.0 R2, R0, R1         // R2 = modifier & flag
+        // 如果 R2 != 0, 设置 R2 = 1
+        SUB.1 R3, R2, #1
+        AND.0 R3, R3, R3
+        // 简化: 直接返回 AND 结果
+        RETURN.1 R0, R0
+    }
+}
+
+@locus combine_modifiers {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 组合多个修饰符标志
+        // 输入: R0,R1,R2,R3,R4,R5 = 各标志值
+        // 输出: R6 = 组合后的修饰符
+        MOVE R6, R0
+        OR.0 R6, R6, R1
+        OR.0 R6, R6, R2
+        OR.0 R6, R6, R3
+        OR.0 R6, R6, R4
+        OR.0 R6, R6, R5
+        RETURN.1 R0, R0
+    }
+}

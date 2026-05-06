@@ -1,0 +1,154 @@
+@evolang "3.0"
+
+@meta_locus hexagram_categories {
+    description = "六十四卦指令的四大分类义理定义"
+    purpose = "运行时可按类别筛选指令，AI模型可理解指令的组织结构"
+}
+
+@xiangci {
+    易有太极，是生两仪，两仪生四象，四象生八卦。
+    六十四卦分为四类，对应四德:
+    - 元(YUAN): 创生之源 — 进程/线程/内存/同步原语
+    - 亨(HENG): 亨通之流 — 数据流/事件/调试/持久化
+    - 利(LI):   利物之用 — 类型转换/加密/内存管理/压缩
+    - 贞(ZHEN): 贞固之守 — 信号/安全/上下文/最终性
+}
+
+// ============================================================================
+// 四大分类 — 每类16条指令
+// ============================================================================
+@locus category_yuan_ops {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 元·创生 (0-15): CREA, RECV, ALLOC, SPRT, WAIT, LOCK, BRANCH, MERGE,
+        //                PREFETCH, STEP, FLUSH, HALT, FELLOWSHIP, ABUNDANCE, YIELD, SPECULATE
+        // 将在 heap 中存储 opcode 列表: [63, 0, 17, 34, 23, 58, 2, 16, 55, 59, 7, 56, 61, 47, 4, 8]
+        CREA.1 R0, R0, #63       // CREA
+        CREA.1 R1, R1, #0        // RECV
+        CREA.1 R2, R2, #17       // ALLOC
+        CREA.1 R3, R3, #34       // SPRT
+        CREA.1 R4, R4, #23       // WAIT
+        CREA.1 R5, R5, #58       // LOCK
+        CREA.1 R6, R6, #2        // BRANCH
+        CREA.1 R7, R7, #16       // MERGE
+        CREA.1 R8, R8, #55       // PREFETCH
+        CREA.1 R9, R9, #59       // STEP
+        CREA.1 R10, R10, #7      // FLUSH
+        CREA.1 R11, R11, #56     // HALT
+        CREA.1 R12, R12, #61     // FELLOWSHIP
+        CREA.1 R13, R13, #47     // ABUNDANCE
+        CREA.1 R14, R14, #4      // YIELD
+        CREA.1 R15, R15, #8      // SPECULATE
+        RETURN.1 R0, R0
+    }
+}
+
+@locus category_heng_ops {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 亨·交互 (16-31): FOLLOWING, MUT, APPROACH, CONTEMPLATE, BITE, ADORN, STRIP,
+        //                  RETURN, INTRINSIC, BARRIER, NOURISH, OVERLOAD, TRAP, ILLUMINATE,
+        //                  SENSE, PERSIST
+        // [25, 38, 3, 48, 41, 37, 32, 1, 57, 39, 33, 30, 18, 45, 28, 14]
+        CREA.1 R0, R0, #25       // FOLLOWING
+        CREA.1 R1, R1, #38       // MUT
+        CREA.1 R2, R2, #3        // APPROACH
+        CREA.1 R3, R3, #48       // CONTEMPLATE
+        CREA.1 R4, R4, #41       // BITE
+        CREA.1 R5, R5, #37       // ADORN
+        CREA.1 R6, R6, #32       // STRIP
+        CREA.1 R7, R7, #1        // RETURN
+        CREA.1 R8, R8, #57       // INTRINSIC
+        CREA.1 R9, R9, #39       // BARRIER
+        CREA.1 R10, R10, #33     // NOURISH
+        CREA.1 R11, R11, #30     // OVERLOAD
+        CREA.1 R12, R12, #18     // TRAP
+        CREA.1 R13, R13, #45     // ILLUMINATE
+        CREA.1 R14, R14, #28     // SENSE
+        CREA.1 R15, R15, #14     // PERSIST
+        RETURN.1 R0, R0
+    }
+}
+
+@locus category_li_ops {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 利·转换 (32-47): RETREAT, THRUST, ADVANCE, OBSCURE, BIND, CONVERT, LAME,
+        //                  UNLOCK, REDUCE, INCREASE, BREAK, MATE, GATHER, PUSH_UP, TRAPPED, WELL
+        // [60, 15, 40, 5, 53, 43, 20, 10, 35, 49, 31, 62, 24, 6, 26, 22]
+        CREA.1 R0, R0, #60       // RETREAT
+        CREA.1 R1, R1, #15       // THRUST
+        CREA.1 R2, R2, #40       // ADVANCE
+        CREA.1 R3, R3, #5        // OBSCURE
+        CREA.1 R4, R4, #53       // BIND
+        CREA.1 R5, R5, #43       // CONVERT
+        CREA.1 R6, R6, #20       // LAME
+        CREA.1 R7, R7, #10       // UNLOCK
+        CREA.1 R8, R8, #35       // REDUCE
+        CREA.1 R9, R9, #49       // INCREASE
+        CREA.1 R10, R10, #31     // BREAK
+        CREA.1 R11, R11, #62     // MATE
+        CREA.1 R12, R12, #24     // GATHER
+        CREA.1 R13, R13, #6      // PUSH_UP
+        CREA.1 R14, R14, #26     // TRAPPED
+        CREA.1 R15, R15, #22     // WELL
+        RETURN.1 R0, R0
+    }
+}
+
+@locus category_zhen_ops {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 贞·终成 (48-63): REPLACE, CAST, SHOCK, STILL, GRADUAL, MISMATCH, ABOUND,
+        //                  TRAVEL, PENETRATE, JOY, DISPERSE, THROTTLE, TRUST, MICRO, SYNC, FUTU
+        // [29, 46, 9, 36, 52, 11, 13, 44, 54, 27, 50, 19, 51, 12, 21, 42]
+        CREA.1 R0, R0, #29       // REPLACE
+        CREA.1 R1, R1, #46       // CAST
+        CREA.1 R2, R2, #9        // SHOCK
+        CREA.1 R3, R3, #36       // STILL
+        CREA.1 R4, R4, #52       // GRADUAL
+        CREA.1 R5, R5, #11       // MISMATCH
+        CREA.1 R6, R6, #13       // ABOUND
+        CREA.1 R7, R7, #44       // TRAVEL
+        CREA.1 R8, R8, #54       // PENETRATE
+        CREA.1 R9, R9, #27       // JOY
+        CREA.1 R10, R10, #50     // DISPERSE
+        CREA.1 R11, R11, #19     // THROTTLE
+        CREA.1 R12, R12, #51     // TRUST
+        CREA.1 R13, R13, #12     // MICRO
+        CREA.1 R14, R14, #21     // SYNC
+        CREA.1 R15, R15, #42     // FUTU
+        RETURN.1 R0, R0
+    }
+}
+
+@locus instructions_by_category {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // 按类别返回 opcode 列表
+        // 输入: R0 = category (0=元, 1=亨, 2=利, 3=贞)
+        // 输出: R1 = 16个opcode在heap中的起始偏移
+        // 处理流程: 编译器注入对应类别的 opcode 地址
+        HALT.1 R0, R0
+    }
+}

@@ -1,0 +1,289 @@
+@evolang "3.0"
+
+@meta_locus xiangci_template_library {
+    description = "易衍·Evomorph 象辞编程模板库 — 24个预定义编程模式"
+    purpose = "AI模型选择模板+填参数即可生成代码，3B/4B小模型友好"
+    version = "0.0.6"
+    template_count = 24
+}
+
+@xiangci {
+    小模型友好设计理念:
+    - AI模型(3B/4B)上下文有限，不宜从零生成代码
+    - 24个预定义模板覆盖常见编程场景
+    - 模型只需: 意图匹配→选择模板→填充参数→编译执行
+
+    模板分类:
+    [并发原语] parallel, mutex_guard, atomic_op, barrier_sync, fork_join
+    [数据处理] map_reduce, pipeline, batch_process, data_transform, stream_filter
+    [IO操作]   io_bound, cache_access, log_writer, disperse_write
+    [容错恢复] retry_loop, degrade_fallback, trap_handler
+    [安全]     crypto_ops, throttle_limit, trust_verify
+    [内存]     mem_pool, context_switch
+    [生命周期] event_loop, hot_reload
+}
+
+@locus parallel {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 并行计算: CREA → FELLOWSHIP → SYNC → RECV
+        CREA.1 R0, R0, #63; CREA.1 R1, R1, #61
+        CREA.1 R2, R2, #21; CREA.1 R3, R3, #0
+        RETURN.1 R0, R0
+    }
+}
+
+@locus mutex_guard {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 互斥锁保护: LOCK → ALLOC → UNLOCK → RETURN
+        CREA.1 R0, R0, #58; CREA.1 R1, R1, #17
+        CREA.1 R2, R2, #10; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus atomic_op {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 原子操作: INTRINSIC → LOCK → STEP → UNLOCK → RETURN
+        CREA.1 R0, R0, #57; CREA.1 R1, R1, #58
+        CREA.1 R2, R2, #59; CREA.1 R3, R3, #10; CREA.1 R4, R4, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus barrier_sync {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 屏障同步: FELLOWSHIP → SYNC → BARRIER → RETURN
+        CREA.1 R0, R0, #61; CREA.1 R1, R1, #21
+        CREA.1 R2, R2, #39; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus fork_join {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // Fork-Join: CREA → CREA → FELLOWSHIP → GATHER → RETURN
+        CREA.1 R0, R0, #63; CREA.1 R1, R1, #63
+        CREA.1 R2, R2, #61; CREA.1 R3, R3, #24; CREA.1 R4, R4, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus map_reduce {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // Map-Reduce: CREA → GATHER → REDUCE → RETURN
+        CREA.1 R0, R0, #63; CREA.1 R1, R1, #24
+        CREA.1 R2, R2, #35; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus pipeline {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 流水线处理: RECV → ADVANCE → ABUNDANCE → STEP → RETURN
+        CREA.1 R0, R0, #0; CREA.1 R1, R1, #40
+        CREA.1 R2, R2, #47; CREA.1 R3, R3, #59; CREA.1 R4, R4, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus batch_process {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 批量处理: ABOUND → STEP → RETURN
+        CREA.1 R0, R0, #13; CREA.1 R1, R1, #59; CREA.1 R2, R2, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus data_transform {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 数据转换: RECV → ADORN → ABUNDANCE → RETURN
+        CREA.1 R0, R0, #0; CREA.1 R1, R1, #37
+        CREA.1 R2, R2, #47; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus stream_filter {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 流过滤: PENETRATE → BRANCH → ABUNDANCE → RETURN
+        CREA.1 R0, R0, #54; CREA.1 R1, R1, #2
+        CREA.1 R2, R2, #47; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus io_bound {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // IO密集: RECV → ALLOC → ABUNDANCE
+        CREA.1 R0, R0, #0; CREA.1 R1, R1, #17; CREA.1 R2, R2, #47
+        RETURN.1 R0, R0
+    }
+}
+
+@locus cache_access {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 缓存访问: PREFETCH → APPROACH → ABUNDANCE → RETURN
+        CREA.1 R0, R0, #55; CREA.1 R1, R1, #3
+        CREA.1 R2, R2, #47; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus log_writer {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 日志写入: ILLUMINATE → PERSIST → RETURN
+        CREA.1 R0, R0, #45; CREA.1 R1, R1, #14; CREA.1 R2, R2, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus disperse_write {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 分散写入: DISPERSE → FLUSH → SYNC → RETURN
+        CREA.1 R0, R0, #50; CREA.1 R1, R1, #7
+        CREA.1 R2, R2, #21; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus compute {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 计算密集: CREA → STEP → RETURN
+        CREA.1 R0, R0, #63; CREA.1 R1, R1, #59; CREA.1 R2, R2, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus retry_loop {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 重试循环: LAME → BRANCH → STEP → RETURN
+        CREA.1 R0, R0, #20; CREA.1 R1, R1, #2
+        CREA.1 R2, R2, #59; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus degrade_fallback {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 降级回退: BRANCH → BRANCH → RETURN
+        CREA.1 R0, R0, #2; CREA.1 R1, R1, #2; CREA.1 R2, R2, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus trap_handler {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 异常捕获: TRAP → ILLUMINATE → RETREAT → RETURN
+        CREA.1 R0, R0, #18; CREA.1 R1, R1, #45
+        CREA.1 R2, R2, #60; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus crypto_ops {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 加密解谜: OBSCURE → BIND → TRUST → RETURN
+        CREA.1 R0, R0, #5; CREA.1 R1, R1, #53
+        CREA.1 R2, R2, #51; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus throttle_limit {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 限流控制: THROTTLE → WAIT → STEP → RETURN
+        CREA.1 R0, R0, #19; CREA.1 R1, R1, #23
+        CREA.1 R2, R2, #59; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus trust_verify {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 签名验证: TRUST → BITE → BRANCH → RETURN
+        CREA.1 R0, R0, #51; CREA.1 R1, R1, #41
+        CREA.1 R2, R2, #2; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus mem_pool {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 内存池: ALLOC → NOURISH → ABUNDANCE → YIELD → RETURN
+        CREA.1 R0, R0, #17; CREA.1 R1, R1, #33
+        CREA.1 R2, R2, #47; CREA.1 R3, R3, #4; CREA.1 R4, R4, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus context_switch {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 上下文切换: TRAVEL → PUSH_UP → PERSIST → YIELD → RETURN
+        CREA.1 R0, R0, #44; CREA.1 R1, R1, #6
+        CREA.1 R2, R2, #14; CREA.1 R3, R3, #4; CREA.1 R4, R4, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus event_loop {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 事件循环: SENSE → RECV → BRANCH → STEP → RETURN
+        CREA.1 R0, R0, #28; CREA.1 R1, R1, #0
+        CREA.1 R2, R2, #2; CREA.1 R3, R3, #59; CREA.1 R4, R4, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus hot_reload {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 热更新: REPLACE → CAST → THRUST → RETURN
+        CREA.1 R0, R0, #29; CREA.1 R1, R1, #46
+        CREA.1 R2, R2, #15; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus signal_handler {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 信号处理: SENSE → SHOCK → BRANCH → RETURN
+        CREA.1 R0, R0, #28; CREA.1 R1, R1, #9
+        CREA.1 R2, R2, #2; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}
+
+@locus type_convert {
+    mut_rate = 0.0; cross_pool = "xiangci"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 类型转换: CONVERT → BITE → ABUNDANCE → RETURN
+        CREA.1 R0, R0, #43; CREA.1 R1, R1, #41
+        CREA.1 R2, R2, #47; CREA.1 R3, R3, #1
+        RETURN.1 R0, R0
+    }
+}

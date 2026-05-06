@@ -1,3 +1,15 @@
+# =============================================================================
+# 六十四卦指令集
+# =============================================================================
+# IChing EVB 自举等价文件 (运行时自省):
+#   hexagram_table.evo   — 完整64条指令定义 + lookup_by_opcode/mnemonic 基因座
+#   categories.evo        — 四大分类(元·亨·利·贞) + 按类查询基因座
+#   modifiers.evo         — 6个修饰符标志 + encode/decode/combine 基因座
+#
+# AI 模型只需阅读上述 .evo 文件即可理解 Evomorph 的全部指令能力。
+# 本 Python 模块保留用于: VM初始化、进化引擎的变异/交叉操作。
+# =============================================================================
+
 from .instruction_set import HEXAGRAM_TABLE, HEXAGRAM_CATEGORIES, MODIFIERS
 
 
@@ -96,3 +108,48 @@ class HexagramInstructionSet:
             if neighbor != opcode:
                 result.append(neighbor)
         return result
+
+    def export_evo_heap_data(self) -> bytes:
+        """导出指令表为 VM heap 可加载的二进制格式。
+
+        格式: 每指令条目 [opcode(u8) | category(u8) | mnemonic_len(u8) | mnemonic(ascii) | cn_name_len(u8) | cn_name(utf8) | desc_len(u8) | desc(utf8)]
+        用于 hexagram_table.evo 中 lookup_by_opcode 基因座的运行时自省查询。
+        """
+        import struct
+        buf = bytearray()
+        for opcode in range(64):
+            entry = self._by_opcode.get(opcode)
+            if not entry:
+                buf.extend(struct.pack("BBB", opcode, 0xff, 0))
+                buf.extend(struct.pack("B", 0))
+                buf.extend(struct.pack("B", 0))
+                continue
+            mnemonic = entry["mnemonic"].encode("ascii")
+            cn_name = entry["cn_name"].encode("utf-8")
+            desc = entry["description"].encode("utf-8")
+            buf.append(opcode)
+            buf.append(self._get_category_index(opcode))
+            buf.append(len(mnemonic))
+            buf.extend(mnemonic)
+            buf.append(len(cn_name))
+            buf.extend(cn_name)
+            buf.append(len(desc))
+            buf.extend(desc)
+        return bytes(buf)
+
+    def _get_category_index(self, opcode: int) -> int:
+        for idx, (cat_name, ops) in enumerate(HEXAGRAM_CATEGORIES.items()):
+            if opcode in ops:
+                return idx
+        return 0xff
+
+    @property
+    def evo_files(self):
+        """返回对应的 .evo 自举文件路径列表，供 AI 模型/自省系统使用。"""
+        import os
+        base = os.path.dirname(os.path.abspath(__file__))
+        return {
+            "table": os.path.join(base, "hexagram_table.evo"),
+            "categories": os.path.join(base, "categories.evo"),
+            "modifiers": os.path.join(base, "modifiers.evo"),
+        }

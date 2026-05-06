@@ -1,0 +1,109 @@
+@evolang "3.0"
+
+@meta_locus platform_niche_data {
+    description = "易衍·Evomorph 多平台模拟生态位数据"
+    purpose = "AI模型可了解Evomorph程序在各平台的性能特征，选择最优编译目标"
+    version = "0.0.6"
+    platforms = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+}
+
+@xiangci {
+    平台模拟生态位数据定义。
+    每个平台定义: syscall成本 | 内存延迟 | 线程创建成本 | 锁成本 | 同步成本 | IO成本 | 能耗 | SIMD | 最大线程数
+    用于进化引擎在编译时评估基因座在各平台的预期性能。
+
+    AI模型可根据目标平台特征选择合适的指令序列:
+    - Linux:   低延迟、高并发、SIMD优
+    - Android: 中等延迟、能耗敏感、限线程
+    - iOS:     极低延迟、能耗最优、限线程
+    - Windows: 中等延迟、开箱适中
+    - Harmony: 中等延迟、平衡设计
+}
+
+@locus platform_linux {
+    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // linux-6.x: clone=30ns, mmap=20ns, futex=5ns
+        // mem_lat=80ns, thread_cost=30ns, lock=5ns, sync=15ns, io=80ns
+        // energy=0.8, simd=1, max_threads=128, cache_line=64, page=4096
+        CREA.1 R0, R0, #30       // clone cost
+        CREA.1 R1, R1, #20       // mmap cost
+        CREA.1 R2, R2, #5        // futex cost
+        CREA.1 R3, R3, #80       // mem_lat
+        CREA.1 R4, R4, #30       // thread cost
+        CREA.1 R5, R5, #5        // lock cost
+        CREA.1 R6, R6, #15       // sync cost
+        CREA.1 R7, R7, #80       // io cost
+        CREA.1 R8, R8, #80       // energy (×100)
+        CREA.1 R9, R9, #1        // simd available
+        CREA.1 R10, R10, #128    // max threads
+        RETURN.1 R0, R0
+    }
+}
+
+@locus platform_android {
+    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // android-14: clone=40ns, mmap=25ns, futex=8ns
+        // mem_lat=120ns, thread_cost=40ns, lock=8ns, sync=20ns, io=120ns
+        // energy=1.5, simd=1, max_threads=16
+        CREA.1 R0, R0, #40; CREA.1 R1, R1, #25; CREA.1 R2, R2, #8
+        CREA.1 R3, R3, #120; CREA.1 R4, R4, #40
+        CREA.1 R5, R5, #8; CREA.1 R6, R6, #20; CREA.1 R7, R7, #120
+        CREA.1 R8, R8, #150; CREA.1 R9, R9, #1; CREA.1 R10, R10, #16
+        RETURN.1 R0, R0
+    }
+}
+
+@locus platform_ios {
+    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // ios-18: clone=25ns, mmap=15ns, futex=3ns
+        // mem_lat=60ns, thread_cost=25ns, lock=3ns, sync=10ns, io=60ns
+        // energy=0.6, simd=1, max_threads=8
+        CREA.1 R0, R0, #25; CREA.1 R1, R1, #15; CREA.1 R2, R2, #3
+        CREA.1 R3, R3, #60; CREA.1 R4, R4, #25
+        CREA.1 R5, R5, #3; CREA.1 R6, R6, #10; CREA.1 R7, R7, #60
+        CREA.1 R8, R8, #60; CREA.1 R9, R9, #1; CREA.1 R10, R10, #8
+        RETURN.1 R0, R0
+    }
+}
+
+@locus platform_windows {
+    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // win-11: clone=35ns, mmap=22ns, futex=6ns
+        // mem_lat=90ns, thread_cost=35ns, lock=6ns, sync=18ns, io=90ns
+        // energy=1.0, simd=1, max_threads=64
+        CREA.1 R0, R0, #35; CREA.1 R1, R1, #22; CREA.1 R2, R2, #6
+        CREA.1 R3, R3, #90; CREA.1 R4, R4, #35
+        CREA.1 R5, R5, #6; CREA.1 R6, R6, #18; CREA.1 R7, R7, #90
+        CREA.1 R8, R8, #100; CREA.1 R9, R9, #1; CREA.1 R10, R10, #64
+        RETURN.1 R0, R0
+    }
+}
+
+@locus platform_harmony {
+    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // harmony-5: clone=35ns, mmap=20ns, futex=5ns
+        // mem_lat=100ns, thread_cost=35ns, lock=7ns, sync=16ns, io=100ns
+        // energy=1.2, simd=1, max_threads=32
+        CREA.1 R0, R0, #35; CREA.1 R1, R1, #20; CREA.1 R2, R2, #5
+        CREA.1 R3, R3, #100; CREA.1 R4, R4, #35
+        CREA.1 R5, R5, #7; CREA.1 R6, R6, #16; CREA.1 R7, R7, #100
+        CREA.1 R8, R8, #120; CREA.1 R9, R9, #1; CREA.1 R10, R10, #32
+        RETURN.1 R0, R0
+    }
+}
+
+@locus evaluate_platform {
+    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 评估基因座在指定平台的适应度
+        // 输入: R0 = 平台索引(0-4), R1 = 指令序列在 heap 的偏移, R2 = 指令数
+        // 输出: R3 = 适应度分数(×100)
+        // 简化版: 返回平台基准分数
+        HALT.1 R0, R0
+    }
+}

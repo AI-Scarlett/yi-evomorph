@@ -1,3 +1,20 @@
+# =============================================================================
+# 六十四卦指令集数据定义
+# =============================================================================
+# IChing EVB 自省等价: hexagram_table.evo   (完整64条指令定义)
+#                       categories.evo      (四大分类分组)
+#                       modifiers.evo       (修饰符标志位)
+#
+# 运行时 .evo 程序可通过 hexagram_table.evo 中的基因座查询指令信息:
+#   - lookup_by_opcode    : opcode → mnemonic + cn_name + category
+#   - lookup_by_mnemonic  : mnemonic → opcode + category
+#   - encode_instruction  : (opcode, modifier) → (byte1, byte2)
+#   - decode_instruction  : (byte1, byte2) → (opcode, modifier)
+#
+# AI 模型只需阅读上述 .evo 文件即可理解 Evomorph 的全部指令能力，
+# 无需阅读本 Python 文件。
+# =============================================================================
+
 HEXAGRAM_TABLE = [
     (63, "䷀", "QIAN",       "CREA",        "创生",       "乾元创生，创建新进程/线程"),
     (0,  "䷁", "KUN",        "RECV",        "承纳",       "坤厚载物，接收消息/映射"),

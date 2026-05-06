@@ -1,3 +1,5 @@
+# Legacy — 道枢自举 (v0.0.4 过渡代码)
+# 主编译路径已迁移到 IChing EVB 自举编译器 (compiler.evoasm)
 import sys
 import os
 import json

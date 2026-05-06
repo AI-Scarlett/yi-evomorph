@@ -1,0 +1,45 @@
+@evolang "3.0"
+
+@meta_locus opcode_cost_map {
+    description = "六十四卦指令 → 成本类型映射 + 基础成本表"
+    purpose = "编译器/进化引擎评估指令序列的预期开销，AI模型了解指令的语义成本"
+    version = "0.0.6"
+}
+
+@xiangci {
+    每条指令对应一种成本类型:
+    - thread_create: 50ns  — CREA
+    - io:          100ns  — RECV, ILLUMINATE, PERSIST
+    - memory:       10ns  — ALLOC, SPRT, MERGE, PREFETCH, FLUSH, ABUNDANCE, FOLLOWING, STRIP, NOURISH, BIND, PUSH_UP, TRAPPED, WELL, TRAVEL, DISPERSE, ABOUND
+    - sync:         20ns  — WAIT, HALT, FELLOWSHIP, YIELD, BARRIER, OVERLOAD, TRAP, SENSE, RETREAT, OBSCURE, LAME, TRAPPED, STILL, MISMATCH, PENETRATE, THROTTLE, SYNC, FUTU
+    - lock:         15ns  — LOCK, UNLOCK
+    - branch:        5ns  — BRANCH, RETURN, BREAK
+    - compute:       2ns  — 其他所有指令
+}
+
+@locus cost_categories {
+    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 定义6种基础成本 (×10 用于整数运算)
+        // R0=thread_create=500, R1=io=1000, R2=memory=100, R3=sync=200, R4=lock=150, R5=branch=50, R6=compute=20
+        CREA.1 R0, R0, #500      // thread_create
+        CREA.1 R1, R1, #1000     // io
+        CREA.1 R2, R2, #100      // memory
+        CREA.1 R3, R3, #200      // sync
+        CREA.1 R4, R4, #150      // lock
+        CREA.1 R5, R5, #50       // branch
+        CREA.1 R6, R6, #20       // compute
+        RETURN.1 R0, R0
+    }
+}
+
+@locus opcode_to_cost_category {
+    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
+    GUAXU: {
+        // 将 opcode 映射到成本类别
+        // 输入: R0 = opcode (0-63)
+        // 输出: R1 = 成本类别 (0=thread_create, 1=io, 2=memory, 3=sync, 4=lock, 5=branch, 6=compute)
+        // 简化: 由编译器在编译时注入完整的64元素查找表
+        HALT.1 R0, R0
+    }
+}
