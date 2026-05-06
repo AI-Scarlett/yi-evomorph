@@ -1,0 +1,132 @@
+@evolang "3.0"
+
+@xiangci {
+    字节码工具函数 — 用 IChing 指令集重写原 Python bytecode_utils.py
+    所有函数对原始字节数组操作，不依赖 Python dict 结构
+}
+
+@locus operand_to_byte {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // operand_to_byte(val: u32) -> u8
+        // 输入: R0 = 操作数值
+        // 输出: R0 = val & 0xFF
+        AND.0 R0, R0, #255
+        RETURN.1 R0, R0
+    }
+}
+
+@locus encode_instruction {
+    mut_rate = 0.0
+    cross_pool = "stdlib"  
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // encode_instruction(opcode, modifier, operands[]) -> byte[]
+        // 输入: R0 = opcode, R1 = modifier, R2 = op1, R3 = op2
+        // 输出: R0 = byte1 | (byte2 << 8) | (op1 << 16) | (op2 << 24)  (packed u32)
+        // byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+        // byte2 = modifier & 0x0F
+        AND.0 R0, R0, #63       // R4 = opcode & 0x3F
+        MOVE R4, R0
+        SHL.0 R4, R4, #2        // R4 = (opcode & 0x3F) << 2
+        
+        MOVE R5, R1
+        SHR.0 R5, R5, #4        // R5 = modifier >> 4
+        AND.0 R5, R5, #3        // R5 = (modifier >> 4) & 0x03
+        
+        OR.0 R4, R4, R5         // byte1 = R4 | R5
+        AND.0 R1, R1, #15       // byte2 = modifier & 0x0F
+        
+        // Pack into R0: byte1 | (byte2 << 8) | (op1 << 16) | (op2 << 24)
+        MOVE R0, R4
+        SHL.0 R5, R1, #8
+        OR.0 R0, R0, R5
+        SHL.0 R5, R2, #16
+        OR.0 R0, R0, R5
+        SHL.0 R5, R3, #24
+        OR.0 R0, R0, R5
+        
+        RETURN.1 R0, R0
+    }
+}
+
+@locus locus_to_bytecode {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    GUAXU: {
+        // locus_to_bytecode(instr_count, *instructions_heap) -> bytecode_len
+        // 输入: R0 = 指令数量, R1 = heap 中指令数据起始偏移
+        // 输出: R0 = 生成的字节码长度 (写入 heap 从 R1 + instr_count*4 开始)
+        // 指令格式: 每指令 4 字节 [opcode, modifier, op1, op2]
+        
+        MOVE R5, R1              // R5 = 源指针 (指令数据)
+        MOVE R6, R0              // R6 = 剩余指令计数
+        SHL.0 R7, R0, #2         // R7 = 指令数据总大小 (count * 4)
+        ADD.0 R7, R7, R1         // R7 = 输出起始偏移 (heap 中)
+        MOVE R8, R7              // R8 = 当前输出指针
+        MOVE R9, R0              // R9 = 总字节码长度 (累加)
+        LOAD.0 R9, R0            // R9 = 0 (初始化为 0 bytecode 长度)
+        
+    encode_loop:
+        // 检查是否完成
+        SUB.1 R6, R6, #1        // R6--
+        MOVE R10, R6
+        AND.0 R10, R10, R10     // 检查 R6
+        BRANCH.2 @done
+        
+        // 读取指令: opcode, modifier, op1, op2
+        LOAD.0 R0, R5            // R0 = opcode
+        ADD.1 R5, R5, #1
+        LOAD.0 R1, R5            // R1 = modifier
+        ADD.1 R5, R5, #1
+        LOAD.0 R2, R5            // R2 = op1
+        ADD.1 R5, R5, #1
+        LOAD.0 R3, R5            // R3 = op2
+        ADD.1 R5, R5, #1
+        
+        // 调用 encode_instruction
+        // byte1 | (byte2 << 8) | (op1 << 16) | (op2 << 24)
+        // R4 = byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+        MOVE R4, R0
+        AND.0 R4, R4, #63
+        SHL.0 R4, R4, #2
+        MOVE R11, R1
+        SHR.0 R11, R11, #4
+        AND.0 R11, R11, #3
+        OR.0 R4, R4, R11
+        
+        // 写入 byte1
+        STORE.1 R8, R4
+        ADD.1 R8, R8, #1
+        ADD.1 R9, R9, #1
+        
+        // R4 = byte2 = modifier & 0x0F
+        AND.0 R4, R1, #15
+        STORE.1 R8, R4
+        ADD.1 R8, R8, #1
+        ADD.1 R9, R9, #1
+        
+        // 写入 operand bytes
+        STORE.1 R8, R2
+        ADD.1 R8, R8, #1
+        ADD.1 R9, R9, #1
+        STORE.1 R8, R3
+        ADD.1 R8, R8, #1
+        ADD.1 R9, R9, #1
+        
+        BRANCH.2 @encode_loop
+        
+    done:
+        MOVE R0, R9              // 返回字节码总长度
+        RETURN.1 R0, R0
+    }
+}

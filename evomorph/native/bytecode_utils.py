@@ -1,3 +1,6 @@
+# IChing EVB 等价实现: bytecode_utils.evo (operand_to_byte, encode_instruction, locus_to_bytecode)
+# Python 版本保留为桥接层，供 native/linker/image 等基础设施使用
+
 def operand_to_byte(val) -> int:
     if isinstance(val, int):
         return val & 0xFF

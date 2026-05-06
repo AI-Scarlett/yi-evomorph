@@ -1,3 +1,5 @@
+# Legacy — 主编译路径已迁移到 IChing EVB 自举编译器 (compiler.evoasm)
+# 此文件保留供 bootstrap 脚本和测试使用
 import re
 from enum import Enum, auto
 
