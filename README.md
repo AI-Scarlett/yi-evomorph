@@ -65,11 +65,30 @@ compiler.evoasm  (36KB IChing 汇编)
 - ❌ `ir.py` → 已删除（546行死代码）
 - ❌ `PythonEvocCompiler` → 已移除（~376行）
 - ❌ `ASTToIRConverter` → 已移除
+- ❌ `bootstrap_compiler.py` → 已删除（~1250行，被 compiler.evoasm 完全替代）
+- ❌ `native_lib.py` → 已删除（~320行，仅服务于已删除的 bootstrap_compiler）
+- ❌ `compile_evo_for_vm.py` → 已删除（~120行，被直接 compiler.evoasm 编译替代）
 
 ### 新增 .evo 替代文件
 
 - `evomorph/native/bytecode_utils.evo` — 字节码编解码（IChing 汇编 132 行）
 - `evomorph/sdk/xiangci_data.evo` — 象辞模板数据（69 行）
+- `evomorph/hexagrams/hexagram_table.evo` — 64卦指令集自省表（273行）
+- `evomorph/hexagrams/categories.evo` — 卦象四类分组（170行）
+- `evomorph/hexagrams/modifiers.evo` — 修饰符标志定义（130行）
+- `evomorph/sdk/xiangci_templates.evo` — 24个象辞编程模板（200+行）
+- `evomorph/simulator/niche_data.evo` — 5个平台性能数据（100+行）
+- `evomorph/simulator/opcode_cost.evo` — 操作码成本映射（60+行）
+- `evomorph/monitor/evomon.evo` — 性能监控基因座（90+行）
+
+### 📦 小模型友好
+
+易衍·Evomorph 专为小模型（3B/4B 参数、4K-8K 上下文）AI 驱动编程优化：
+
+- **9 个自省 .evo 文件** — AI 模型无需阅读 Python 源码，通过 `.evo` 文件即可理解完整的指令集、修饰符、象辞模板、平台数据和监控逻辑
+- **指令集自述（自省）** — `hexagram_table.evo` 包含完整的 64 卦指令表，支持运行时查询操作码、助记符和指令编码
+- **象辞模板库** — 24 个预定义编程模式模板，小模型通过模板匹配即可生成正确代码
+- **平台数据自省** — `niche_data.evo` 和 `opcode_cost.evo` 替代 Python 配置，模型可直接读取平台性能参数
 
 ## 快速开始
 
@@ -281,13 +300,23 @@ evomorph/
 │   │   ├── engine.py             # Python版进化引擎
 │   │   ├── evolution_core.evo    # Evomorph版进化引擎核心
 │   │   └── evolution_meta.evo    # Evomorph版元基因座
-│   ├── hexagrams/instruction_set.py  # 六十四卦指令集
-│   ├── simulator/niche.py        # 平台模拟生态位
+│   ├── hexagrams/
+│   │   ├── instruction_set.py      # 六十四卦指令集
+│   │   ├── hexagram_table.evo      # 指令集自省表 (273行)
+│   │   ├── categories.evo          # 卦象四类分组 (170行)
+│   │   └── modifiers.evo           # 修饰符标志定义 (130行)
+│   ├── simulator/
+│   │   ├── niche.py                # 平台模拟生态位
+│   │   ├── niche_data.evo          # 平台性能数据 (100+行)
+│   │   └── opcode_cost.evo         # 操作码成本映射 (60+行)
 │   ├── sdk/
-│   │   ├── xiangci.py            # 象辞翻译 SDK
-│   │   └── xiangci_data.evo      # 象辞模板数据 (.evo)
+│   │   ├── xiangci.py              # 象辞翻译 SDK
+│   │   ├── xiangci_data.evo        # 象辞模板数据 (69行)
+│   │   └── xiangci_templates.evo   # 24个象辞编程模板 (200+行)
 │   ├── stdlib/                   # 标准库（.evo 格式）
 │   ├── debugger/                 # 爻镜调试器
+│   ├── monitor/
+│   │   └── evomon.evo            # 性能监控基因座 (90+行)
 │   ├── native/                   # 原生模块
 │   │   ├── bytecode_utils.py     # 字节码工具 (桥接层)
 │   │   └── bytecode_utils.evo    # 字节码工具 (.evo)
@@ -295,8 +324,11 @@ evomorph/
 │       ├── compiler.evoasm       # IChing 汇编编译器 (36KB)
 │       ├── compiler.evob         # 编译器可执行体 (7.9KB)
 │       ├── assembler.evoasm      # 汇编器源码
-│       ├── self_compile.py       # 自举过程实现
+│       ├── self_compile.py       # 自举过程实现 (legacy)
+│       ├── enhanced_bootstrap.py # 增强自举接口 (legacy)
+│       ├── true_self_hosting.py  # 真正自举实现 (legacy)
 │       └── iching/               # IChing 编译器桥接
+│           └── iching_compiler.py # 主编译器桥接 (已清理传统编译路径)
 ├── ai/
 │   ├── mcp/
 │   │   ├── evomorph_mcp_server.py   # Python版MCP Server
@@ -373,6 +405,28 @@ python3 -m pytest tests/ -v
 - PC 推进: ext_mode=2 缺少立即数时正确报错 (不再静默继续)
 - 寄存器掩码: ext_mode=0 支持全部 32 个寄存器 R0-R31 (之前只有 R0-R15)
 - 编码注释修正与实际派发逻辑一致
+
+#### 🧬 指令集自省（Phase 1）
+- **hexagram_table.evo** (273行) — 完整64卦指令表，支持运行时自省查询（lookup_by_opcode / lookup_by_mnemonic / encode_instruction / decode_instruction）
+- **categories.evo** (170行) — 四类卦象分组（元/亨/利/贞），每类16个操作码
+- **modifiers.evo** (130行) — 6种修饰符标志定义（ASYNC/ATOMIC/PRIV/WEAK/STRONG/VOLATILE）
+- **export_evo_heap_data()** — 导出二进制指令表（3202字节）供 VM 堆加载
+
+#### 📚 象辞模板库扩展（Phase 2）
+- **xiangci_templates.evo** — 24个预定义编程模板（原仅3个 parallel/IO/compute）
+- 覆盖：并发原语(5)、数据处理(5)、IO操作(4)、容错恢复(3)、安全(3)、内存管理(2)、生命周期(2)
+- 每个模板包含 template_instructions 和 fitness_hint
+
+#### 🧹 Bootstrap 清理（Phase 3）
+- **删除 bootstrap_compiler.py** (~1250行) — 传统CPU汇编编译器，被 compiler.evoasm 完全替代
+- **删除 native_lib.py** (~320行) — 原生标准库，仅服务于已删除的编译器
+- **删除 compile_evo_for_vm.py** (~120行) — .evo→C VM 格式编译包装器
+- **标记 legacy** — enhanced_bootstrap.py / complete_bootstrap_runtime.py / self_compile.py / true_self_hosting.py / iching_compiler.py
+
+#### 📊 数据模块 .evo 化（Phase 4）
+- **niche_data.evo** (100+行) — 5个平台性能数据（Linux/Android/iOS/Windows/Harmony）
+- **opcode_cost.evo** (60+行) — 操作码成本分类映射（thread_create/io/memory/sync/lock/branch/compute）
+- **evomon.evo** (90+行) — 性能监控基因座（采样/热点路径/进化建议/报告生成）
 
 #### 🧹 清理
 - 删除根目录 92 个临时 test/debug 脚本

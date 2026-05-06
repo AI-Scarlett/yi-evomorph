@@ -155,16 +155,25 @@ evomorph/
 │   ├── evolution/
 │   │   └── engine.py             # 进化引擎（遗传算法）
 │   ├── hexagrams/
-│   │   └── instruction_set.py    # 六十四卦指令集
+│   │   ├── __init__.py             # 指令集模块入口，export_evo_heap_data()
+│   │   ├── instruction_set.py      # 六十四卦指令集
+│   │   ├── hexagram_table.evo      # 64卦指令集自省表 (273行)
+│   │   ├── categories.evo          # 卦象四类分组 (170行)
+│   │   └── modifiers.evo           # 修饰符标志定义 (130行)
 │   ├── simulator/
-│   │   └── niche.py              # 平台模拟生态位
+│   │   ├── niche.py                # 平台模拟生态位
+│   │   ├── niche_data.evo          # 5个平台性能数据 (100+行)
+│   │   └── opcode_cost.evo         # 操作码成本映射 (60+行)
 │   ├── sdk/
-│   │   └── xiangci.py            # 象辞翻译 SDK
+│   │   ├── xiangci.py            # 象辞翻译 SDK
+│   │   ├── xiangci_data.evo      # 象辞模板数据 (69行)
+│   │   └── xiangci_templates.evo # 24个象辞编程模板 (200+行)
 │   ├── bootstrap/                # 自举编译器（.evo 格式）
 │   ├── native/                   # 原生模块（链接器/加载器/Shell/REPL）
 │   ├── stdlib/                   # 标准库（.evo 格式）
 │   ├── debugger/                 # 爻镜调试器
-│   ├── monitor/                  # 进化监控
+│   ├── monitor/
+│   │   └── evomon.evo            # 性能监控基因座 (90+行)
 │   └── hub/                      # 基因座仓库
 ├── ai/
 │   ├── mcp/

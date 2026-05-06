@@ -31,6 +31,24 @@
 └─────────────────────────────────────────────┘
 ```
 
+### 📦 小模型友好设计
+
+易衍·Evomorph 专为小模型（3B/4B 参数、4K-8K 上下文）AI 驱动编程优化。AI 模型通过读取以下 9 个自省 `.evo` 文件即可理解完整的语言能力，无需阅读数万行 Python 源码：
+
+| 文件 | 大小 | 用途 |
+|------|------|------|
+| `evomorph/hexagrams/hexagram_table.evo` | 273行 | 完整64卦指令表，支持运行时自省查询 |
+| `evomorph/hexagrams/categories.evo` | 170行 | 四类卦象分组（元/亨/利/贞） |
+| `evomorph/hexagrams/modifiers.evo` | 130行 | 6种修饰符标志定义 |
+| `evomorph/sdk/xiangci_templates.evo` | 200+行 | 24个预定义编程模式模板 |
+| `evomorph/sdk/xiangci_data.evo` | 69行 | 象辞模板数据 |
+| `evomorph/native/bytecode_utils.evo` | 132行 | 字节码编解码 |
+| `evomorph/simulator/niche_data.evo` | 100+行 | 5个平台性能数据 |
+| `evomorph/simulator/opcode_cost.evo` | 60+行 | 操作码成本分类映射 |
+| `evomorph/monitor/evomon.evo` | 90+行 | 性能监控基因座 |
+
+> 这 9 个文件替代了约 1700 行已删除的 Python 编译器代码和大量 Python 配置逻辑，使小模型在有限上下文内即可完全理解 Evomorph。`EVO_INTROSPECTION_FILES` 常量在 `evomorph/__init__.py` 中定义。
+
 ---
 
 ## MCP Server
@@ -514,6 +532,14 @@ evo-ai config
 | `ai/configs/hermes.json` | Hermes 配置 |
 | `ai/configs/codebuddy.json` | CodeBuddy 配置 |
 | `ai/configs/codex.json` | Codex 配置 |
+| `evomorph/hexagrams/hexagram_table.evo` | 64卦指令集自省表 |
+| `evomorph/hexagrams/categories.evo` | 四类卦象分组 |
+| `evomorph/hexagrams/modifiers.evo` | 修饰符标志定义 |
+| `evomorph/sdk/xiangci_templates.evo` | 24个象辞编程模板 |
+| `evomorph/sdk/xiangci_data.evo` | 象辞模板数据 |
+| `evomorph/simulator/niche_data.evo` | 平台性能数据 |
+| `evomorph/simulator/opcode_cost.evo` | 操作码成本映射 |
+| `evomorph/monitor/evomon.evo` | 性能监控基因座 |
 | `evomorph/evolution/evolution_core.evo` | Evomorph版进化引擎核心 |
 | `evomorph/evolution/evolution_meta.evo` | Evomorph版元基因座（进化之进化） |
 | `evomorph/stdlib/evolution.evo` | 标准库进化模块 |
