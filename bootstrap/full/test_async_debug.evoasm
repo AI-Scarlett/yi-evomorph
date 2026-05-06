@@ -1,0 +1,39 @@
+; 最简单的测试：验证 .ASYNC BRANCH 寄存器间接跳转
+; 不打印任何东西，只检查寄存器状态
+; SUCCESS 地址 = 32
+
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+START:
+    ; 设置条件寄存器 R1 = 1
+    ABOUND R1, 1
+    
+    ; 设置 R5 = 32 (SUCCESS 地址)
+    ABOUND R5, 32
+    
+    ; 寄存器间接跳转：.ASYNC BRANCH R1, R5
+    ; 如果 R1 != 0，跳转到 R5 中的地址
+    .ASYNC BRANCH R1, R5
+    
+    ; 如果跳转失败，设置 R7 = 0xDEAD
+    ABOUND R7, 222
+    ABOUND R8, 173
+    INCREASE R7, R8
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+; 目标标签 - 地址 32
+SUCCESS:
+    ; 如果跳转成功，设置 R7 = 0xBEEF
+    ABOUND R7, 190
+    ABOUND R8, 239
+    INCREASE R7, R8
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

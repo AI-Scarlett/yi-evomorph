@@ -1,0 +1,503 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 增强代码生成器"
+    "实现完整的EVOB字节码生成功能"
+    "目标：达到Python代码生成器同等功能水平"
+}
+
+@locus evoc.codegen.init_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::AST_PROGRAM
+        ䷂ ALLOC R1, 0x100
+        ䷀ CREA R2, @evoc.core.memory_zero
+        ䷌ FELLOWSHIP R1, R2
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        ䷂ ALLOC R5, 0x20
+        ䷀ CREA R6, @evoc.core.memory_copy
+        ䷌ FELLOWSHIP R5, R6
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.full_pass_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CODEGEN_STATE
+        ䷀ CREA R1, @evoc.codegen.generate_evb_header
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷁ RECV R2, env::AST_LOCUS_COUNT
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        
+        @codegen_locus_loop:
+        ䷔ BITE R3, R2
+        ䷆ BRANCH R_ge, @codegen_locus_loop_done
+        
+        ䷀ CREA R4, @evoc.codegen.emit_locus
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R3
+        ䷉ STEP R3
+        ䷆ BRANCH R_always, @codegen_locus_loop
+        
+        @codegen_locus_loop_done:
+        ䷀ CREA R5, @evoc.codegen.link_labels
+        ䷌ FELLOWSHIP R0, R5
+        
+        ䷀ CREA R6, @evoc.codegen.optimize_bytecode
+        ䷌ FELLOWSHIP R0, R6
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.generate_evb_header_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CODEGEN_STATE
+        ䷂ ALLOC R1, 0x10
+        
+        ䷀ CREA R2, @evoc.core.string_to_bytes
+        ䷍ ABUNDANCE R2, "EVOB"
+        ䷌ FELLOWSHIP R1, R2
+        
+        ䷂ ALLOC R3, 0x02
+        ䷍ ABUNDANCE R3, 3
+        ䷀ CREA R4, @evoc.codegen.encode_uint16_be
+        ䷌ FELLOWSHIP R3, R4
+        ䷍ ABUNDANCE R1, R4
+        
+        ䷂ ALLOC R5, 0x02
+        ䷍ ABUNDANCE R5, 12
+        ䷀ CREA R6, @evoc.codegen.encode_uint16_be
+        ䷌ FELLOWSHIP R5, R6
+        ䷍ ABUNDANCE R1, R6
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.emit_locus_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CODEGEN_STATE
+        ䷁ RECV R1, env::LOCUS_INDEX
+        ䷁ RECV R2, env::LOCUS_NODE
+        
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        
+        ䷁ RECV R4, env::INSTRUCTION_COUNT
+        
+        @emit_instruction_loop:
+        ䷔ BITE R3, R4
+        ䷆ BRANCH R_ge, @emit_instruction_loop_done
+        
+        ䷀ CREA R5, @evoc.codegen.emit_instruction
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷉ STEP R3
+        ䷆ BRANCH R_always, @emit_instruction_loop
+        
+        @emit_instruction_loop_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.emit_instruction_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CODEGEN_STATE
+        ䷁ RECV R1, env::INSTRUCTION_INDEX
+        ䷁ RECV R2, env::INSTRUCTION_NODE
+        
+        ䷀ CREA R3, @evoc.codegen.encode_opcode
+        ䷌ FELLOWSHIP R2, R3
+        
+        ䷀ CREA R4, @evoc.codegen.encode_modifier
+        ䷌ FELLOWSHIP R2, R4
+        
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, 0
+        
+        ䷁ RECV R7, env::OPERAND_COUNT
+        
+        @encode_operand_loop:
+        ䷔ BITE R5, R7
+        ䷆ BRANCH R_ge, @encode_operand_loop_done
+        
+        ䷀ CREA R8, @evoc.codegen.encode_operand
+        ䷌ FELLOWSHIP R2, R8
+        ䷍ ABUNDANCE R8, R5
+        
+        ䷔ BITE R5, 0
+        ䷆ BRANCH R_eq, @operand0_stored
+        ䷔ BITE R5, 1
+        ䷆ BRANCH R_eq, @operand1_stored
+        ䷆ BRANCH R_always, @operand_next
+        
+        @operand0_stored:
+        ䷍ ABUNDANCE R6, R8
+        ䷆ BRANCH R_always, @operand_next
+        
+        @operand1_stored:
+        ䷍ ABUNDANCE R7, R8
+        
+        @operand_next:
+        ䷉ STEP R5
+        ䷆ BRANCH R_always, @encode_operand_loop
+        
+        @encode_operand_loop_done:
+        ䷂ ALLOC R9, 0x01
+        ䷍ ABUNDANCE R9, 0
+        
+        ䷔ BITE R7, 2
+        ䷆ BRANCH R_lt, @pad_operands
+        
+        ䷆ BRANCH R_always, @build_instruction
+        
+        @pad_operands:
+        ䷔ BITE R7, 0
+        ䷆ BRANCH R_eq, @pad_both_operands
+        ䷔ BITE R7, 1
+        ䷆ BRANCH R_eq, @pad_second_operand
+        ䷆ BRANCH R_always, @build_instruction
+        
+        @pad_both_operands:
+        ䷍ ABUNDANCE R6, R9
+        ䷍ ABUNDANCE R7, R9
+        ䷆ BRANCH R_always, @build_instruction
+        
+        @pad_second_operand:
+        ䷍ ABUNDANCE R7, R9
+        
+        @build_instruction:
+        ䷂ ALLOC R10, 0x04
+        
+        ䷂ ALLOC R11, 0x01
+        ䷍ ABUNDANCE R11, R3
+        ䷀ CREA R12, @evoc.core.shift_left
+        ䷍ ABUNDANCE R12, 2
+        ䷌ FELLOWSHIP R11, R12
+        
+        ䷂ ALLOC R13, 0x01
+        ䷍ ABUNDANCE R13, R4
+        ䷀ CREA R14, @evoc.core.shift_right
+        ䷍ ABUNDANCE R14, 4
+        ䷌ FELLOWSHIP R13, R14
+        
+        ䷀ CREA R15, @evoc.core.bit_or
+        ䷌ FELLOWSHIP R12, R14
+        ䷍ ABUNDANCE R10, R15
+        
+        ䷂ ALLOC R12, 0x01
+        ䷍ ABUNDANCE R12, R4
+        ䷀ CREA R14, @evoc.core.bit_and
+        ䷍ ABUNDANCE R14, 0x0F
+        ䷌ FELLOWSHIP R12, R14
+        ䷍ ABUNDANCE R10, R14
+        
+        ䷍ ABUNDANCE R10, R6
+        ䷍ ABUNDANCE R10, R7
+        
+        ䷀ CREA R12, @evoc.codegen.append_bytecode
+        ䷌ FELLOWSHIP R0, R12
+        ䷍ ABUNDANCE R12, R10
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.encode_opcode_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INSTRUCTION_NODE
+        ䷁ RECV R1, env::OPCODE_VALUE
+        ䷔ BITE R1, 0x3F
+        ䷂ ALLOC R2, 0x01
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.encode_operand_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INSTRUCTION_NODE
+        ䷁ RECV R1, env::OPERAND_INDEX
+        ䷁ RECV R2, env::OPERAND_NODE
+        
+        ䷔ BITE R2, @OPERAND_REGISTER
+        ䷆ BRANCH R_eq, @encode_register_operand
+        
+        ䷔ BITE R2, @OPERAND_IMMEDIATE
+        ䷆ BRANCH R_eq, @encode_immediate_operand
+        
+        ䷔ BITE R2, @OPERAND_LABEL
+        ䷆ BRANCH R_eq, @encode_label_operand
+        
+        ䷆ BRANCH R_always, @encode_default_operand
+        
+        @encode_register_operand:
+        ䷀ CREA R3, @evoc.codegen.encode_register_operand
+        ䷌ FELLOWSHIP R2, R3
+        ䷆ BRANCH R_always, @encode_operand_done
+        
+        @encode_immediate_operand:
+        ䷀ CREA R3, @evoc.codegen.encode_immediate_operand
+        ䷌ FELLOWSHIP R2, R3
+        ䷆ BRANCH R_always, @encode_operand_done
+        
+        @encode_label_operand:
+        ䷀ CREA R3, @evoc.codegen.encode_label_operand
+        ䷌ FELLOWSHIP R2, R3
+        ䷆ BRANCH R_always, @encode_operand_done
+        
+        @encode_default_operand:
+        ䷂ ALLOC R3, 0x01
+        ䷍ ABUNDANCE R3, 0
+        
+        @encode_operand_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.encode_register_operand_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPERAND_NODE
+        ䷁ RECV R1, env::REGISTER_NAME
+        
+        ䷔ BITE R1, "R_FP"
+        ䷆ BRANCH R_eq, @reg_fp
+        
+        ䷔ BITE R1, "R_SP"
+        ䷆ BRANCH R_eq, @reg_sp
+        
+        ䷔ BITE R1, "R_LR"
+        ䷆ BRANCH R_eq, @reg_lr
+        
+        ䷔ BITE R1, "R_A0"
+        ䷆ BRANCH R_eq, @reg_a0
+        
+        ䷆ BRANCH R_always, @reg_number
+        
+        @reg_fp:
+        ䷂ ALLOC R2, 0x01
+        ䷍ ABUNDANCE R2, 12
+        ䷆ BRANCH R_always, @encode_register_done
+        
+        @reg_sp:
+        ䷂ ALLOC R2, 0x01
+        ䷍ ABUNDANCE R2, 13
+        ䷆ BRANCH R_always, @encode_register_done
+        
+        @reg_lr:
+        ䷂ ALLOC R2, 0x01
+        ䷍ ABUNDANCE R2, 14
+        ䷆ BRANCH R_always, @encode_register_done
+        
+        @reg_a0:
+        ䷂ ALLOC R2, 0x01
+        ䷍ ABUNDANCE R2, 15
+        ䷆ BRANCH R_always, @encode_register_done
+        
+        @reg_number:
+        ䷀ CREA R2, @evoc.core.string_to_int
+        ䷌ FELLOWSHIP R1, R2
+        ䷀ CREA R3, @evoc.core.bit_and
+        ䷍ ABUNDANCE R3, 0x0F
+        ䷌ FELLOWSHIP R2, R3
+        
+        @encode_register_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.encode_immediate_operand_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPERAND_NODE
+        ䷁ RECV R1, env::IMMEDIATE_VALUE
+        
+        ䷂ ALLOC R2, 0x01
+        ䷍ ABUNDANCE R2, R1
+        ䷀ CREA R3, @evoc.core.bit_and
+        ䷍ ABUNDANCE R3, 0xFF
+        ䷌ FELLOWSHIP R2, R3
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.encode_label_operand_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPERAND_NODE
+        ䷁ RECV R1, env::LABEL_NAME
+        
+        ䷀ CREA R2, @evoc.codegen.add_relocation
+        ䷌ FELLOWSHIP R0, R2
+        ䷍ ABUNDANCE R2, R1
+        
+        ䷂ ALLOC R3, 0x01
+        ䷍ ABUNDANCE R3, 0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.link_labels_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CODEGEN_STATE
+        ䷁ RECV R1, env::RELOCATION_COUNT
+        
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 0
+        
+        @link_label_loop:
+        ䷔ BITE R2, R1
+        ䷆ BRANCH R_ge, @link_label_loop_done
+        
+        ䷀ CREA R3, @evoc.codegen.get_relocation
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R3, R2
+        
+        ䷀ CREA R4, @evoc.codegen.get_symbol_offset
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷀ CREA R5, @evoc.codegen.patch_bytecode
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷍ ABUNDANCE R5, R4
+        
+        ䷉ STEP R2
+        ䷆ BRANCH R_always, @link_label_loop
+        
+        @link_label_loop_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.codegen.optimize_bytecode_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CODEGEN_STATE
+        ䷁ RECV R1, env::OPTIMIZATION_LEVEL
+        
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 0
+        
+        ䷔ BITE R1, 1
+        ䷆ BRANCH R_lt, @optimize_level0
+        
+        ䷀ CREA R3, @evoc.codegen.opt_remove_redundant_nops
+        ䷌ FELLOWSHIP R0, R3
+        ䷌ FELLOWSHIP R2, R3
+        
+        ䷀ CREA R4, @evoc.codegen.opt_remove_redundant_moves
+        ䷌ FELLOWSHIP R0, R4
+        ䷌ FELLOWSHIP R2, R4
+        
+        ䷀ CREA R5, @evoc.codegen.opt_merge_adjacent
+        ䷌ FELLOWSHIP R0, R5
+        ䷌ FELLOWSHIP R2, R5
+        
+        ䷔ BITE R1, 2
+        ䷆ BRANCH R_lt, @optimize_done
+        
+        ䷀ CREA R6, @evoc.codegen.opt_fold_constants
+        ䷌ FELLOWSHIP R0, R6
+        ䷌ FELLOWSHIP R2, R6
+        
+        ䷀ CREA R7, @evoc.codegen.opt_dead_code
+        ䷌ FELLOWSHIP R0, R7
+        ䷌ FELLOWSHIP R2, R7
+        
+        ䷔ BITE R1, 3
+        ䷆ BRANCH R_lt, @optimize_done
+        
+        ䷀ CREA R8, @evoc.codegen.opt_loop_optimize
+        ䷌ FELLOWSHIP R0, R8
+        ䷌ FELLOWSHIP R2, R8
+        
+        ䷀ CREA R9, @evoc.codegen.opt_schedule
+        ䷌ FELLOWSHIP R0, R9
+        ䷌ FELLOWSHIP R2, R9
+        
+        ䷆ BRANCH R_always, @optimize_done
+        
+        @optimize_level0:
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 0
+        
+        @optimize_done:
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 代码生成器.进化策略 {
+    mut_rate = 0.001
+    fitness  = min_latency + max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x04
+        ䷫ MATE R0, R1
+        ䷏ SPECULATE R2
+        ䷾ SYNC
+    }
+}

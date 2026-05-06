@@ -1,0 +1,675 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 增强语法分析器"
+    "实现完整的AST构建功能"
+    "目标：达到Python语法分析器同等功能水平"
+}
+
+@locus evoc.parser.init_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::TOKEN_STREAM
+        ䷂ ALLOC R1, 0x40
+        ䷀ CREA R2, @evoc.core.memory_zero
+        ䷌ FELLOWSHIP R1, R2
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        ䷂ ALLOC R6, 0x10
+        ䷀ CREA R7, @evoc.core.memory_copy
+        ䷌ FELLOWSHIP R6, R7
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.full_pass_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        @parse_loop:
+        ䷀ CREA R2, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R2
+        ䷓ CONTEMPLATE R3
+        ䷆ BRANCH R_zero, @parse_loop_done
+        
+        ䷀ CREA R3, @evoc.parser.parse_evolang
+        ䷌ FELLOWSHIP R0, R3
+        ䷆ BRANCH R3, @parse_loop
+        
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R0, R3
+        ䷆ BRANCH R3, @parse_loop
+        
+        ䷀ CREA R3, @evoc.parser.parse_meta_locus
+        ䷌ FELLOWSHIP R0, R3
+        ䷆ BRANCH R3, @parse_loop
+        
+        ䷀ CREA R3, @evoc.parser.parse_xiangci
+        ䷌ FELLOWSHIP R0, R3
+        ䷆ BRANCH R3, @parse_loop
+        
+        ䷀ CREA R2, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R_always, @parse_loop
+        
+        @parse_loop_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_evolang_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        ䷀ CREA R1, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R1
+        ䷔ BITE R1, @TOKEN_EVOLANG
+        ䷆ BRANCH R_ne, @parse_evolang_fail
+        
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷀ CREA R2, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R2
+        ䷔ BITE R2, @TOKEN_STRING
+        ䷆ BRANCH R_ne, @parse_evolang_fail
+        
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, R2
+        ䷀ CREA R2, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R2
+        
+        ䷀ CREA R4, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R4
+        
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 1
+        ䷆ BRANCH R_always, @parse_evolang_done
+        
+        @parse_evolang_fail:
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        
+        @parse_evolang_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_locus_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        ䷀ CREA R1, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R1
+        ䷔ BITE R1, @TOKEN_LOCUS
+        ䷆ BRANCH R_ne, @parse_locus_fail
+        
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷀ CREA R2, @evoc.parser.parse_locus_name
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R_zero, @parse_locus_fail
+        
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷀ CREA R3, @evoc.parser.expect
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R3, @TOKEN_LBRACE
+        ䷆ BRANCH R_zero, @parse_locus_fail
+        
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        @parse_locus_body:
+        ䷀ CREA R4, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R4
+        ䷔ BITE R4, @TOKEN_RBRACE
+        ䷆ BRANCH R_eq, @parse_locus_body_done
+        
+        ䷀ CREA R5, @evoc.parser.parse_mut_rate
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_locus_body
+        
+        ䷀ CREA R5, @evoc.parser.parse_fitness
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_locus_body
+        
+        ䷀ CREA R5, @evoc.parser.parse_env_target
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_locus_body
+        
+        ䷀ CREA R5, @evoc.parser.parse_max_generations
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_locus_body
+        
+        ䷀ CREA R5, @evoc.parser.parse_cross_pool
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_locus_body
+        
+        ䷀ CREA R5, @evoc.parser.parse_gua_xu
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_locus_body
+        
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷆ BRANCH R_always, @parse_locus_body
+        
+        @parse_locus_body_done:
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 1
+        ䷆ BRANCH R_always, @parse_locus_done
+        
+        @parse_locus_fail:
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        
+        @parse_locus_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_meta_locus_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        ䷀ CREA R1, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R1
+        ䷔ BITE R1, @TOKEN_META_LOCUS
+        ䷆ BRANCH R_ne, @parse_meta_locus_fail
+        
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷀ CREA R2, @evoc.parser.parse_locus_name
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R_zero, @parse_meta_locus_fail
+        
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷀ CREA R3, @evoc.parser.expect
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R3, @TOKEN_LBRACE
+        ䷆ BRANCH R_zero, @parse_meta_locus_fail
+        
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        @parse_meta_locus_body:
+        ䷀ CREA R4, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R4
+        ䷔ BITE R4, @TOKEN_RBRACE
+        ䷆ BRANCH R_eq, @parse_meta_locus_body_done
+        
+        ䷀ CREA R5, @evoc.parser.parse_mut_rate
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_meta_locus_body
+        
+        ䷀ CREA R5, @evoc.parser.parse_fitness
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_meta_locus_body
+        
+        ䷀ CREA R5, @evoc.parser.parse_gua_xu
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_meta_locus_body
+        
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷆ BRANCH R_always, @parse_meta_locus_body
+        
+        @parse_meta_locus_body_done:
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 1
+        ䷆ BRANCH R_always, @parse_meta_locus_done
+        
+        @parse_meta_locus_fail:
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        
+        @parse_meta_locus_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_xiangci_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        ䷀ CREA R1, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R1
+        ䷔ BITE R1, @TOKEN_XIANGCI
+        ䷆ BRANCH R_ne, @parse_xiangci_fail
+        
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷀ CREA R3, @evoc.parser.expect
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R3, @TOKEN_LBRACE
+        ䷆ BRANCH R_zero, @parse_xiangci_fail
+        
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷂ ALLOC R2, 0x200
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        
+        @parse_xiangci_content:
+        ䷀ CREA R5, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R5
+        ䷔ BITE R5, @TOKEN_RBRACE
+        ䷆ BRANCH R_eq, @parse_xiangci_content_done
+        ䷔ BITE R5, @TOKEN_STRING
+        ䷆ BRANCH R_eq, @xiangci_string_found
+        ䷔ BITE R5, @TOKEN_NEWLINE
+        ䷆ BRANCH R_eq, @xiangci_newline_found
+        
+        ䷀ CREA R5, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R_always, @parse_xiangci_content
+        
+        @xiangci_string_found:
+        ䷍ ABUNDANCE R2, R5
+        ䷉ STEP R4
+        ䷀ CREA R5, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R_always, @parse_xiangci_content
+        
+        @xiangci_newline_found:
+        ䷀ CREA R5, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R_always, @parse_xiangci_content
+        
+        @parse_xiangci_content_done:
+        ䷀ CREA R5, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R5
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, 1
+        ䷆ BRANCH R_always, @parse_xiangci_done
+        
+        @parse_xiangci_fail:
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, 0
+        
+        @parse_xiangci_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_gua_xu_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        ䷀ CREA R1, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R1
+        ䷔ BITE R1, @TOKEN_GUA_XU
+        ䷆ BRANCH R_ne, @parse_gua_xu_fail
+        
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷀ CREA R3, @evoc.parser.expect
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R3, @TOKEN_LBRACE
+        ䷆ BRANCH R_zero, @parse_gua_xu_fail
+        
+        ䷀ CREA R1, @evoc.parser.skip_newlines
+        ䷌ FELLOWSHIP R0, R1
+        
+        @parse_instruction_loop:
+        ䷀ CREA R4, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R4
+        ䷔ BITE R4, @TOKEN_RBRACE
+        ䷆ BRANCH R_eq, @parse_gua_xu_done
+        
+        ䷀ CREA R5, @evoc.parser.parse_instruction
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R5, @parse_instruction_loop
+        
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷆ BRANCH R_always, @parse_instruction_loop
+        
+        @parse_gua_xu_done:
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 1
+        ䷆ BRANCH R_always, @parse_gua_xu_exit
+        
+        @parse_gua_xu_fail:
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        
+        @parse_gua_xu_exit:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_instruction_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        ䷀ CREA R1, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷔ BITE R1, @TOKEN_HEXAGRAM_SYMBOL
+        ䷆ BRANCH R_eq, @hexagram_symbol_found
+        
+        ䷔ BITE R1, @TOKEN_MNEMONIC
+        ䷆ BRANCH R_eq, @mnemonic_found
+        
+        ䷔ BITE R1, @TOKEN_PINYIN
+        ䷆ BRANCH R_eq, @pinyin_found
+        
+        ䷆ BRANCH R_always, @parse_instruction_fail
+        
+        @hexagram_symbol_found:
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, R1
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷀ CREA R3, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R3
+        ䷔ BITE R3, @TOKEN_MNEMONIC
+        ䷆ BRANCH R_ne, @parse_operands
+        
+        ䷀ CREA R3, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R3
+        ䷆ BRANCH R_always, @parse_operands
+        
+        @mnemonic_found:
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, R1
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷆ BRANCH R_always, @parse_operands
+        
+        @pinyin_found:
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, R1
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷆ BRANCH R_always, @parse_operands
+        
+        @parse_operands:
+        ䷀ CREA R4, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R4
+        
+        ䷔ BITE R4, @TOKEN_COMMA
+        ䷆ BRANCH R_eq, @skip_comma
+        
+        ䷔ BITE R4, @TOKEN_REGISTER
+        ䷆ BRANCH R_eq, @register_operand
+        
+        ䷔ BITE R4, @TOKEN_IMMEDIATE
+        ䷆ BRANCH R_eq, @immediate_operand
+        
+        ䷔ BITE R4, @TOKEN_NUMBER
+        ䷆ BRANCH R_eq, @immediate_operand
+        
+        ䷔ BITE R4, @TOKEN_LABEL
+        ䷆ BRANCH R_eq, @label_operand
+        
+        ䷔ BITE R4, @TOKEN_MODIFIER
+        ䷆ BRANCH R_eq, @modifier_found
+        
+        ䷆ BRANCH R_always, @parse_instruction_done
+        
+        @skip_comma:
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷆ BRANCH R_always, @parse_operands
+        
+        @register_operand:
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, R4
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷆ BRANCH R_always, @parse_operands
+        
+        @immediate_operand:
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, R4
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷆ BRANCH R_always, @parse_operands
+        
+        @label_operand:
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, R4
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷆ BRANCH R_always, @parse_operands
+        
+        @modifier_found:
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, R4
+        ䷀ CREA R4, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R4
+        ䷆ BRANCH R_always, @parse_operands
+        
+        @parse_instruction_done:
+        ䷂ ALLOC R7, 0x04
+        ䷍ ABUNDANCE R7, 1
+        ䷆ BRANCH R_always, @parse_instruction_exit
+        
+        @parse_instruction_fail:
+        ䷂ ALLOC R7, 0x04
+        ䷍ ABUNDANCE R7, 0
+        
+        @parse_instruction_exit:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.skip_newlines_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        
+        @skip_newline_loop:
+        ䷀ CREA R1, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R1
+        ䷔ BITE R1, @TOKEN_NEWLINE
+        ䷆ BRANCH R_ne, @skip_newline_done
+        
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷆ BRANCH R_always, @skip_newline_loop
+        
+        @skip_newline_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_mut_rate_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        ䷀ CREA R1, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R1
+        ䷔ BITE R1, @TOKEN_MUT_RATE
+        ䷆ BRANCH R_ne, @parse_mut_rate_fail
+        
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷀ CREA R1, @evoc.parser.expect
+        ䷌ FELLOWSHIP R0, R1
+        ䷍ ABUNDANCE R1, @TOKEN_ASSIGN
+        ䷆ BRANCH R_zero, @parse_mut_rate_fail
+        
+        ䷀ CREA R2, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R2
+        ䷔ BITE R2, @TOKEN_FLOAT
+        ䷆ BRANCH R_eq, @mut_rate_value_found
+        ䷔ BITE R2, @TOKEN_NUMBER
+        ䷆ BRANCH R_eq, @mut_rate_value_found
+        ䷆ BRANCH R_always, @parse_mut_rate_fail
+        
+        @mut_rate_value_found:
+        ䷀ CREA R3, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R3
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 1
+        ䷆ BRANCH R_always, @parse_mut_rate_done
+        
+        @parse_mut_rate_fail:
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        
+        @parse_mut_rate_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.parser.parse_fitness_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARSER_STATE
+        ䷀ CREA R1, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R1
+        ䷔ BITE R1, @TOKEN_FITNESS_KW
+        ䷆ BRANCH R_ne, @parse_fitness_fail
+        
+        ䷀ CREA R1, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R1
+        ䷀ CREA R1, @evoc.parser.expect
+        ䷌ FELLOWSHIP R0, R1
+        ䷍ ABUNDANCE R1, @TOKEN_ASSIGN
+        ䷆ BRANCH R_zero, @parse_fitness_fail
+        
+        @fitness_expr_loop:
+        ䷀ CREA R2, @evoc.parser.current_token
+        ䷌ FELLOWSHIP R0, R2
+        
+        ䷔ BITE R2, @TOKEN_FLOAT
+        ䷆ BRANCH R_eq, @fitness_weight_found
+        
+        ䷔ BITE R2, @TOKEN_NUMBER
+        ䷆ BRANCH R_eq, @fitness_weight_found
+        
+        ䷔ BITE R2, @TOKEN_IDENTIFIER
+        ䷆ BRANCH R_eq, @fitness_keyword_found
+        
+        ䷔ BITE R2, @TOKEN_PLUS
+        ䷆ BRANCH R_eq, @fitness_op_found
+        
+        ䷔ BITE R2, @TOKEN_MINUS
+        ䷆ BRANCH R_eq, @fitness_op_found
+        
+        ䷔ BITE R2, @TOKEN_STAR
+        ䷆ BRANCH R_eq, @fitness_op_found
+        
+        ䷆ BRANCH R_always, @parse_fitness_done
+        
+        @fitness_weight_found:
+        ䷀ CREA R3, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R3
+        ䷆ BRANCH R_always, @fitness_expr_loop
+        
+        @fitness_keyword_found:
+        ䷀ CREA R3, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R3
+        ䷆ BRANCH R_always, @fitness_expr_loop
+        
+        @fitness_op_found:
+        ䷀ CREA R3, @evoc.parser.advance
+        ䷌ FELLOWSHIP R0, R3
+        ䷆ BRANCH R_always, @fitness_expr_loop
+        
+        @parse_fitness_done:
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 1
+        ䷆ BRANCH R_always, @parse_fitness_exit
+        
+        @parse_fitness_fail:
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        
+        @parse_fitness_exit:
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 语法分析器.进化策略 {
+    mut_rate = 0.001
+    fitness  = min_latency + max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x02
+        ䷫ MATE R0, R1
+        ䷏ SPECULATE R2
+        ䷾ SYNC
+    }
+}

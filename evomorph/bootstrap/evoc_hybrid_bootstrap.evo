@@ -1,0 +1,202 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 自举编译器 v3.0"
+    "道枢自举：易衍编译器用易衍语言书写自身"
+    "此文件通过EvoRuntime的native handlers实现编译功能"
+    "目标：逐步用易衍代码替换所有Python模块"
+    "简易 · 变易 · 不易 · 进化 · 自举"
+}
+
+@locus evoc.bootstrap.compile_source {
+    mut_rate   = 0.001
+    cross_pool = "bootstrap"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_TEXT
+        ䷌ FELLOWSHIP R1, R0
+        ䷄ WAIT R1
+        ䷀ CREA R2, @evoc.lexer.tokenize
+        ䷌ FELLOWSHIP R1, R2
+        ䷀ CREA R3, @evoc.parser.full_pass
+        ䷌ FELLOWSHIP R2, R3
+        ䷀ CREA R4, @evoc.codegen.full_pass
+        ䷌ FELLOWSHIP R3, R4
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.load_evo_file {
+    mut_rate   = 0.001
+    cross_pool = "bootstrap"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::FILE_PATH
+        ䷌ FELLOWSHIP R1, R0
+        ䷄ WAIT R1
+        ䷀ CREA R2, @evoc.core.string_length
+        ䷌ FELLOWSHIP R0, R2
+        ䷀ CREA R3, @evoc.bootstrap.compile_source
+        ䷌ FELLOWSHIP R2, R3
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.measure_fitness {
+    mut_rate   = 0.001
+    cross_pool = "bootstrap"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INDIVIDUAL
+        ䷁ RECV R1, env::PLATFORM
+        ䷌ FELLOWSHIP R2, R0
+        ䷌ FELLOWSHIP R2, R1
+        ䷄ WAIT R2
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.mutate_gene {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPCODE
+        ䷁ RECV R1, env::BIT_POS
+        ䷑ MUT R0, R1
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, R0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.crossover_genes {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::OPCODE1
+        ䷁ RECV R1, env::OPCODE2
+        ䷁ RECV R2, env::CROSS_POINT
+        ䷫ MATE R0, R1
+        ䷂ ALLOC R3, 0x08
+        ䷍ ABUNDANCE R3, R0
+        ䷍ ABUNDANCE R3, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.evolve_locus {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_NAME
+        ䷁ RECV R1, env::GENERATIONS
+        ䷌ FELLOWSHIP R2, R0
+        ䷌ FELLOWSHIP R2, R1
+        ䷄ WAIT R2
+        ䷀ CREA R3, @evoc.bootstrap.mutate_gene
+        ䷀ CREA R4, @evoc.bootstrap.crossover_genes
+        ䷀ CREA R5, @evoc.bootstrap.measure_fitness
+        ䷌ FELLOWSHIP R3, R4
+        ䷌ FELLOWSHIP R4, R5
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.self_compile {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SELF_SOURCE
+        ䷀ CREA R1, @evoc.bootstrap.compile_source
+        ䷌ FELLOWSHIP R0, R1
+        ䷀ CREA R2, @evoc.bootstrap.evolve_locus
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.execute_locus {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_NAME
+        ䷁ RECV R1, env::MAX_CYCLES
+        ䷀ CREA R2, @evoc.vm.init
+        ䷀ CREA R3, @evoc.vm.load_program
+        ䷀ CREA R4, @evoc.vm.run
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R2, R3
+        ䷌ FELLOWSHIP R3, R4
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.bootstrap.main {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap"
+    fitness    = max_throughput + min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::ARGC
+        ䷁ RECV R1, env::ARGV
+        ䷀ CREA R2, @evoc.core.init
+        ䷀ CREA R3, @evoc.bootstrap.load_evo_file
+        ䷀ CREA R4, @evoc.bootstrap.evolve_locus
+        ䷀ CREA R5, @evoc.bootstrap.execute_locus
+        ䷌ FELLOWSHIP R1, R2
+        ䷌ FELLOWSHIP R2, R3
+        ䷌ FELLOWSHIP R3, R4
+        ䷌ FELLOWSHIP R4, R5
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 自举.进化策略 {
+    mut_rate = 0.005
+    fitness  = max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x02
+        ䷫ MATE R0, R1
+        ䷏ SPECULATE R2
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 自举.选择策略 {
+    mut_rate = 0.003
+    fitness  = max_throughput + min_latency
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷔ BITE R0, R1
+        ䷆ BRANCH R_selected
+        ䷾ SYNC
+        ䷗ RETURN
+    }
+}

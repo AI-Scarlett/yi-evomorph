@@ -1,0 +1,1426 @@
+{
+  "analysis": {
+    "timestamp": 1777945108.289691,
+    "modules": {
+      "lexer": {
+        "total_features": 18,
+        "implemented": 0,
+        "missing": [
+          "tokenize_source",
+          "recognize_hexagram_symbols",
+          "recognize_mnemonics",
+          "recognize_registers",
+          "recognize_numbers_decimal",
+          "recognize_numbers_hex",
+          "recognize_numbers_binary",
+          "recognize_floats",
+          "recognize_strings_double_quote",
+          "recognize_strings_chinese",
+          "recognize_modifiers",
+          "recognize_comments",
+          "recognize_keywords_locus",
+          "recognize_keywords_meta_locus",
+          "recognize_keywords_xiangci",
+          "recognize_keywords_evolang",
+          "position_tracking",
+          "error_reporting"
+        ],
+        "coverage": 0.0,
+        "completeness_level": "functional"
+      },
+      "parser": {
+        "total_features": 17,
+        "implemented": 4,
+        "missing": [
+          "parse_program",
+          "parse_evolang_declaration",
+          "parse_locus_declaration",
+          "parse_meta_locus_declaration",
+          "parse_xiangci_block",
+          "parse_locus_attributes",
+          "parse_cross_pool",
+          "parse_fitness_expression",
+          "parse_gua_xu_block",
+          "parse_operands",
+          "parse_labels",
+          "ast_construction",
+          "error_recovery"
+        ],
+        "coverage": 0.23529411764705882,
+        "completeness_level": "optimized"
+      },
+      "codegen": {
+        "total_features": 15,
+        "implemented": 3,
+        "missing": [
+          "generate_evb_format",
+          "generate_json_format",
+          "encode_modifier",
+          "encode_label_operand",
+          "symbol_table_management",
+          "relocation_table",
+          "optimization_level_1",
+          "optimization_level_2",
+          "optimization_level_3",
+          "disassemble_bytecode",
+          "parse_evb_header",
+          "validate_instruction"
+        ],
+        "coverage": 0.2,
+        "completeness_level": "complete"
+      },
+      "vm": {
+        "total_features": 28,
+        "implemented": 0,
+        "missing": [
+          "initialize_registers",
+          "initialize_stack",
+          "initialize_heap",
+          "load_program_bytes",
+          "load_program_dict",
+          "run_program",
+          "step_execution",
+          "execute_CREA",
+          "execute_RECV",
+          "execute_ALLOC",
+          "execute_FELLOWSHIP",
+          "execute_SYNC",
+          "execute_BRANCH",
+          "execute_MUT",
+          "execute_MATE",
+          "execute_WAIT",
+          "execute_LOCK",
+          "execute_RETURN",
+          "execute_ABUNDANCE",
+          "execute_PUSH_UP",
+          "execute_WELL",
+          "condition_flags",
+          "call_stack",
+          "future_handling",
+          "barrier_support",
+          "io_handlers",
+          "energy_tracking",
+          "cycle_counting"
+        ],
+        "coverage": 0.0,
+        "completeness_level": "functional"
+      },
+      "evolution": {
+        "total_features": 15,
+        "implemented": 7,
+        "missing": [
+          "initialize_population",
+          "selection_rank",
+          "crossover_uniform",
+          "elite_preservation",
+          "convergence_detection",
+          "diversity_calculation",
+          "cross_pool_management",
+          "platform_evaluation"
+        ],
+        "coverage": 0.4666666666666667,
+        "completeness_level": "complete"
+      }
+    },
+    "overall_gap_score": 0.8494623655913979,
+    "total_features": 93,
+    "implemented_features": 14,
+    "missing_features": [
+      {
+        "feature": "tokenize_source",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_hexagram_symbols",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_mnemonics",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_registers",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_numbers_decimal",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_numbers_hex",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_numbers_binary",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_floats",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_strings_double_quote",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_strings_chinese",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_modifiers",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_comments",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_keywords_locus",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_keywords_meta_locus",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_keywords_xiangci",
+        "module": "lexer"
+      },
+      {
+        "feature": "recognize_keywords_evolang",
+        "module": "lexer"
+      },
+      {
+        "feature": "position_tracking",
+        "module": "lexer"
+      },
+      {
+        "feature": "error_reporting",
+        "module": "lexer"
+      },
+      {
+        "feature": "parse_program",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_evolang_declaration",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_locus_declaration",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_meta_locus_declaration",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_xiangci_block",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_locus_attributes",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_cross_pool",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_fitness_expression",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_gua_xu_block",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_operands",
+        "module": "parser"
+      },
+      {
+        "feature": "parse_labels",
+        "module": "parser"
+      },
+      {
+        "feature": "ast_construction",
+        "module": "parser"
+      },
+      {
+        "feature": "error_recovery",
+        "module": "parser"
+      },
+      {
+        "feature": "generate_evb_format",
+        "module": "codegen"
+      },
+      {
+        "feature": "generate_json_format",
+        "module": "codegen"
+      },
+      {
+        "feature": "encode_modifier",
+        "module": "codegen"
+      },
+      {
+        "feature": "encode_label_operand",
+        "module": "codegen"
+      },
+      {
+        "feature": "symbol_table_management",
+        "module": "codegen"
+      },
+      {
+        "feature": "relocation_table",
+        "module": "codegen"
+      },
+      {
+        "feature": "optimization_level_1",
+        "module": "codegen"
+      },
+      {
+        "feature": "optimization_level_2",
+        "module": "codegen"
+      },
+      {
+        "feature": "optimization_level_3",
+        "module": "codegen"
+      },
+      {
+        "feature": "disassemble_bytecode",
+        "module": "codegen"
+      },
+      {
+        "feature": "parse_evb_header",
+        "module": "codegen"
+      },
+      {
+        "feature": "validate_instruction",
+        "module": "codegen"
+      },
+      {
+        "feature": "initialize_registers",
+        "module": "vm"
+      },
+      {
+        "feature": "initialize_stack",
+        "module": "vm"
+      },
+      {
+        "feature": "initialize_heap",
+        "module": "vm"
+      },
+      {
+        "feature": "load_program_bytes",
+        "module": "vm"
+      },
+      {
+        "feature": "load_program_dict",
+        "module": "vm"
+      },
+      {
+        "feature": "run_program",
+        "module": "vm"
+      },
+      {
+        "feature": "step_execution",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_CREA",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_RECV",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_ALLOC",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_FELLOWSHIP",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_SYNC",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_BRANCH",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_MUT",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_MATE",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_WAIT",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_LOCK",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_RETURN",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_ABUNDANCE",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_PUSH_UP",
+        "module": "vm"
+      },
+      {
+        "feature": "execute_WELL",
+        "module": "vm"
+      },
+      {
+        "feature": "condition_flags",
+        "module": "vm"
+      },
+      {
+        "feature": "call_stack",
+        "module": "vm"
+      },
+      {
+        "feature": "future_handling",
+        "module": "vm"
+      },
+      {
+        "feature": "barrier_support",
+        "module": "vm"
+      },
+      {
+        "feature": "io_handlers",
+        "module": "vm"
+      },
+      {
+        "feature": "energy_tracking",
+        "module": "vm"
+      },
+      {
+        "feature": "cycle_counting",
+        "module": "vm"
+      },
+      {
+        "feature": "initialize_population",
+        "module": "evolution"
+      },
+      {
+        "feature": "selection_rank",
+        "module": "evolution"
+      },
+      {
+        "feature": "crossover_uniform",
+        "module": "evolution"
+      },
+      {
+        "feature": "elite_preservation",
+        "module": "evolution"
+      },
+      {
+        "feature": "convergence_detection",
+        "module": "evolution"
+      },
+      {
+        "feature": "diversity_calculation",
+        "module": "evolution"
+      },
+      {
+        "feature": "cross_pool_management",
+        "module": "evolution"
+      },
+      {
+        "feature": "platform_evaluation",
+        "module": "evolution"
+      }
+    ],
+    "prioritized_improvements": [
+      {
+        "feature": "initialize_registers",
+        "module": "vm",
+        "priority": 1,
+        "effort_estimate": 1.0
+      },
+      {
+        "feature": "initialize_stack",
+        "module": "vm",
+        "priority": 1,
+        "effort_estimate": 1.0
+      },
+      {
+        "feature": "initialize_heap",
+        "module": "vm",
+        "priority": 1,
+        "effort_estimate": 1.0
+      },
+      {
+        "feature": "initialize_population",
+        "module": "evolution",
+        "priority": 1,
+        "effort_estimate": 1.0
+      },
+      {
+        "feature": "parse_program",
+        "module": "parser",
+        "priority": 1,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_evolang_declaration",
+        "module": "parser",
+        "priority": 1,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_locus_declaration",
+        "module": "parser",
+        "priority": 1,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_meta_locus_declaration",
+        "module": "parser",
+        "priority": 1,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_xiangci_block",
+        "module": "parser",
+        "priority": 1,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "encode_modifier",
+        "module": "codegen",
+        "priority": 1,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "tokenize_source",
+        "module": "lexer",
+        "priority": 1,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_hexagram_symbols",
+        "module": "lexer",
+        "priority": 1,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_mnemonics",
+        "module": "lexer",
+        "priority": 1,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_registers",
+        "module": "lexer",
+        "priority": 1,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_numbers_decimal",
+        "module": "lexer",
+        "priority": 1,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "generate_evb_format",
+        "module": "codegen",
+        "priority": 1,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "generate_json_format",
+        "module": "codegen",
+        "priority": 1,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "load_program_bytes",
+        "module": "vm",
+        "priority": 1,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "load_program_dict",
+        "module": "vm",
+        "priority": 1,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "selection_rank",
+        "module": "evolution",
+        "priority": 1,
+        "effort_estimate": 3.0
+      },
+      {
+        "feature": "parse_locus_attributes",
+        "module": "parser",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_cross_pool",
+        "module": "parser",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_fitness_expression",
+        "module": "parser",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_gua_xu_block",
+        "module": "parser",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_operands",
+        "module": "parser",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_labels",
+        "module": "parser",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "encode_label_operand",
+        "module": "codegen",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "parse_evb_header",
+        "module": "codegen",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_CREA",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_RECV",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_ALLOC",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_FELLOWSHIP",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_SYNC",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_BRANCH",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_MUT",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_MATE",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "recognize_numbers_hex",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_numbers_binary",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_floats",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_strings_double_quote",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_strings_chinese",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_modifiers",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_comments",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_keywords_locus",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_keywords_meta_locus",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "recognize_keywords_xiangci",
+        "module": "lexer",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "symbol_table_management",
+        "module": "codegen",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "relocation_table",
+        "module": "codegen",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "optimization_level_1",
+        "module": "codegen",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "optimization_level_2",
+        "module": "codegen",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "optimization_level_3",
+        "module": "codegen",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "disassemble_bytecode",
+        "module": "codegen",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "validate_instruction",
+        "module": "codegen",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "run_program",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "step_execution",
+        "module": "vm",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "elite_preservation",
+        "module": "evolution",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "diversity_calculation",
+        "module": "evolution",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "cross_pool_management",
+        "module": "evolution",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "platform_evaluation",
+        "module": "evolution",
+        "priority": 2,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "crossover_uniform",
+        "module": "evolution",
+        "priority": 2,
+        "effort_estimate": 3.0
+      },
+      {
+        "feature": "convergence_detection",
+        "module": "evolution",
+        "priority": 2,
+        "effort_estimate": 4.0
+      },
+      {
+        "feature": "execute_WAIT",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_LOCK",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_RETURN",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_ABUNDANCE",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_PUSH_UP",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "execute_WELL",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.0
+      },
+      {
+        "feature": "recognize_keywords_evolang",
+        "module": "lexer",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "position_tracking",
+        "module": "lexer",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "ast_construction",
+        "module": "parser",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "condition_flags",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "call_stack",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "future_handling",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "barrier_support",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "io_handlers",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "energy_tracking",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "cycle_counting",
+        "module": "vm",
+        "priority": 3,
+        "effort_estimate": 2.5
+      },
+      {
+        "feature": "error_reporting",
+        "module": "lexer",
+        "priority": 3,
+        "effort_estimate": 4.0
+      },
+      {
+        "feature": "error_recovery",
+        "module": "parser",
+        "priority": 3,
+        "effort_estimate": 4.0
+      }
+    ]
+  },
+  "improvement_plan": {
+    "generation": 0,
+    "timestamp": 1777945108.290279,
+    "phases": [
+      {
+        "name": "Phase 1: 基础功能完善",
+        "description": "实现核心编译流程所需的基础功能",
+        "items": [
+          {
+            "feature": "initialize_registers",
+            "module": "vm",
+            "priority": 1,
+            "effort_estimate": 1.0
+          },
+          {
+            "feature": "initialize_stack",
+            "module": "vm",
+            "priority": 1,
+            "effort_estimate": 1.0
+          },
+          {
+            "feature": "initialize_heap",
+            "module": "vm",
+            "priority": 1,
+            "effort_estimate": 1.0
+          },
+          {
+            "feature": "initialize_population",
+            "module": "evolution",
+            "priority": 1,
+            "effort_estimate": 1.0
+          },
+          {
+            "feature": "parse_program",
+            "module": "parser",
+            "priority": 1,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_evolang_declaration",
+            "module": "parser",
+            "priority": 1,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_locus_declaration",
+            "module": "parser",
+            "priority": 1,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_meta_locus_declaration",
+            "module": "parser",
+            "priority": 1,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_xiangci_block",
+            "module": "parser",
+            "priority": 1,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "encode_modifier",
+            "module": "codegen",
+            "priority": 1,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "tokenize_source",
+            "module": "lexer",
+            "priority": 1,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_hexagram_symbols",
+            "module": "lexer",
+            "priority": 1,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_mnemonics",
+            "module": "lexer",
+            "priority": 1,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_registers",
+            "module": "lexer",
+            "priority": 1,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_numbers_decimal",
+            "module": "lexer",
+            "priority": 1,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "generate_evb_format",
+            "module": "codegen",
+            "priority": 1,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "generate_json_format",
+            "module": "codegen",
+            "priority": 1,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "load_program_bytes",
+            "module": "vm",
+            "priority": 1,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "load_program_dict",
+            "module": "vm",
+            "priority": 1,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "selection_rank",
+            "module": "evolution",
+            "priority": 1,
+            "effort_estimate": 3.0
+          }
+        ],
+        "estimated_hours": 41.5
+      },
+      {
+        "name": "Phase 2: 功能完整性",
+        "description": "实现所有与Python编译器对等的功能",
+        "items": [
+          {
+            "feature": "parse_locus_attributes",
+            "module": "parser",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_cross_pool",
+            "module": "parser",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_fitness_expression",
+            "module": "parser",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_gua_xu_block",
+            "module": "parser",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_operands",
+            "module": "parser",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_labels",
+            "module": "parser",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "encode_label_operand",
+            "module": "codegen",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "parse_evb_header",
+            "module": "codegen",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_CREA",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_RECV",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_ALLOC",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_FELLOWSHIP",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_SYNC",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_BRANCH",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_MUT",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_MATE",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "recognize_numbers_hex",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_numbers_binary",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_floats",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_strings_double_quote",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_strings_chinese",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_modifiers",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_comments",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_keywords_locus",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_keywords_meta_locus",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "recognize_keywords_xiangci",
+            "module": "lexer",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "symbol_table_management",
+            "module": "codegen",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "relocation_table",
+            "module": "codegen",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "optimization_level_1",
+            "module": "codegen",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "optimization_level_2",
+            "module": "codegen",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "optimization_level_3",
+            "module": "codegen",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "disassemble_bytecode",
+            "module": "codegen",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "validate_instruction",
+            "module": "codegen",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "run_program",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "step_execution",
+            "module": "vm",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "elite_preservation",
+            "module": "evolution",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "diversity_calculation",
+            "module": "evolution",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "cross_pool_management",
+            "module": "evolution",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "platform_evaluation",
+            "module": "evolution",
+            "priority": 2,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "crossover_uniform",
+            "module": "evolution",
+            "priority": 2,
+            "effort_estimate": 3.0
+          },
+          {
+            "feature": "convergence_detection",
+            "module": "evolution",
+            "priority": 2,
+            "effort_estimate": 4.0
+          }
+        ],
+        "estimated_hours": 96.5
+      },
+      {
+        "name": "Phase 3: 优化与增强",
+        "description": "实现高级优化和额外功能",
+        "items": [
+          {
+            "feature": "execute_WAIT",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_LOCK",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_RETURN",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_ABUNDANCE",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_PUSH_UP",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "execute_WELL",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.0
+          },
+          {
+            "feature": "recognize_keywords_evolang",
+            "module": "lexer",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "position_tracking",
+            "module": "lexer",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "ast_construction",
+            "module": "parser",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "condition_flags",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "call_stack",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "future_handling",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "barrier_support",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "io_handlers",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "energy_tracking",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "cycle_counting",
+            "module": "vm",
+            "priority": 3,
+            "effort_estimate": 2.5
+          },
+          {
+            "feature": "error_reporting",
+            "module": "lexer",
+            "priority": 3,
+            "effort_estimate": 4.0
+          },
+          {
+            "feature": "error_recovery",
+            "module": "parser",
+            "priority": 3,
+            "effort_estimate": 4.0
+          }
+        ],
+        "estimated_hours": 45.0
+      }
+    ],
+    "estimated_total_hours": 183.0
+  },
+  "timestamp": 1777945108.2905269
+}

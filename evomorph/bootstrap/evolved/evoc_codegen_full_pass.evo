@@ -17,3 +17,270 @@
         ䷁ RECV
     }
 }
+
+
+@locus evoc.codegen.encode_modifier {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INSTRUCTION
+        ䷂ ALLOC R1, 0x04
+        ䷀ CREA R2, @evoc.codegen.encode_opcode
+        ䷌ FELLOWSHIP R0, R2
+        ䷍ ABUNDANCE R1, R2
+        ䷀ CREA R3, @evoc.codegen.encode_operand
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.optimization_level_2 {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.optimization_level_3 {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.encode_modifier {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INSTRUCTION
+        ䷂ ALLOC R1, 0x04
+        ䷀ CREA R2, @evoc.codegen.encode_opcode
+        ䷌ FELLOWSHIP R0, R2
+        ䷍ ABUNDANCE R1, R2
+        ䷀ CREA R3, @evoc.codegen.encode_operand
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.generate_evb_format {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.generate_json_format {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.encode_label_operand {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INSTRUCTION
+        ䷂ ALLOC R1, 0x04
+        ䷀ CREA R2, @evoc.codegen.encode_opcode
+        ䷌ FELLOWSHIP R0, R2
+        ䷍ ABUNDANCE R1, R2
+        ䷀ CREA R3, @evoc.codegen.encode_operand
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.parse_evb_header {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.symbol_table_management {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.relocation_table {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.optimization_level_1 {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.optimization_level_2 {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.optimization_level_3 {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.disassemble_bytecode {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.codegen.validate_instruction {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+

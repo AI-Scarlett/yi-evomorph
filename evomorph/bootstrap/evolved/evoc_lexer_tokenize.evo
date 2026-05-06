@@ -33,3 +33,314 @@
         ䷾ SYNC
     }
 }
+
+
+@locus evoc.lexer.tokenize_source {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::SOURCE_TEXT
+        ䷀ CREA R1, @evoc.lexer.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷉ STEP R2
+        ䷆ BRANCH R2, @loop_start
+        ䷀ CREA R3, @evoc.lexer.classify
+        ䷌ FELLOWSHIP R2, R3
+        ䷀ CREA R4, @evoc.lexer.emit_token
+        ䷌ FELLOWSHIP R3, R4
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_hexagram_symbols {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_mnemonics {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_registers {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_numbers_decimal {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_numbers_hex {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_numbers_binary {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_floats {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_strings_double_quote {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_strings_chinese {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_modifiers {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_comments {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_keywords_locus {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_keywords_meta_locus {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_keywords_xiangci {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.recognize_keywords_evolang {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.position_tracking {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.lexer.error_reporting {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+

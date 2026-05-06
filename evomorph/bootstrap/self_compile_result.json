@@ -1,0 +1,2278 @@
+{
+  "version": "3.0",
+  "loci": [
+    {
+      "name": "evoc.bootstrap.compile_source",
+      "mut_rate": 0.001,
+      "cross_pool": "bootstrap",
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          },
+          {
+            "keyword": "min_latency",
+            "weight": 1.0
+          }
+        ]
+      },
+      "env_targets": [
+        "linux-6.x",
+        "android-14",
+        "ios-18",
+        "win-11",
+        "harmony-5"
+      ],
+      "max_generations": 100,
+      "instructions": [
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::SOURCE_TEXT"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "register",
+              "value": "R0"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 23,
+          "symbol": "䷄",
+          "mnemonic": "WAIT",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "register",
+              "value": "R2"
+            }
+          ],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 20,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "register",
+              "value": "R3"
+            }
+          ],
+          "offset": 24,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R4"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 28,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "register",
+              "value": "R4"
+            }
+          ],
+          "offset": 32,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 36,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        0,
+        0,
+        0,
+        198,
+        244,
+        0,
+        1,
+        0,
+        92,
+        0,
+        1,
+        0,
+        252,
+        0,
+        2,
+        0,
+        244,
+        0,
+        1,
+        2,
+        252,
+        0,
+        3,
+        0,
+        244,
+        0,
+        2,
+        3,
+        252,
+        0,
+        4,
+        0,
+        244,
+        0,
+        3,
+        4,
+        84,
+        0,
+        0,
+        0
+      ],
+      "symbol_table": {},
+      "relocation_table": [
+        {
+          "label": "@evoc",
+          "offset": 12
+        },
+        {
+          "label": "@evoc",
+          "offset": 20
+        },
+        {
+          "label": "@evoc",
+          "offset": 28
+        }
+      ]
+    },
+    {
+      "name": "evoc.bootstrap.load_evo_file",
+      "mut_rate": 0.001,
+      "cross_pool": "bootstrap",
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          },
+          {
+            "keyword": "min_size",
+            "weight": 1.0
+          }
+        ]
+      },
+      "env_targets": [
+        "linux-6.x",
+        "android-14",
+        "ios-18",
+        "win-11",
+        "harmony-5"
+      ],
+      "max_generations": 100,
+      "instructions": [
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::FILE_PATH"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "register",
+              "value": "R0"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 23,
+          "symbol": "䷄",
+          "mnemonic": "WAIT",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "register",
+              "value": "R2"
+            }
+          ],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 20,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "register",
+              "value": "R3"
+            }
+          ],
+          "offset": 24,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 28,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        0,
+        0,
+        0,
+        163,
+        244,
+        0,
+        1,
+        0,
+        92,
+        0,
+        1,
+        0,
+        252,
+        0,
+        2,
+        0,
+        244,
+        0,
+        0,
+        2,
+        252,
+        0,
+        3,
+        0,
+        244,
+        0,
+        2,
+        3,
+        84,
+        0,
+        0,
+        0
+      ],
+      "symbol_table": {},
+      "relocation_table": [
+        {
+          "label": "@evoc",
+          "offset": 12
+        },
+        {
+          "label": "@evoc",
+          "offset": 20
+        }
+      ]
+    },
+    {
+      "name": "evoc.bootstrap.measure_fitness",
+      "mut_rate": 0.001,
+      "cross_pool": "bootstrap",
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          },
+          {
+            "keyword": "min_energy",
+            "weight": 1.0
+          }
+        ]
+      },
+      "env_targets": [
+        "linux-6.x",
+        "android-14",
+        "ios-18",
+        "win-11",
+        "harmony-5"
+      ],
+      "max_generations": 100,
+      "instructions": [
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::INDIVIDUAL"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::PLATFORM"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "register",
+              "value": "R0"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 23,
+          "symbol": "䷄",
+          "mnemonic": "WAIT",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            }
+          ],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 17,
+          "symbol": "䷂",
+          "mnemonic": "ALLOC",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "immediate",
+              "value": 4
+            }
+          ],
+          "offset": 20,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 47,
+          "symbol": "䷍",
+          "mnemonic": "ABUNDANCE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "register",
+              "value": "R2"
+            }
+          ],
+          "offset": 24,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 28,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        0,
+        0,
+        0,
+        209,
+        0,
+        0,
+        1,
+        15,
+        244,
+        0,
+        2,
+        0,
+        244,
+        0,
+        2,
+        1,
+        92,
+        0,
+        2,
+        0,
+        68,
+        0,
+        3,
+        4,
+        188,
+        0,
+        3,
+        2,
+        84,
+        0,
+        0,
+        0
+      ],
+      "symbol_table": {},
+      "relocation_table": []
+    },
+    {
+      "name": "evoc.bootstrap.mutate_gene",
+      "mut_rate": 0.005,
+      "cross_pool": "bootstrap",
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "min_latency",
+            "weight": 1.0
+          },
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          }
+        ]
+      },
+      "env_targets": [
+        "linux-6.x",
+        "android-14",
+        "ios-18",
+        "win-11",
+        "harmony-5"
+      ],
+      "max_generations": 100,
+      "instructions": [
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::OPCODE"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::BIT_POS"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 38,
+          "symbol": "䷑",
+          "mnemonic": "MUT",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 17,
+          "symbol": "䷂",
+          "mnemonic": "ALLOC",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "immediate",
+              "value": 4
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 47,
+          "symbol": "䷍",
+          "mnemonic": "ABUNDANCE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "register",
+              "value": "R0"
+            }
+          ],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 20,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        0,
+        0,
+        0,
+        88,
+        0,
+        0,
+        1,
+        118,
+        152,
+        0,
+        0,
+        1,
+        68,
+        0,
+        2,
+        4,
+        188,
+        0,
+        2,
+        0,
+        84,
+        0,
+        0,
+        0
+      ],
+      "symbol_table": {},
+      "relocation_table": []
+    },
+    {
+      "name": "evoc.bootstrap.crossover_genes",
+      "mut_rate": 0.005,
+      "cross_pool": "bootstrap",
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "min_latency",
+            "weight": 1.0
+          },
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          }
+        ]
+      },
+      "env_targets": [
+        "linux-6.x",
+        "android-14",
+        "ios-18",
+        "win-11",
+        "harmony-5"
+      ],
+      "max_generations": 100,
+      "instructions": [
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::OPCODE1"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::OPCODE2"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::CROSS_POINT"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 62,
+          "symbol": "䷫",
+          "mnemonic": "MATE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 17,
+          "symbol": "䷂",
+          "mnemonic": "ALLOC",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "immediate",
+              "value": 8
+            }
+          ],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 47,
+          "symbol": "䷍",
+          "mnemonic": "ABUNDANCE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "register",
+              "value": "R0"
+            }
+          ],
+          "offset": 20,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 47,
+          "symbol": "䷍",
+          "mnemonic": "ABUNDANCE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 24,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 28,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        0,
+        0,
+        0,
+        35,
+        0,
+        0,
+        1,
+        101,
+        0,
+        0,
+        2,
+        114,
+        248,
+        0,
+        0,
+        1,
+        68,
+        0,
+        3,
+        8,
+        188,
+        0,
+        3,
+        0,
+        188,
+        0,
+        3,
+        1,
+        84,
+        0,
+        0,
+        0
+      ],
+      "symbol_table": {},
+      "relocation_table": []
+    },
+    {
+      "name": "evoc.bootstrap.evolve_locus",
+      "mut_rate": 0.01,
+      "cross_pool": "bootstrap",
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          },
+          {
+            "keyword": "min_size",
+            "weight": 1.0
+          }
+        ]
+      },
+      "env_targets": [
+        "linux-6.x",
+        "android-14",
+        "ios-18",
+        "win-11",
+        "harmony-5"
+      ],
+      "max_generations": 100,
+      "instructions": [
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::LOCUS_NAME"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::GENERATIONS"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "register",
+              "value": "R0"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 23,
+          "symbol": "䷄",
+          "mnemonic": "WAIT",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            }
+          ],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 20,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R4"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 24,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R5"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 28,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "register",
+              "value": "R4"
+            }
+          ],
+          "offset": 32,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R4"
+            },
+            {
+              "kind": "register",
+              "value": "R5"
+            }
+          ],
+          "offset": 36,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 40,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        0,
+        0,
+        0,
+        238,
+        0,
+        0,
+        1,
+        31,
+        244,
+        0,
+        2,
+        0,
+        244,
+        0,
+        2,
+        1,
+        92,
+        0,
+        2,
+        0,
+        252,
+        0,
+        3,
+        0,
+        252,
+        0,
+        4,
+        0,
+        252,
+        0,
+        5,
+        0,
+        244,
+        0,
+        3,
+        4,
+        244,
+        0,
+        4,
+        5,
+        84,
+        0,
+        0,
+        0
+      ],
+      "symbol_table": {},
+      "relocation_table": [
+        {
+          "label": "@evoc",
+          "offset": 20
+        },
+        {
+          "label": "@evoc",
+          "offset": 24
+        },
+        {
+          "label": "@evoc",
+          "offset": 28
+        }
+      ]
+    },
+    {
+      "name": "evoc.bootstrap.self_compile",
+      "mut_rate": 0.01,
+      "cross_pool": "bootstrap",
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          },
+          {
+            "keyword": "min_energy",
+            "weight": 1.0
+          }
+        ]
+      },
+      "env_targets": [
+        "linux-6.x",
+        "android-14",
+        "ios-18",
+        "win-11",
+        "harmony-5"
+      ],
+      "max_generations": 100,
+      "instructions": [
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::SELF_SOURCE"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "register",
+              "value": "R2"
+            }
+          ],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 20,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        0,
+        0,
+        0,
+        242,
+        252,
+        0,
+        1,
+        0,
+        244,
+        0,
+        0,
+        1,
+        252,
+        0,
+        2,
+        0,
+        244,
+        0,
+        1,
+        2,
+        84,
+        0,
+        0,
+        0
+      ],
+      "symbol_table": {},
+      "relocation_table": [
+        {
+          "label": "@evoc",
+          "offset": 4
+        },
+        {
+          "label": "@evoc",
+          "offset": 12
+        }
+      ]
+    },
+    {
+      "name": "evoc.bootstrap.execute_locus",
+      "mut_rate": 0.005,
+      "cross_pool": "bootstrap",
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "min_latency",
+            "weight": 1.0
+          },
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          }
+        ]
+      },
+      "env_targets": [
+        "linux-6.x",
+        "android-14",
+        "ios-18",
+        "win-11",
+        "harmony-5"
+      ],
+      "max_generations": 100,
+      "instructions": [
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::LOCUS_NAME"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::MAX_CYCLES"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R4"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "register",
+              "value": "R2"
+            }
+          ],
+          "offset": 20,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "register",
+              "value": "R3"
+            }
+          ],
+          "offset": 24,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "register",
+              "value": "R4"
+            }
+          ],
+          "offset": 28,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 32,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        0,
+        0,
+        0,
+        238,
+        0,
+        0,
+        1,
+        84,
+        252,
+        0,
+        2,
+        0,
+        252,
+        0,
+        3,
+        0,
+        252,
+        0,
+        4,
+        0,
+        244,
+        0,
+        0,
+        2,
+        244,
+        0,
+        2,
+        3,
+        244,
+        0,
+        3,
+        4,
+        84,
+        0,
+        0,
+        0
+      ],
+      "symbol_table": {},
+      "relocation_table": [
+        {
+          "label": "@evoc",
+          "offset": 8
+        },
+        {
+          "label": "@evoc",
+          "offset": 12
+        },
+        {
+          "label": "@evoc",
+          "offset": 16
+        }
+      ]
+    },
+    {
+      "name": "evoc.bootstrap.main",
+      "mut_rate": 0.01,
+      "cross_pool": "bootstrap",
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          },
+          {
+            "keyword": "min_energy",
+            "weight": 1.0
+          },
+          {
+            "keyword": "min_size",
+            "weight": 1.0
+          }
+        ]
+      },
+      "env_targets": [
+        "linux-6.x",
+        "android-14",
+        "ios-18",
+        "win-11",
+        "harmony-5"
+      ],
+      "max_generations": 100,
+      "instructions": [
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::ARGC"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 0,
+          "symbol": "䷁",
+          "mnemonic": "RECV",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "env_ref",
+              "value": "env::ARGV"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R4"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 63,
+          "symbol": "䷀",
+          "mnemonic": "CREA",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R5"
+            },
+            {
+              "kind": "label",
+              "value": "@evoc"
+            }
+          ],
+          "offset": 20,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R1"
+            },
+            {
+              "kind": "register",
+              "value": "R2"
+            }
+          ],
+          "offset": 24,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            },
+            {
+              "kind": "register",
+              "value": "R3"
+            }
+          ],
+          "offset": 28,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R3"
+            },
+            {
+              "kind": "register",
+              "value": "R4"
+            }
+          ],
+          "offset": 32,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 61,
+          "symbol": "䷌",
+          "mnemonic": "FELLOWSHIP",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R4"
+            },
+            {
+              "kind": "register",
+              "value": "R5"
+            }
+          ],
+          "offset": 36,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 40,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        0,
+        0,
+        0,
+        44,
+        0,
+        0,
+        1,
+        194,
+        252,
+        0,
+        2,
+        0,
+        252,
+        0,
+        3,
+        0,
+        252,
+        0,
+        4,
+        0,
+        252,
+        0,
+        5,
+        0,
+        244,
+        0,
+        1,
+        2,
+        244,
+        0,
+        2,
+        3,
+        244,
+        0,
+        3,
+        4,
+        244,
+        0,
+        4,
+        5,
+        84,
+        0,
+        0,
+        0
+      ],
+      "symbol_table": {},
+      "relocation_table": [
+        {
+          "label": "@evoc",
+          "offset": 8
+        },
+        {
+          "label": "@evoc",
+          "offset": 12
+        },
+        {
+          "label": "@evoc",
+          "offset": 16
+        },
+        {
+          "label": "@evoc",
+          "offset": 20
+        }
+      ]
+    }
+  ],
+  "meta_loci": [
+    {
+      "name": "自举.进化策略",
+      "mut_rate": 0.005,
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          },
+          {
+            "keyword": "min_size",
+            "weight": 1.0
+          }
+        ]
+      },
+      "instructions": [
+        {
+          "opcode": 48,
+          "symbol": "䷓",
+          "mnemonic": "CONTEMPLATE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 38,
+          "symbol": "䷑",
+          "mnemonic": "MUT",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "immediate",
+              "value": 2
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 62,
+          "symbol": "䷫",
+          "mnemonic": "MATE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 8,
+          "symbol": "䷏",
+          "mnemonic": "SPECULATE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R2"
+            }
+          ],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        192,
+        0,
+        0,
+        0,
+        152,
+        0,
+        0,
+        2,
+        248,
+        0,
+        0,
+        1,
+        32,
+        0,
+        2,
+        0,
+        84,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "自举.选择策略",
+      "mut_rate": 0.003,
+      "fitness": {
+        "terms": [
+          {
+            "keyword": "max_throughput",
+            "weight": 1.0
+          },
+          {
+            "keyword": "min_latency",
+            "weight": 1.0
+          }
+        ]
+      },
+      "instructions": [
+        {
+          "opcode": 48,
+          "symbol": "䷓",
+          "mnemonic": "CONTEMPLATE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            }
+          ],
+          "offset": 0,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 41,
+          "symbol": "䷔",
+          "mnemonic": "BITE",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R0"
+            },
+            {
+              "kind": "register",
+              "value": "R1"
+            }
+          ],
+          "offset": 4,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 2,
+          "symbol": "䷆",
+          "mnemonic": "BRANCH",
+          "modifier": 0,
+          "operands": [
+            {
+              "kind": "register",
+              "value": "R_selected"
+            }
+          ],
+          "offset": 8,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 21,
+          "symbol": "䷾",
+          "mnemonic": "SYNC",
+          "modifier": 0,
+          "operands": [],
+          "offset": 12,
+          "line": 0,
+          "col": 0
+        },
+        {
+          "opcode": 1,
+          "symbol": "䷗",
+          "mnemonic": "RETURN",
+          "modifier": 0,
+          "operands": [],
+          "offset": 16,
+          "line": 0,
+          "col": 0
+        }
+      ],
+      "bytecode": [
+        192,
+        0,
+        0,
+        0,
+        164,
+        0,
+        0,
+        1,
+        8,
+        0,
+        0,
+        0,
+        84,
+        0,
+        0,
+        0,
+        4,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "xiangci": [
+    {
+      "text": "易衍·Evomorph 自举编译器 v3.0 道枢自举：易衍编译器用易衍语言书写自身 此文件通过EvoRuntime的native handlers实现编译功能 目标：逐步用易衍代码替换所有Python模块 简易 · 变易 · 不易 · 进化 · 自举"
+    }
+  ],
+  "warnings": [
+    {
+      "message": "Optimization error: 'IROperand' object has no attribute 'clone'",
+      "line": 0,
+      "col": 0
+    }
+  ],
+  "notes": []
+}

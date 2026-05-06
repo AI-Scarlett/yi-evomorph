@@ -1,0 +1,18 @@
+; 测试 PREFETCH 和 MICRO
+; 逐步验证
+
+START:
+    ; 步骤 1: ABOUND R5, 3
+    ; 期望: R5 = 3
+    ABOUND R5, 3
+    
+    ; 步骤 2: ABOUND R6, 8
+    ; 期望: R6 = 8
+    ABOUND R6, 8
+    
+    ; 步骤 3: PREFETCH R5, R6 (R5 = R5 << R6)
+    ; 期望: R5 = 3 << 8 = 768
+    PREFETCH R5, R6
+    
+    ; 停止，检查结果
+    HALT

@@ -1,0 +1,717 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 增强虚拟机"
+    "实现完整的IChingVM功能"
+    "目标：达到Python虚拟机同等功能水平"
+}
+
+@locus evoc.vm.init_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷂ ALLOC R1, 0x40
+        ䷀ CREA R2, @evoc.vm.init_registers
+        ䷌ FELLOWSHIP R0, R2
+        ䷀ CREA R3, @evoc.vm.init_stack
+        ䷌ FELLOWSHIP R0, R3
+        ䷀ CREA R4, @evoc.vm.init_heap
+        ䷌ FELLOWSHIP R0, R4
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, @VM_STATE_INIT
+        ䷂ ALLOC R7, 0x04
+        ䷍ ABUNDANCE R7, 0
+        ䷂ ALLOC R8, 0x04
+        ䷍ ABUNDANCE R8, 0
+        ䷂ ALLOC R9, 0x04
+        ䷍ ABUNDANCE R9, 0
+        ䷂ ALLOC R10, 0x04
+        ䷍ ABUNDANCE R10, 0
+        ䷂ ALLOC R11, 0x08
+        ䷀ CREA R12, @evoc.core.memory_zero
+        ䷌ FELLOWSHIP R11, R12
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.init_registers {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷂ ALLOC R1, 0x40
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 0
+        
+        @init_register_loop:
+        ䷔ BITE R2, 16
+        ䷆ BRANCH R_ge, @init_register_loop_done
+        ䷍ ABUNDANCE R1, 0
+        ䷉ STEP R2
+        ䷆ BRANCH R_always, @init_register_loop
+        
+        @init_register_loop_done:
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, @STACK_SIZE
+        ䷍ ABUNDANCE R1, R3
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, @STACK_SIZE
+        ䷍ ABUNDANCE R1, R4
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.init_stack {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷂ ALLOC R1, 0x10000
+        ䷀ CREA R2, @evoc.core.memory_zero
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.init_heap {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷂ ALLOC R1, 0x100000
+        ䷀ CREA R2, @evoc.core.memory_zero
+        ䷌ FELLOWSHIP R1, R2
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.load_program_bytes {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::BYTECODE_DATA
+        ䷁ RECV R2, env::BYTECODE_LENGTH
+        
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, @VM_STATE_INIT
+        
+        @copy_bytecode_loop:
+        ䷔ BITE R3, R2
+        ䷆ BRANCH R_ge, @copy_bytecode_loop_done
+        
+        ䷀ CREA R5, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R1, R5
+        ䷍ ABUNDANCE R5, R3
+        
+        ䷀ CREA R6, @evoc.core.memory_write
+        ䷌ FELLOWSHIP R0, R6
+        ䷍ ABUNDANCE R6, R3
+        ䷍ ABUNDANCE R6, R5
+        
+        ䷉ STEP R3
+        ䷆ BRANCH R_always, @copy_bytecode_loop
+        
+        @copy_bytecode_loop_done:
+        ䷂ ALLOC R7, 0x04
+        ䷍ ABUNDANCE R7, 0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.load_program_dict {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::PROGRAM_DICT
+        ䷁ RECV R2, env::INSTRUCTION_COUNT
+        
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        
+        @encode_instruction_loop:
+        ䷔ BITE R3, R2
+        ䷆ BRANCH R_ge, @encode_instruction_loop_done
+        
+        ䷀ CREA R4, @evoc.codegen.encode_opcode
+        ䷌ FELLOWSHIP R1, R4
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷀ CREA R5, @evoc.codegen.encode_modifier
+        ䷌ FELLOWSHIP R1, R5
+        ䷍ ABUNDANCE R5, R3
+        
+        ䷀ CREA R6, @evoc.codegen.encode_operand
+        ䷌ FELLOWSHIP R1, R6
+        ䷍ ABUNDANCE R6, R3
+        ䷍ ABUNDANCE R6, 0
+        
+        ䷀ CREA R7, @evoc.codegen.encode_operand
+        ䷌ FELLOWSHIP R1, R7
+        ䷍ ABUNDANCE R7, R3
+        ䷍ ABUNDANCE R7, 1
+        
+        ䷉ STEP R3
+        ䷆ BRANCH R_always, @encode_instruction_loop
+        
+        @encode_instruction_loop_done:
+        ䷂ ALLOC R8, 0x04
+        ䷍ ABUNDANCE R8, 0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.run_program {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::MAX_CYCLES
+        
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, @VM_STATE_RUNNING
+        
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        
+        @vm_run_loop:
+        ䷔ BITE R2, @VM_STATE_RUNNING
+        ䷆ BRANCH R_ne, @vm_run_loop_done
+        
+        ䷔ BITE R1, 0
+        ䷆ BRANCH R_ne, @check_cycles
+        ䷆ BRANCH R_always, @execute_step
+        
+        @check_cycles:
+        ䷔ BITE R3, R1
+        ䷆ BRANCH R_ge, @vm_run_loop_paused
+        
+        @execute_step:
+        ䷀ CREA R4, @evoc.vm.step_execution
+        ䷌ FELLOWSHIP R0, R4
+        
+        ䷉ STEP R3
+        ䷆ BRANCH R_always, @vm_run_loop
+        
+        @vm_run_loop_paused:
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, @VM_STATE_PAUSED
+        ䷆ BRANCH R_always, @vm_run_loop
+        
+        @vm_run_loop_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.step_execution {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        
+        ䷀ CREA R1, @evoc.vm.decode_instruction
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷀ CREA R2, @evoc.vm.decode_opcode
+        ䷌ FELLOWSHIP R1, R2
+        
+        ䷀ CREA R3, @evoc.vm.decode_modifier
+        ䷌ FELLOWSHIP R1, R3
+        
+        ䷀ CREA R4, @evoc.vm.dispatch_opcode
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R2
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.decode_instruction {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::PROGRAM_COUNTER
+        
+        ䷂ ALLOC R2, 0x08
+        
+        ䷀ CREA R3, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R3, R1
+        
+        ䷍ ABUNDANCE R2, R3
+        
+        ䷉ STEP R1
+        
+        ䷀ CREA R4, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R1
+        
+        ䷍ ABUNDANCE R2, R4
+        
+        ䷉ STEP R1
+        
+        ䷀ CREA R5, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R1
+        
+        ䷍ ABUNDANCE R2, R5
+        
+        ䷉ STEP R1
+        
+        ䷀ CREA R6, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R6
+        ䷍ ABUNDANCE R6, R1
+        
+        ䷍ ABUNDANCE R2, R6
+        
+        ䷉ STEP R1
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.decode_opcode {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INSTRUCTION_BYTES
+        ䷂ ALLOC R1, 0x01
+        ䷍ ABUNDANCE R1, R0
+        ䷀ CREA R2, @evoc.core.shift_right
+        ䷍ ABUNDANCE R2, 2
+        ䷌ FELLOWSHIP R1, R2
+        ䷀ CREA R3, @evoc.core.bit_and
+        ䷍ ABUNDANCE R3, 0x3F
+        ䷌ FELLOWSHIP R2, R3
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.decode_modifier {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::INSTRUCTION_BYTES
+        ䷂ ALLOC R1, 0x01
+        ䷍ ABUNDANCE R1, R0
+        ䷀ CREA R2, @evoc.core.bit_and
+        ䷍ ABUNDANCE R2, 0x03
+        ䷌ FELLOWSHIP R1, R2
+        ䷀ CREA R3, @evoc.core.shift_left
+        ䷍ ABUNDANCE R3, 4
+        ䷌ FELLOWSHIP R2, R3
+        ䷂ ALLOC R4, 0x01
+        ䷍ ABUNDANCE R4, R0
+        ䷀ CREA R5, @evoc.core.shift_right
+        ䷍ ABUNDANCE R5, 1
+        ䷌ FELLOWSHIP R4, R5
+        ䷀ CREA R6, @evoc.core.bit_and
+        ䷍ ABUNDANCE R6, 0x0F
+        ䷌ FELLOWSHIP R5, R6
+        ䷀ CREA R7, @evoc.core.bit_or
+        ䷌ FELLOWSHIP R3, R7
+        ䷍ ABUNDANCE R7, R6
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.dispatch_opcode {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::OPCODE
+        ䷁ RECV R2, env::MODIFIER
+        ䷁ RECV R3, env::OPERAND1
+        ䷁ RECV R4, env::OPERAND2
+        
+        ䷔ BITE R1, 63
+        ䷆ BRANCH R_eq, @execute_crea
+        
+        ䷔ BITE R1, 0
+        ䷆ BRANCH R_eq, @execute_recv
+        
+        ䷔ BITE R1, 17
+        ䷆ BRANCH R_eq, @execute_alloc
+        
+        ䷔ BITE R1, 34
+        ䷆ BRANCH R_eq, @execute_sprt
+        
+        ䷔ BITE R1, 23
+        ䷆ BRANCH R_eq, @execute_wait
+        
+        ䷔ BITE R1, 58
+        ䷆ BRANCH R_eq, @execute_lock
+        
+        ䷔ BITE R1, 2
+        ䷆ BRANCH R_eq, @execute_branch
+        
+        ䷔ BITE R1, 16
+        ䷆ BRANCH R_eq, @execute_merge
+        
+        ䷔ BITE R1, 61
+        ䷆ BRANCH R_eq, @execute_fellowship
+        
+        ䷔ BITE R1, 47
+        ䷆ BRANCH R_eq, @execute_abundance
+        
+        ䷔ BITE R1, 21
+        ䷆ BRANCH R_eq, @execute_sync
+        
+        ䷔ BITE R1, 56
+        ䷆ BRANCH R_eq, @execute_halt
+        
+        ䷆ BRANCH R_always, @dispatch_unknown
+        
+        @execute_crea:
+        ䷀ CREA R5, @evoc.vm.execute_op_crea
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷍ ABUNDANCE R5, R4
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_recv:
+        ䷀ CREA R5, @evoc.vm.execute_op_recv
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷍ ABUNDANCE R5, R4
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_alloc:
+        ䷀ CREA R5, @evoc.vm.execute_op_alloc
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷍ ABUNDANCE R5, R4
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_sprt:
+        ䷀ CREA R5, @evoc.vm.execute_op_sprt
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_wait:
+        ䷀ CREA R5, @evoc.vm.execute_op_wait
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_lock:
+        ䷀ CREA R5, @evoc.vm.execute_op_lock
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_branch:
+        ䷀ CREA R5, @evoc.vm.execute_op_branch
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷍ ABUNDANCE R5, R4
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_merge:
+        ䷀ CREA R5, @evoc.vm.execute_op_merge
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷍ ABUNDANCE R5, R4
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_fellowship:
+        ䷀ CREA R5, @evoc.vm.execute_op_fellowship
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷍ ABUNDANCE R5, R4
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_abundance:
+        ䷀ CREA R5, @evoc.vm.execute_op_abundance
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷍ ABUNDANCE R5, R4
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_sync:
+        ䷀ CREA R5, @evoc.vm.execute_op_sync
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R3
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @execute_halt:
+        ䷀ CREA R5, @evoc.vm.execute_op_halt
+        ䷌ FELLOWSHIP R0, R5
+        ䷆ BRANCH R_always, @dispatch_done
+        
+        @dispatch_unknown:
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, @VM_STATE_ERROR
+        
+        @dispatch_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_op_crea {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::DST_REG
+        ䷁ RECV R2, env::SRC_REG
+        
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 1
+        
+        ䷀ CREA R4, @evoc.core.memory_write
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R1
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_op_recv {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::DST_REG
+        ䷁ RECV R2, env::PORT
+        
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        
+        ䷀ CREA R4, @evoc.core.memory_write
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R1
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_op_alloc {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::DST_REG
+        ䷁ RECV R2, env::SIZE
+        
+        ䷔ BITE R2, 0
+        ䷆ BRANCH R_eq, @alloc_default_size
+        
+        ䷆ BRANCH R_always, @alloc_continue
+        
+        @alloc_default_size:
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 256
+        
+        @alloc_continue:
+        ䷀ CREA R3, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R3, @HEAP_PTR_OFFSET
+        
+        ䷀ CREA R4, @evoc.core.add
+        ䷌ FELLOWSHIP R3, R4
+        ䷍ ABUNDANCE R4, R2
+        
+        ䷀ CREA R5, @evoc.core.memory_write
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, @HEAP_PTR_OFFSET
+        ䷍ ABUNDANCE R5, R4
+        
+        ䷀ CREA R6, @evoc.core.memory_write
+        ䷌ FELLOWSHIP R0, R6
+        ䷍ ABUNDANCE R6, R1
+        ䷍ ABUNDANCE R6, R3
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_op_fellowship {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::DST_REG
+        ䷁ RECV R2, env::SRC_REG
+        
+        ䷀ CREA R3, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R3, R2
+        
+        ䷀ CREA R4, @evoc.core.memory_write
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R1
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_op_abundance {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::ADDR_REG
+        ䷁ RECV R2, env::SRC_REG
+        
+        ䷀ CREA R3, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R3, R1
+        
+        ䷀ CREA R4, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R2
+        
+        ䷀ CREA R5, @evoc.core.bit_and
+        ䷍ ABUNDANCE R5, 0xFF
+        ䷌ FELLOWSHIP R4, R5
+        
+        ䷀ CREA R6, @evoc.core.add
+        ䷌ FELLOWSHIP R0, R6
+        ䷍ ABUNDANCE R6, R3
+        ䷍ ABUNDANCE R6, @HEAP_BASE_OFFSET
+        
+        ䷀ CREA R7, @evoc.core.memory_write
+        ䷌ FELLOWSHIP R0, R7
+        ䷍ ABUNDANCE R7, R6
+        ䷍ ABUNDANCE R7, R5
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_op_sync {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        ䷁ RECV R1, env::BARRIER_ID
+        
+        ䷀ CREA R2, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R2
+        ䷍ ABUNDANCE R2, @BARRIER_TABLE_OFFSET
+        
+        ䷀ CREA R3, @evoc.core.add
+        ䷌ FELLOWSHIP R2, R3
+        ䷍ ABUNDANCE R3, R1
+        
+        ䷀ CREA R4, @evoc.core.memory_read
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷀ CREA R5, @evoc.core.add
+        ䷌ FELLOWSHIP R4, R5
+        ䷍ ABUNDANCE R5, 1
+        
+        ䷀ CREA R6, @evoc.core.memory_write
+        ䷌ FELLOWSHIP R0, R6
+        ䷍ ABUNDANCE R6, R3
+        ䷍ ABUNDANCE R6, R5
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.vm.execute_op_halt {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::VM_STATE
+        
+        ䷂ ALLOC R1, 0x04
+        ䷍ ABUNDANCE R1, @VM_STATE_HALTED
+        
+        ䷀ CREA R2, @evoc.core.memory_write
+        ䷌ FELLOWSHIP R0, R2
+        ䷍ ABUNDANCE R2, @STATE_OFFSET
+        ䷍ ABUNDANCE R2, R1
+        
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 虚拟机.进化策略 {
+    mut_rate = 0.001
+    fitness  = min_latency + max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷏ SPECULATE R2
+        ䷾ SYNC
+    }
+}

@@ -1,0 +1,531 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 增强词法分析器"
+    "实现完整的Token扫描和分类功能"
+    "目标：达到Python词法分析器同等功能水平"
+}
+
+@locus evoc.lexer.init_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_TEXT_ADDR
+        ䷂ ALLOC R1, 0x20
+        ䷀ CREA R2, @evoc.core.memory_zero
+        ䷌ FELLOWSHIP R1, R2
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, R0
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 1
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, 1
+        ䷂ ALLOC R7, 0x10
+        ䷀ CREA R8, @evoc.core.memory_copy
+        ䷌ FELLOWSHIP R7, R8
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.tokenize_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LEXER_STATE
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R1, @tokenize_loop_start
+        ䷁ RECV R2, env::CURRENT_POS
+        ䷁ RECV R3, env::SOURCE_LENGTH
+        ䷔ BITE R2, R3
+        ䷆ BRANCH R_zero, @tokenize_complete
+        
+        @tokenize_loop_start:
+        ䷀ CREA R4, @evoc.lexer.peek_char
+        ䷌ FELLOWSHIP R0, R4
+        ䷓ CONTEMPLATE R5
+        ䷆ BRANCH R5, @classify_whitespace
+        ䷆ BRANCH R5, @classify_newline
+        ䷆ BRANCH R5, @classify_hexagram
+        ䷆ BRANCH R5, @classify_quote
+        ䷆ BRANCH R5, @classify_digit
+        ䷆ BRANCH R5, @classify_alpha
+        ䷆ BRANCH R5, @classify_symbol
+        ䷉ STEP R2
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @classify_whitespace:
+        ䷀ CREA R4, @evoc.lexer.is_whitespace
+        ䷌ FELLOWSHIP R5, R4
+        ䷆ BRANCH R4, @skip_whitespace
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @skip_whitespace:
+        ䷉ STEP R2
+        ䷀ CREA R4, @evoc.lexer.peek_char
+        ䷌ FELLOWSHIP R0, R4
+        ䷀ CREA R5, @evoc.lexer.is_whitespace
+        ䷌ FELLOWSHIP R4, R5
+        ䷆ BRANCH R5, @skip_whitespace
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @classify_newline:
+        ䷀ CREA R4, @evoc.lexer.emit_token
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, @TOKEN_NEWLINE
+        ䷉ STEP R2
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @classify_hexagram:
+        ䷀ CREA R4, @evoc.lexer.is_hexagram_symbol
+        ䷌ FELLOWSHIP R5, R4
+        ䷆ BRANCH R4, @scan_hexagram
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @scan_hexagram:
+        ䷀ CREA R4, @evoc.lexer.hexagram_scan
+        ䷌ FELLOWSHIP R0, R4
+        ䷀ CREA R5, @evoc.lexer.emit_token
+        ䷌ FELLOWSHIP R4, R5
+        ䷍ ABUNDANCE R5, @TOKEN_HEXAGRAM
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @classify_quote:
+        ䷀ CREA R4, @evoc.lexer.string_scan
+        ䷌ FELLOWSHIP R0, R4
+        ䷀ CREA R5, @evoc.lexer.emit_token
+        ䷌ FELLOWSHIP R4, R5
+        ䷍ ABUNDANCE R5, @TOKEN_STRING
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @classify_digit:
+        ䷀ CREA R4, @evoc.lexer.number_scan
+        ䷌ FELLOWSHIP R0, R4
+        ䷀ CREA R5, @evoc.lexer.classify_number
+        ䷌ FELLOWSHIP R4, R5
+        ䷀ CREA R6, @evoc.lexer.emit_token
+        ䷌ FELLOWSHIP R5, R6
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @classify_alpha:
+        ䷀ CREA R4, @evoc.lexer.scan_identifier
+        ䷌ FELLOWSHIP R0, R4
+        ䷀ CREA R5, @evoc.lexer.classify_identifier
+        ䷌ FELLOWSHIP R4, R5
+        ䷀ CREA R6, @evoc.lexer.emit_token
+        ䷌ FELLOWSHIP R5, R6
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @classify_symbol:
+        ䷀ CREA R4, @evoc.lexer.classify_symbol
+        ䷌ FELLOWSHIP R5, R4
+        ䷀ CREA R5, @evoc.lexer.emit_token
+        ䷌ FELLOWSHIP R4, R5
+        ䷉ STEP R2
+        ䷆ BRANCH R_always, @tokenize_loop_start
+        
+        @tokenize_complete:
+        ䷀ CREA R4, @evoc.lexer.emit_token
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, @TOKEN_EOF
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.is_whitespace_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR_VALUE
+        ䷓ CONTEMPLATE R1
+        ䷔ BITE R0, 0x20
+        ䷆ BRANCH R_eq, @is_space
+        ䷔ BITE R0, 0x09
+        ䷆ BRANCH R_eq, @is_tab
+        ䷔ BITE R0, 0x0D
+        ䷆ BRANCH R_eq, @is_cr
+        ䷀ CREA R1, 0
+        ䷆ BRANCH R_always, @whitespace_check_done
+        
+        @is_space:
+        ䷀ CREA R1, 1
+        ䷆ BRANCH R_always, @whitespace_check_done
+        
+        @is_tab:
+        ䷀ CREA R1, 1
+        ䷆ BRANCH R_always, @whitespace_check_done
+        
+        @is_cr:
+        ䷀ CREA R1, 1
+        
+        @whitespace_check_done:
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.is_alpha_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR_VALUE
+        ䷓ CONTEMPLATE R1
+        ䷔ BITE R0, 0x41
+        ䷆ BRANCH R_lt, @check_lower
+        ䷔ BITE R0, 0x5A
+        ䷆ BRANCH R_gt, @check_lower
+        ䷀ CREA R1, 1
+        ䷆ BRANCH R_always, @alpha_check_done
+        
+        @check_lower:
+        ䷔ BITE R0, 0x61
+        ䷆ BRANCH R_lt, @check_underscore
+        ䷔ BITE R0, 0x7A
+        ䷆ BRANCH R_gt, @check_underscore
+        ䷀ CREA R1, 1
+        ䷆ BRANCH R_always, @alpha_check_done
+        
+        @check_underscore:
+        ䷔ BITE R0, 0x5F
+        ䷆ BRANCH R_eq, @is_underscore
+        ䷀ CREA R1, 0
+        ䷆ BRANCH R_always, @alpha_check_done
+        
+        @is_underscore:
+        ䷀ CREA R1, 1
+        
+        @alpha_check_done:
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.is_digit_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR_VALUE
+        ䷓ CONTEMPLATE R1
+        ䷔ BITE R0, 0x30
+        ䷆ BRANCH R_lt, @not_digit
+        ䷔ BITE R0, 0x39
+        ䷆ BRANCH R_gt, @not_digit
+        ䷀ CREA R1, 1
+        ䷆ BRANCH R_always, @digit_check_done
+        
+        @not_digit:
+        ䷀ CREA R1, 0
+        
+        @digit_check_done:
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.hexagram_scan_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LEXER_STATE
+        ䷁ RECV R1, env::CURRENT_POS
+        ䷂ ALLOC R2, 0x04
+        ䷀ CREA R3, @evoc.lexer.peek_char
+        ䷌ FELLOWSHIP R0, R3
+        ䷍ ABUNDANCE R2, R3
+        ䷉ STEP R1
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.number_scan_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LEXER_STATE
+        ䷁ RECV R1, env::CURRENT_POS
+        ䷂ ALLOC R2, 0x40
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        
+        @number_scan_loop:
+        ䷀ CREA R6, @evoc.lexer.peek_char
+        ䷌ FELLOWSHIP R0, R6
+        ䷀ CREA R7, @evoc.lexer.is_digit
+        ䷌ FELLOWSHIP R6, R7
+        ䷆ BRANCH R7, @digit_found
+        ䷔ BITE R6, 0x2E
+        ䷆ BRANCH R_eq, @dot_found
+        ䷔ BITE R6, 0x78
+        ䷆ BRANCH R_eq, @hex_prefix
+        ䷔ BITE R6, 0x58
+        ䷆ BRANCH R_eq, @hex_prefix
+        ䷔ BITE R6, 0x62
+        ䷆ BRANCH R_eq, @bin_prefix
+        ䷔ BITE R6, 0x42
+        ䷆ BRANCH R_eq, @bin_prefix
+        ䷆ BRANCH R_always, @number_scan_done
+        
+        @digit_found:
+        ䷍ ABUNDANCE R2, R6
+        ䷉ STEP R3
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @number_scan_loop
+        
+        @dot_found:
+        ䷍ ABUNDANCE R5, 1
+        ䷍ ABUNDANCE R2, R6
+        ䷉ STEP R3
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @number_scan_loop
+        
+        @hex_prefix:
+        ䷍ ABUNDANCE R4, 16
+        ䷍ ABUNDANCE R2, R6
+        ䷉ STEP R3
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @number_scan_loop
+        
+        @bin_prefix:
+        ䷍ ABUNDANCE R4, 2
+        ䷍ ABUNDANCE R2, R6
+        ䷉ STEP R3
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @number_scan_loop
+        
+        @number_scan_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.string_scan_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LEXER_STATE
+        ䷁ RECV R1, env::CURRENT_POS
+        ䷁ RECV R2, env::QUOTE_CHAR
+        ䷂ ALLOC R3, 0x100
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        ䷉ STEP R1
+        
+        @string_scan_loop:
+        ䷀ CREA R5, @evoc.lexer.peek_char
+        ䷌ FELLOWSHIP R0, R5
+        ䷔ BITE R5, R2
+        ䷆ BRANCH R_eq, @string_scan_done
+        ䷔ BITE R5, 0x5C
+        ䷆ BRANCH R_eq, @escape_sequence
+        ䷍ ABUNDANCE R3, R5
+        ䷉ STEP R4
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @string_scan_loop
+        
+        @escape_sequence:
+        ䷉ STEP R1
+        ䷀ CREA R6, @evoc.lexer.peek_char
+        ䷌ FELLOWSHIP R0, R6
+        ䷔ BITE R6, 0x6E
+        ䷆ BRANCH R_eq, @escape_newline
+        ䷔ BITE R6, 0x74
+        ䷆ BRANCH R_eq, @escape_tab
+        ䷔ BITE R6, 0x72
+        ䷆ BRANCH R_eq, @escape_cr
+        ䷔ BITE R6, 0x22
+        ䷆ BRANCH R_eq, @escape_quote
+        ䷍ ABUNDANCE R3, R6
+        ䷉ STEP R4
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @string_scan_loop
+        
+        @escape_newline:
+        ䷍ ABUNDANCE R3, 0x0A
+        ䷉ STEP R4
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @string_scan_loop
+        
+        @escape_tab:
+        ䷍ ABUNDANCE R3, 0x09
+        ䷉ STEP R4
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @string_scan_loop
+        
+        @escape_cr:
+        ䷍ ABUNDANCE R3, 0x0D
+        ䷉ STEP R4
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @string_scan_loop
+        
+        @escape_quote:
+        ䷍ ABUNDANCE R3, 0x22
+        ䷉ STEP R4
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @string_scan_loop
+        
+        @string_scan_done:
+        ䷉ STEP R1
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.scan_identifier_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LEXER_STATE
+        ䷁ RECV R1, env::CURRENT_POS
+        ䷂ ALLOC R2, 0x40
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        
+        @identifier_scan_loop:
+        ䷀ CREA R4, @evoc.lexer.peek_char
+        ䷌ FELLOWSHIP R0, R4
+        ䷀ CREA R5, @evoc.lexer.is_alpha
+        ䷌ FELLOWSHIP R4, R5
+        ䷆ BRANCH R5, @identifier_char
+        ䷀ CREA R5, @evoc.lexer.is_digit
+        ䷌ FELLOWSHIP R4, R5
+        ䷆ BRANCH R5, @identifier_char
+        ䷆ BRANCH R_always, @identifier_scan_done
+        
+        @identifier_char:
+        ䷍ ABUNDANCE R2, R4
+        ䷉ STEP R3
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @identifier_scan_loop
+        
+        @identifier_scan_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.classify_identifier_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::IDENTIFIER_STRING
+        ䷂ ALLOC R1, 0x04
+        ䷍ ABUNDANCE R1, @TOKEN_IDENTIFIER
+        
+        ䷔ BITE R0, 0x40
+        ䷆ BRANCH R_eq, @check_at_keyword
+        
+        ䷀ CREA R2, @evoc.lexer.check_mnemonic
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R2, @is_mnemonic
+        
+        ䷀ CREA R2, @evoc.lexer.check_register
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R2, @is_register
+        
+        ䷀ CREA R2, @evoc.lexer.check_keyword
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R2, @is_keyword
+        
+        ䷆ BRANCH R_always, @classify_identifier_done
+        
+        @check_at_keyword:
+        ䷀ CREA R2, @evoc.lexer.check_at_keyword
+        ䷌ FELLOWSHIP R0, R2
+        ䷆ BRANCH R2, @is_at_keyword
+        ䷍ ABUNDANCE R1, @TOKEN_LABEL
+        ䷆ BRANCH R_always, @classify_identifier_done
+        
+        @is_mnemonic:
+        ䷍ ABUNDANCE R1, @TOKEN_MNEMONIC
+        ䷆ BRANCH R_always, @classify_identifier_done
+        
+        @is_register:
+        ䷍ ABUNDANCE R1, @TOKEN_REGISTER
+        ䷆ BRANCH R_always, @classify_identifier_done
+        
+        @is_keyword:
+        ䷍ ABUNDANCE R1, @TOKEN_KEYWORD
+        ䷆ BRANCH R_always, @classify_identifier_done
+        
+        @is_at_keyword:
+        ䷍ ABUNDANCE R1, @TOKEN_AT_KEYWORD
+        
+        @classify_identifier_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.lexer.skip_comment_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::LEXER_STATE
+        ䷁ RECV R1, env::CURRENT_POS
+        
+        @comment_skip_loop:
+        ䷀ CREA R2, @evoc.lexer.peek_char
+        ䷌ FELLOWSHIP R0, R2
+        ䷔ BITE R2, 0x0A
+        ䷆ BRANCH R_eq, @comment_skip_done
+        ䷔ BITE R2, 0x00
+        ䷆ BRANCH R_eq, @comment_skip_done
+        ䷉ STEP R1
+        ䷆ BRANCH R_always, @comment_skip_loop
+        
+        @comment_skip_done:
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 词法分析器.进化策略 {
+    mut_rate = 0.001
+    fitness  = min_latency + max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷏ SPECULATE R2
+        ䷾ SYNC
+    }
+}

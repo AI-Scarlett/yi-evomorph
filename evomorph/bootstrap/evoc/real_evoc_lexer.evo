@@ -1,0 +1,279 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍自举编译器 - 词法分析器
+    通过系统调用机制执行词法分析
+    支持所有Token类型：卦象符号、助记符、寄存器、数字、字符串、注释等"
+}
+
+@locus evoc.lexer.main {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_TEXT
+        ䷀ CREA R1
+        ䷂ ALLOC R2, 0x1000
+        
+        ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.lexer.init
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷆ BRANCH R0, @lexer_loop
+        ䷀ CREA R3, @evoc.lexer.tokenize
+        ䷌ FELLOWSHIP R0, R3
+        
+        ䷁ RECV R0, env::OUTPUT
+        ䷗ RETURN R0
+    }
+}
+
+@locus evoc.lexer.tokenize {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::SOURCE_PTR
+        ䷀ CREA R0
+        ䷂ ALLOC R2, 0x2000
+        
+        ䷁ RECV R0, env::INPUT
+        ䷆ BRANCH R0, @scan_loop
+        
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R0, @check_hexagram
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R1, @check_whitespace
+        
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R0, @check_digit
+        
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R0, @check_alpha
+        
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R0, @check_quote
+        
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R0, @check_slash
+        
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R0, @check_at
+        
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R0, @check_bracket
+        
+        ䷉ STEP R1
+        ䷆ BRANCH R1, @scan_loop
+        
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus evoc.lexer.init {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::SOURCE
+        ䷀ CREA R0
+        ䷂ ALLOC R2, 0x100
+        
+        ䷍ ABUNDANCE R2, 0
+        ䷍ ABUNDANCE R2, 1
+        ䷍ ABUNDANCE R2, 1
+        
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus evoc.lexer.advance {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::STATE
+        ䷀ CREA R0
+        ䷉ STEP R1
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus evoc.lexer.peek {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::STATE
+        ䷁ RECV R2, env::OFFSET
+        ䷀ CREA R0
+        ䷓ CONTEMPLATE R1
+        ䷗ RETURN R0
+    }
+}
+
+@locus evoc.lexer.scan_identifier {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::STATE
+        ䷀ CREA R0
+        ䷂ ALLOC R2, 0x100
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @id_loop
+        
+        ䷉ STEP R1
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @id_loop
+        
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus evoc.lexer.scan_number {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::STATE
+        ䷀ CREA R0
+        ䷂ ALLOC R2, 0x20
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @check_hex
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @check_bin
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @check_float
+        
+        ䷉ STEP R1
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @num_loop
+        
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus evoc.lexer.scan_string {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::STATE
+        ䷀ CREA R0
+        ䷂ ALLOC R2, 0x400
+        
+        ䷉ STEP R1
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @str_loop
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @check_escape
+        
+        ䷉ STEP R1
+        ䷆ BRANCH R0, @str_loop
+        
+        ䷾ SYNC
+        ䷗ RETURN R2
+    }
+}
+
+@locus evoc.lexer.skip_comment {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::STATE
+        ䷀ CREA R0
+        
+        ䷉ STEP R1
+        ䷉ STEP R1
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @comment_loop
+        
+        ䷾ SYNC
+        ䷗ RETURN R1
+    }
+}
+
+@locus evoc.lexer.classify_token {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::TOKEN_STR
+        ䷀ CREA R0
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @check_hexagram_symbol
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @check_mnemonic
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @check_register
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @check_modifier
+        
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R0, @check_keyword
+        
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}
+
+@locus evoc.lexer.emit_token {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R1, env::TOKEN_TYPE
+        ䷁ RECV R2, env::TOKEN_VALUE
+        ䷁ RECV R3, env::LINE
+        ䷁ RECV R4, env::COL
+        ䷀ CREA R0
+        ䷂ ALLOC R0, 0x40
+        
+        ䷍ ABUNDANCE R0, R1
+        ䷍ ABUNDANCE R0, R2
+        ䷍ ABUNDANCE R0, R3
+        ䷍ ABUNDANCE R0, R4
+        
+        ䷾ SYNC
+        ䷗ RETURN R0
+    }
+}

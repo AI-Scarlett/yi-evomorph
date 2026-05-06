@@ -2,7 +2,7 @@
     "name": "yistudio-evomorph",
     "displayName": "YiStudio - 易衍·Evomorph",
     "description": "易衍·Evomorph 编程语言完整支持 — 语法高亮、智能补全、悬停提示、诊断、调试、进化编译、AI编程",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "publisher": "evomorph",
     "engines": {"vscode": "^1.80.0"},
     "categories": ["Programming Languages", "Debuggers", "Machine Learning", "Snippets"],

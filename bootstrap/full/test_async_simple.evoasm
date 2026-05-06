@@ -1,0 +1,239 @@
+; 最简单的测试：验证 .ASYNC BRANCH 寄存器间接跳转
+; SUCCESS 地址 = 244
+
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+START:
+    ; 设置条件寄存器 R1 = 1
+    ABOUND R1, 1
+    
+    ; 设置 R5 = 244 (SUCCESS 地址)
+    ABOUND R5, 244
+    
+    ; 寄存器间接跳转：.ASYNC BRANCH R1, R5
+    ; 如果 R1 != 0，跳转到 R5 中的地址
+    .ASYNC BRANCH R1, R5
+    
+    ; 如果跳转失败，打印 "Jump failed\n"
+    ALLOC R0, 0
+    FELLOWSHIP R4, R0
+    FELLOWSHIP R10, R4
+    
+    ; 'J' = 74
+    ABOUND R1, 74
+    DISPERSE R10, R1
+    
+    ; 指针加1 - 使用 GATHER (加法)
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'u' = 117
+    ABOUND R1, 117
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'm' = 109
+    ABOUND R1, 109
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'f' = 102
+    ABOUND R1, 102
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'l' = 108
+    ABOUND R1, 108
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'd' = 100
+    ABOUND R1, 100
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '\n' = 10
+    ABOUND R1, 10
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '\0' = 0
+    ABOUND R1, 0
+    DISPERSE R10, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R4
+    RECV R0, 0
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+; 目标标签 - 地址 244
+SUCCESS:
+    ; 打印 "Jump success!\n"
+    ALLOC R0, 0
+    FELLOWSHIP R4, R0
+    FELLOWSHIP R10, R4
+    
+    ; 'J' = 74
+    ABOUND R1, 74
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'u' = 117
+    ABOUND R1, 117
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'm' = 109
+    ABOUND R1, 109
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'u' = 117
+    ABOUND R1, 117
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '!' = 33
+    ABOUND R1, 33
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '\n' = 10
+    ABOUND R1, 10
+    DISPERSE R10, R1
+    
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '\0' = 0
+    ABOUND R1, 0
+    DISPERSE R10, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R4
+    RECV R0, 0
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

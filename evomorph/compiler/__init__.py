@@ -7,7 +7,6 @@ from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-
 class ErrorSeverity(Enum):
     ERROR = auto()
     WARNING = auto()
@@ -175,7 +174,7 @@ class ASTToIRConverter:
         return f"bb_{self._block_counter}"
 
 
-class EvocCompiler:
+class PythonEvocCompiler:
     def __init__(self, instruction_set=None):
         self.isa = instruction_set or HexagramInstructionSet()
         self.codegen = CodeGenerator(self.isa)
@@ -422,3 +421,140 @@ class EvocCompiler:
             ],
             "count": self.diagnostics.count()
         }
+
+
+
+class IChingEvocCompiler:
+    def __init__(self, instruction_set=None):
+        self.isa = instruction_set or HexagramInstructionSet()
+        self.diagnostics = CompilerDiagnostics()
+        self.optimization_level = 0
+        self._iching_compiler = None
+
+    def _get_iching_compiler(self):
+        if self._iching_compiler is None:
+            from evomorph.bootstrap.iching.iching_compiler import IChingBootstrapCompiler
+            self._iching_compiler = IChingBootstrapCompiler()
+        return self._iching_compiler
+
+    def set_optimization_level(self, level: int):
+        self.optimization_level = max(0, min(3, level))
+
+    def compile(self, source, output_format="json"):
+        self.diagnostics = CompilerDiagnostics()
+        compiler = self._get_iching_compiler()
+        result = compiler.compile_source(source)
+
+        if not result.get("success"):
+            self.diagnostics.add_error(CompilerError(
+                type=ErrorType.SYNTAX_ERROR,
+                message=result.get("error", "IChing compilation failed"),
+                severity=ErrorSeverity.ERROR
+            ))
+            return self._generate_error_output()
+
+        loci = []
+        if result.get("evob_valid"):
+            instructions = result.get("instructions", [])
+            loci.append({
+                "name": "main",
+                "mut_rate": 0.02,
+                "cross_pool": "default",
+                "fitness": "min_latency",
+                "env_targets": ["linux-6.x"],
+                "max_generations": 100,
+                "instructions": [
+                    {
+                        "opcode": i.get("opcode", 0),
+                        "symbol": "???",
+                        "mnemonic": i.get("mnemonic", ""),
+                        "modifier": i.get("modifier", 0),
+                        "operands": self._make_operands(i),
+                        "offset": idx,
+                        "line": 0,
+                        "col": 0,
+                    }
+                    for idx, i in enumerate(instructions)
+                ],
+                "bytecode": list(result.get("output_bytes", b"")),
+                "symbol_table": {},
+                "relocation_table": [],
+            })
+
+        dict_result = {
+            "version": "3.0",
+            "loci": loci,
+            "meta_loci": [],
+            "xiangci": [],
+        }
+
+        if output_format == "dict":
+            return dict_result
+        elif output_format == "evb":
+            return result.get("output_bytes", b"")
+        elif output_format == "json":
+            import json
+            return json.dumps(dict_result, ensure_ascii=False, indent=2)
+        return dict_result
+
+    def compile_file(self, filepath, output_format="json"):
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                source = f.read()
+            return self.compile(source, output_format)
+        except FileNotFoundError:
+            self.diagnostics.add_error(CompilerError(
+                type=ErrorType.SEMANTIC_ERROR,
+                message=f"File not found: {filepath}",
+                severity=ErrorSeverity.ERROR
+            ))
+            return self._generate_error_output()
+        except Exception as e:
+            self.diagnostics.add_error(CompilerError(
+                type=ErrorType.SEMANTIC_ERROR,
+                message=f"Error reading file: {str(e)}",
+                severity=ErrorSeverity.ERROR
+            ))
+            return self._generate_error_output()
+
+    def _make_operands(self, instr):
+        ops = []
+        op1 = instr.get("op1", 0)
+        op2 = instr.get("op2", 0)
+        if op1 is not None:
+            ops.append({"kind": "register", "value": f"R{op1}"})
+        if op2 is not None:
+            if instr.get("imm") is not None:
+                ops.append({"kind": "immediate", "value": instr["imm"]})
+            else:
+                ops.append({"kind": "register", "value": f"R{op2}"})
+        return ops
+
+    def _generate_error_output(self) -> Dict[str, Any]:
+        return {
+            "error": True,
+            "errors": [
+                {
+                    "type": e.type.name,
+                    "message": e.message,
+                    "line": e.line,
+                    "col": e.col,
+                    "severity": e.severity.name,
+                    "suggestion": e.suggestion
+                }
+                for e in self.diagnostics.errors
+            ],
+            "warnings": [
+                {
+                    "message": w.message,
+                    "line": w.line,
+                    "col": w.col,
+                    "suggestion": w.suggestion
+                }
+                for w in self.diagnostics.warnings
+            ],
+            "count": self.diagnostics.count()
+        }
+
+
+EvocCompiler = IChingEvocCompiler

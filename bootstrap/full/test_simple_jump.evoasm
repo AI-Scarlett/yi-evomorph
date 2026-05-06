@@ -1,0 +1,650 @@
+; 简单测试：验证长跳转代码生成
+; 目标：跳转到 TARGET 标签
+; 使用手动计算的地址
+
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+START:
+    ; 打印 "Start\n"
+    ALLOC R0, 0
+    FELLOWSHIP R4, R0
+    
+    ; 'S' = 83
+    ABOUND R1, 83
+    DISPERSE R4, R1
+    
+    ; 指针加1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2      ; R1 = 1
+    INCREASE R4, R1
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; '\n' = 10
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; '\0' = 0
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    DISPERSE R4, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R0
+    RECV R0, 0
+    
+    ; ============================================
+    ; 长跳转测试
+    ; ============================================
+    
+    ; 设置条件寄存器 R1 = 1
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2      ; R1 = 1
+    
+    ; ============================================
+    ; 手动编写的长跳转代码
+    ; 目标地址：假设 TARGET 在地址 0x0100 (256)
+    ; 但我们不知道实际地址，所以先跳转到 NEAR_TARGET
+    ; ============================================
+    
+    ; 先尝试直接跳转
+    BRANCH R1, NEAR_TARGET
+    
+    ; 如果跳转失败，打印 "Direct jump failed\n"
+    ALLOC R0, 0
+    FELLOWSHIP R4, R0
+    
+    ; 'D' = 68
+    ABOUND R1, 68
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'j' = 106
+    ABOUND R1, 106
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'u' = 117
+    ABOUND R1, 117
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'm' = 109
+    ABOUND R1, 109
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'f' = 102
+    ABOUND R1, 102
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'i' = 105
+    ABOUND R1, 105
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'l' = 108
+    ABOUND R1, 108
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'd' = 100
+    ABOUND R1, 100
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; '\n' = 10
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; '\0' = 0
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    DISPERSE R4, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R4
+    RECV R0, 0
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+; 近目标
+NEAR_TARGET:
+    ; 打印 "Near target reached\n"
+    ALLOC R0, 0
+    FELLOWSHIP R4, R0
+    
+    ; 'N' = 78
+    ABOUND R1, 78
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'g' = 103
+    ABOUND R1, 103
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'h' = 104
+    ABOUND R1, 104
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'd' = 100
+    ABOUND R1, 100
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; '\n' = 10
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; '\0' = 0
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    DISPERSE R4, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R4
+    RECV R0, 0
+    
+    ; 现在尝试使用寄存器间接跳转到 TARGET
+    ; 首先，我们需要知道 TARGET 的地址
+    ; 但在汇编时我们不知道...
+    
+    ; 让我们尝试另一种方法：使用多个短跳转
+    ; 或者，让我们检查一下为什么长跳转代码不工作
+    
+    ; 让我们先退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+; 目标标签 - 应该在超过255字节的位置
+TARGET:
+    ; 打印 "Jump success!\n"
+    ALLOC R0, 0
+    FELLOWSHIP R4, R0
+    
+    ; 'J' = 74
+    ABOUND R1, 74
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'u' = 117
+    ABOUND R1, 117
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'm' = 109
+    ABOUND R1, 109
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'u' = 117
+    ABOUND R1, 117
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'c' = 99
+    ABOUND R1, 99
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; '!' = 33
+    ABOUND R1, 33
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; '\n' = 10
+    ABOUND R1, 16
+    ABOUND R2, 6
+    REDUCE R1, R2
+    DISPERSE R4, R1
+    
+    ABOUND R1, 16
+    ABOUND R2, 15
+    REDUCE R1, R2
+    INCREASE R4, R1
+    
+    ; '\0' = 0
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+    DISPERSE R4, R1
+    
+    ; 打印
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R4
+    RECV R0, 0
+    
+    ; 退出
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+
+HALT

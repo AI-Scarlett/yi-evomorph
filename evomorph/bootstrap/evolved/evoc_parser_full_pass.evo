@@ -17,3 +17,342 @@
         ䷁ RECV
     }
 }
+
+
+@locus evoc.parser.parse_program {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_evolang_declaration {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_locus_declaration {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_meta_locus_declaration {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_xiangci_block {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_program {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_evolang_declaration {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_locus_declaration {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_meta_locus_declaration {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_xiangci_block {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_locus_attributes {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_cross_pool {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_fitness_expression {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_gua_xu_block {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_operands {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.parse_labels {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::TOKEN_STREAM
+        ䷀ CREA R1, @evoc.parser.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @parse_locus
+        ䷀ CREA R3, @evoc.parser.parse_locus
+        ䷌ FELLOWSHIP R1, R3
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.ast_construction {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+
+
+@locus evoc.parser.error_recovery {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+                ䷁ RECV R0, env::INPUT
+        ䷀ CREA R1, @evoc.core.init
+        ䷌ FELLOWSHIP R0, R1
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R2, @process
+        ䷾ SYNC
+    }
+}
+

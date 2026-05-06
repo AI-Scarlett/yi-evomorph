@@ -1,0 +1,6 @@
+; 测试输入文件 - 用于测试自举汇编器
+RECV
+ABOUND
+ALLOC
+DISPERSE
+HALT

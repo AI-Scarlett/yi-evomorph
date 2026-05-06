@@ -1,0 +1,14 @@
+; 最简单的测试
+; 只测试 ABOUND 指令
+
+START:
+    ; ABOUND R5, 3
+    ; 期望: R5 = 3
+    ABOUND R5, 3
+    
+    ; ABOUND R6, 8
+    ; 期望: R6 = 8
+    ABOUND R6, 8
+    
+    ; 停止
+    HALT

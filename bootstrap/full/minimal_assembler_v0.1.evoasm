@@ -1,0 +1,433 @@
+; ============================================
+; 易衍·Evomorph 最小自举汇编器 v0.1
+; 代码量 < 256 字节，所有标签在8位范围内
+; ============================================
+;
+; 功能：
+; - 读取 input.asm
+; - 识别 RECV, ABOUND, ALLOC, DISPERSE, HALT
+; - 编码并写入 output.raw
+;
+; 寄存器：
+; R0-R3 - 系统调用/临时
+; R4    - 输入位置
+; R5    - Token起始
+; R6    - 输出位置
+; R7    - 输入缓冲区
+; R8    - 输出缓冲区
+; R9    - 输入大小
+
+; 系统调用
+SYS_OPEN    EQU 0
+SYS_READ    EQU 1
+SYS_WRITE   EQU 2
+SYS_CLOSE   EQU 3
+SYS_MALLOC  EQU 10
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+O_RDONLY    EQU 0
+O_WRONLY    EQU 1
+O_CREAT     EQU 0x40
+
+; ============================================
+; 主程序
+; ============================================
+START:
+    ; 分配缓冲区
+    ALLOC R0, 1024
+    FELLOWSHIP R7, R0     ; R7 = 输入缓冲区
+    
+    ALLOC R0, 512
+    FELLOWSHIP R8, R0     ; R8 = 输出缓冲区
+    
+    ABOUND R4, 0          ; 输入位置 = 0
+    ABOUND R6, 0          ; 输出位置 = 0
+
+    ; 打开 "input.asm"
+    ALLOC R0, 32
+    FELLOWSHIP R1, R0
+    
+    ; 构造文件名 "input.asm"
+    ABOUND R2, 0x69       ; 'i'
+    DISPERSE R1, R2, 0
+    ABOUND R2, 0x6E       ; 'n'
+    DISPERSE R1, R2, 1
+    ABOUND R2, 0x70       ; 'p'
+    DISPERSE R1, R2, 2
+    ABOUND R2, 0x75       ; 'u'
+    DISPERSE R1, R2, 3
+    ABOUND R2, 0x74       ; 't'
+    DISPERSE R1, R2, 4
+    ABOUND R2, 0x2E       ; '.'
+    DISPERSE R1, R2, 5
+    ABOUND R2, 0x61       ; 'a'
+    DISPERSE R1, R2, 6
+    ABOUND R2, 0x73       ; 's'
+    DISPERSE R1, R2, 7
+    ABOUND R2, 0x6D       ; 'm'
+    DISPERSE R1, R2, 8
+    ABOUND R2, 0x00       ; '\0'
+    DISPERSE R1, R2, 9
+    
+    FELLOWSHIP R0, R1
+    ABOUND R1, O_RDONLY
+    RECV R0, R1, SYS_OPEN
+    
+    ; 读取文件
+    FELLOWSHIP R1, R7
+    ABOUND R2, 1024
+    RECV R0, R1, SYS_READ
+    
+    FELLOWSHIP R9, R0     ; R9 = 输入大小
+    
+    RECV R0, R0, SYS_CLOSE
+
+; ============================================
+; 主循环
+; ============================================
+LOOP:
+    CMP R4, R9
+    BRANCH R4, DONE       ; 如果处理完，退出
+
+SKIP_SPACE:
+    CMP R4, R9
+    BRANCH R4, DONE
+    
+    PENETRATE R0, R7, R4
+    
+    ; 检查空白
+    CMP R0, 0x20
+    BRANCH R0, IS_SPACE
+    CMP R0, 0x09
+    BRANCH R0, IS_SPACE
+    CMP R0, 0x0A
+    BRANCH R0, IS_SPACE
+    CMP R0, 0x0D
+    BRANCH R0, IS_SPACE
+    
+    ; 检查注释
+    CMP R0, 0x3B
+    BRANCH R0, SKIP_COMMENT
+    
+    ; 检查逗号/冒号
+    CMP R0, 0x2C
+    BRANCH R0, SKIP_CHAR
+    CMP R0, 0x3A
+    BRANCH R0, SKIP_CHAR
+    
+    BRANCH R0, COLLECT
+
+IS_SPACE:
+    INCREASE R4, 1
+    BRANCH R0, SKIP_SPACE
+
+SKIP_CHAR:
+    INCREASE R4, 1
+    BRANCH R0, LOOP
+
+SKIP_COMMENT:
+SC_LOOP:
+    CMP R4, R9
+    BRANCH R4, DONE
+    PENETRATE R0, R7, R4
+    CMP R0, 0x0A
+    BRANCH R0, LOOP
+    INCREASE R4, 1
+    BRANCH R0, SC_LOOP
+
+; ============================================
+; 收集Token
+; ============================================
+COLLECT:
+    FELLOWSHIP R5, R4
+
+C_LOOP:
+    CMP R4, R9
+    BRANCH R4, C_DONE
+    
+    PENETRATE R0, R7, R4
+    
+    CMP R0, 0x20
+    BRANCH R4, C_DONE
+    CMP R0, 0x09
+    BRANCH R0, C_DONE
+    CMP R0, 0x0A
+    BRANCH R0, C_DONE
+    CMP R0, 0x2C
+    BRANCH R0, C_DONE
+    CMP R0, 0x3A
+    BRANCH R0, C_DONE
+    CMP R0, 0x3B
+    BRANCH R0, C_DONE
+    
+    INCREASE R4, 1
+    BRANCH R0, C_LOOP
+
+C_DONE:
+    ; 检查Token长度
+    SUB R0, R4, R5
+    
+    ; 长度=4: RECV, HALT
+    CMP R0, 4
+    BRANCH R0, CHK_LEN4
+    
+    ; 长度=5: ALLOC
+    CMP R0, 5
+    BRANCH R0, CHK_LEN5
+    
+    ; 长度=6: ABOUND
+    CMP R0, 6
+    BRANCH R0, CHK_LEN6
+    
+    ; 长度=8: DISPERSE
+    CMP R0, 8
+    BRANCH R0, CHK_LEN8
+    
+    BRANCH R0, LOOP
+
+; ============================================
+; 检查指令
+; ============================================
+CHK_LEN4:
+    PENETRATE R0, R7, R5
+    
+    ; 'R' = RECV
+    CMP R0, 0x52
+    BRANCH R0, CHK_RECV
+    
+    ; 'H' = HALT
+    CMP R0, 0x48
+    BRANCH R0, CHK_HALT
+    
+    BRANCH R0, LOOP
+
+CHK_RECV:
+    ; 检查 "RECV"
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x45
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x43
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x56
+    BRANCH R0, LOOP
+    
+    ; RECV: opcode=0
+    ABOUND R0, 0
+    BRANCH R0, ENCODE
+
+CHK_HALT:
+    ; 检查 "HALT"
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x41
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x4C
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x54
+    BRANCH R0, LOOP
+    
+    ; HALT: opcode=56
+    ABOUND R0, 56
+    BRANCH R0, ENCODE
+
+CHK_LEN5:
+    PENETRATE R0, R7, R5
+    CMP R0, 0x41        ; 'A' for ALLOC
+    BRANCH R0, CHK_ALLOC
+    BRANCH R0, LOOP
+
+CHK_ALLOC:
+    ; 检查 "ALLOC"
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x4C
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x4C
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x4F
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x43
+    BRANCH R0, LOOP
+    
+    ; ALLOC: opcode=17
+    ABOUND R0, 17
+    BRANCH R0, ENCODE
+
+CHK_LEN6:
+    PENETRATE R0, R7, R5
+    CMP R0, 0x41        ; 'A' for ABOUND
+    BRANCH R0, CHK_ABOUND
+    BRANCH R0, LOOP
+
+CHK_ABOUND:
+    ; 检查 "ABOUND"
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x42
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x4F
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x55
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x4E
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x44
+    BRANCH R0, LOOP
+    
+    ; ABOUND: opcode=13
+    ABOUND R0, 13
+    BRANCH R0, ENCODE
+
+CHK_LEN8:
+    PENETRATE R0, R7, R5
+    CMP R0, 0x44        ; 'D' for DISPERSE
+    BRANCH R0, CHK_DISPERSE
+    BRANCH R0, LOOP
+
+CHK_DISPERSE:
+    ; 检查 "DISPERSE"
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x49
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x53
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x50
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x45
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x52
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x53
+    BRANCH R0, LOOP
+    
+    INCREASE R5, 1
+    PENETRATE R0, R7, R5
+    CMP R0, 0x45
+    BRANCH R0, LOOP
+    
+    ; DISPERSE: opcode=50
+    ABOUND R0, 50
+    BRANCH R0, ENCODE
+
+; ============================================
+; 编码指令
+; ============================================
+ENCODE:
+    ; R0 = opcode
+    ; byte1 = (opcode << 2)
+    SHL R0, R0, 2
+    
+    ; 写入4字节
+    DISPERSE R8, R0, R6
+    INCREASE R6, 1
+    
+    ABOUND R0, 0
+    DISPERSE R8, R0, R6
+    INCREASE R6, 1
+    
+    DISPERSE R8, R0, R6
+    INCREASE R6, 1
+    
+    DISPERSE R8, R0, R6
+    INCREASE R6, 1
+    
+    BRANCH R0, LOOP
+
+; ============================================
+; 完成，写入输出
+; ============================================
+DONE:
+    ; 打开 "output.raw"
+    ALLOC R0, 32
+    FELLOWSHIP R1, R0
+    
+    ABOUND R2, 0x6F       ; 'o'
+    DISPERSE R1, R2, 0
+    ABOUND R2, 0x75       ; 'u'
+    DISPERSE R1, R2, 1
+    ABOUND R2, 0x74       ; 't'
+    DISPERSE R1, R2, 2
+    ABOUND R2, 0x70       ; 'p'
+    DISPERSE R1, R2, 3
+    ABOUND R2, 0x75       ; 'u'
+    DISPERSE R1, R2, 4
+    ABOUND R2, 0x74       ; 't'
+    DISPERSE R1, R2, 5
+    ABOUND R2, 0x2E       ; '.'
+    DISPERSE R1, R2, 6
+    ABOUND R2, 0x72       ; 'r'
+    DISPERSE R1, R2, 7
+    ABOUND R2, 0x61       ; 'a'
+    DISPERSE R1, R2, 8
+    ABOUND R2, 0x77       ; 'w'
+    DISPERSE R1, R2, 9
+    ABOUND R2, 0x00       ; '\0'
+    DISPERSE R1, R2, 10
+    
+    FELLOWSHIP R0, R1
+    ABOUND R1, O_WRONLY
+    OR R1, R1, O_CREAT
+    RECV R0, R1, SYS_OPEN
+    
+    FELLOWSHIP R1, R8
+    FELLOWSHIP R2, R6
+    RECV R0, R1, SYS_WRITE
+    
+    RECV R0, R0, SYS_CLOSE
+    
+    ; 退出
+    ABOUND R0, 0
+    RECV R0, R0, SYS_EXIT
+
+HALT

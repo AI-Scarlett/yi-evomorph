@@ -1,0 +1,321 @@
+; 易衍·Evomorph 自举汇编器
+; 版本 1.0 - 简化版
+; 用 EvoASM 编写的汇编器
+
+; ============================================
+; 系统调用常量
+; ============================================
+SYSCALL_OPEN    EQU 0
+SYSCALL_READ    EQU 1
+SYSCALL_WRITE   EQU 2
+SYSCALL_CLOSE   EQU 3
+SYSCALL_MALLOC  EQU 10
+SYSCALL_STRLEN  EQU 20
+SYSCALL_STRCMP  EQU 21
+SYSCALL_STRCPY  EQU 22
+SYSCALL_ATOI    EQU 36
+SYSCALL_PRINT   EQU 40
+SYSCALL_EXIT    EQU 255
+
+; ============================================
+; 操作码映射表 (简化版)
+; ============================================
+; CREA=63, RECV=0, ALLOC=17, SPRT=34
+; WAIT=23, LOCK=58, BRANCH=2, MERGE=16
+; FELLOWSHIP=61, ABUNDANCE=47, YIELD=4, SPECULATE=8
+; FOLLOWING=25, MUT=38, RETURN=1, BARRIER=39
+; MATE=62, GATHER=24, PUSH_UP=6, WELL=22
+; REPLACE=29, CAST=46, SHOCK=9, STILL=36
+; GRADUAL=52, ABOUND=13, JOY=27, DISPERSE=50
+; TRUST=51, MICRO=12, SYNC=21, FUTU=42
+; HALT=56, INCREASE=49, REDUCE=35, SHL=55
+; PREFETCH=57, SHR=7, AND=3, OR=16, XOR=37
+; ============================================
+
+; ============================================
+; 数据区域
+; ============================================
+; 注意：在 EvoASM 中，我们使用堆来分配数据
+; R4, R10, R11 用作临时指针
+
+; ============================================
+; 主程序
+; ============================================
+START:
+    ; 打印欢迎信息
+    ALLOC R0, 0
+    FELLOWSHIP R4, R0
+    FELLOWSHIP R10, R4
+    
+    ; "Evomorph Bootstrap Assembler v1.0\n"
+    ; 逐个字符构建字符串
+    ; 'E' = 69
+    ABOUND R1, 69
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'v' = 118
+    ABOUND R1, 118
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'o' = 111
+    ABOUND R1, 111
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'm' = 109
+    ABOUND R1, 109
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'o' = 111
+    ABOUND R1, 111
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'h' = 104
+    ABOUND R1, 104
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'B' = 66
+    ABOUND R1, 66
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'o' = 111
+    ABOUND R1, 111
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'o' = 111
+    ABOUND R1, 111
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 't' = 116
+    ABOUND R1, 116
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'p' = 112
+    ABOUND R1, 112
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'A' = 65
+    ABOUND R1, 65
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 's' = 115
+    ABOUND R1, 115
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'm' = 109
+    ABOUND R1, 109
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'b' = 98
+    ABOUND R1, 98
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'l' = 108
+    ABOUND R1, 108
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'r' = 114
+    ABOUND R1, 114
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; ' ' = 32
+    ABOUND R1, 32
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'v' = 118
+    ABOUND R1, 118
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '1' = 49
+    ABOUND R1, 49
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '.' = 46
+    ABOUND R1, 46
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '0' = 48
+    ABOUND R1, 48
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '\n' = 10
+    ABOUND R1, 10
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '\0' = 0
+    ABOUND R1, 0
+    DISPERSE R10, R1
+    
+    ; 打印
+    ABOUND R0, SYSCALL_PRINT
+    FELLOWSHIP R1, R4
+    RECV R0, 0
+    
+    ; 打印 "Usage: evoasm <input.evoasm> <output.raw>\n"
+    ; 简化：直接打印 "Ready\n"
+    ALLOC R0, 0
+    FELLOWSHIP R4, R0
+    FELLOWSHIP R10, R4
+    
+    ; 'R' = 82
+    ABOUND R1, 82
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'e' = 101
+    ABOUND R1, 101
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'a' = 97
+    ABOUND R1, 97
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'd' = 100
+    ABOUND R1, 100
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; 'y' = 121
+    ABOUND R1, 121
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '\n' = 10
+    ABOUND R1, 10
+    DISPERSE R10, R1
+    ABOUND R1, 1
+    GATHER R10, R1
+    
+    ; '\0' = 0
+    ABOUND R1, 0
+    DISPERSE R10, R1
+    
+    ; 打印
+    ABOUND R0, SYSCALL_PRINT
+    FELLOWSHIP R1, R4
+    RECV R0, 0
+    
+    ; 退出
+    ABOUND R0, SYSCALL_EXIT
+    ABOUND R1, 0
+    RECV R0, 0
+
+HALT

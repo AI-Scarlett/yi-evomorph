@@ -1,0 +1,1123 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 增强进化引擎"
+    "实现完整的遗传算法进化功能"
+    "目标：达到Python进化引擎同等功能水平"
+}
+
+@locus evoc.evolution.init_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_CONFIG
+        ䷂ ALLOC R1, 0x80
+        ䷀ CREA R2, @evoc.core.memory_zero
+        ䷌ FELLOWSHIP R1, R2
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 32
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 100
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0.02
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, 0.7
+        ䷂ ALLOC R7, 0x04
+        ䷍ ABUNDANCE R7, 2
+        ䷂ ALLOC R8, 0x04
+        ䷍ ABUNDANCE R8, @SELECTION_TOURNAMENT
+        ䷂ ALLOC R9, 0x04
+        ䷍ ABUNDANCE R9, @CROSSOVER_TWO_POINT
+        ䷂ ALLOC R10, 0x04
+        ䷍ ABUNDANCE R10, 5
+        ䷂ ALLOC R11, 0x08
+        ䷀ CREA R12, @evoc.core.memory_zero
+        ䷌ FELLOWSHIP R11, R12
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.init_population {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_STATE
+        ䷁ RECV R1, env::SEED_GENES
+        ䷁ RECV R2, env::POPULATION_SIZE
+        
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        
+        ䷀ CREA R4, @evoc.evolution.create_individual
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R1
+        ䷍ ABUNDANCE R4, "seed"
+        
+        @init_population_loop:
+        ䷔ BITE R3, R2
+        ䷆ BRANCH R_ge, @init_population_loop_done
+        
+        ䷔ BITE R3, 0
+        ䷆ BRANCH R_eq, @add_seed_individual
+        
+        ䷀ CREA R5, @evoc.evolution.create_variant
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R1
+        ䷍ ABUNDANCE R5, 0.1
+        ䷍ ABUNDANCE R5, R3
+        
+        ䷆ BRANCH R_always, @next_individual
+        
+        @add_seed_individual:
+        ䷀ CREA R5, @evoc.evolution.add_to_population
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R4
+        
+        @next_individual:
+        ䷉ STEP R3
+        ䷆ BRANCH R_always, @init_population_loop
+        
+        @init_population_loop_done:
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, 0
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.create_individual {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_STATE
+        ䷁ RECV R1, env::GENE_LIST
+        ䷁ RECV R2, env::ORIGIN_TAG
+        
+        ䷂ ALLOC R3, 0x20
+        ䷀ CREA R4, @evoc.core.memory_copy
+        ䷌ FELLOWSHIP R1, R4
+        ䷌ FELLOWSHIP R3, R4
+        
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0.0
+        
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, 0
+        
+        ䷂ ALLOC R7, 0x04
+        ䷍ ABUNDANCE R7, R2
+        
+        ䷂ ALLOC R8, 0x08
+        ䷀ CREA R9, @evoc.core.memory_zero
+        ䷌ FELLOWSHIP R8, R9
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.create_variant {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_STATE
+        ䷁ RECV R1, env::BASE_GENES
+        ䷁ RECV R2, env::MUTATION_RATE
+        ䷁ RECV R3, env::VARIANT_INDEX
+        
+        ䷂ ALLOC R4, 0x20
+        ䷀ CREA R5, @evoc.core.memory_copy
+        ䷌ FELLOWSHIP R1, R5
+        ䷌ FELLOWSHIP R4, R5
+        
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, 0
+        
+        ䷁ RECV R7, env::GENE_COUNT
+        
+        @mutate_gene_loop:
+        ䷔ BITE R6, R7
+        ䷆ BRANCH R_ge, @mutate_gene_loop_done
+        
+        ䷀ CREA R8, @evoc.core.random
+        ䷌ FELLOWSHIP R0, R8
+        
+        ䷔ BITE R8, R2
+        ䷆ BRANCH R_lt, @apply_mutation
+        
+        ䷆ BRANCH R_always, @next_gene
+        
+        @apply_mutation:
+        ䷀ CREA R9, @evoc.evolution.mutation_flip_yao
+        ䷌ FELLOWSHIP R0, R9
+        ䷍ ABUNDANCE R9, R4
+        ䷍ ABUNDANCE R9, R6
+        
+        ䷀ CREA R10, @evoc.evolution.mutation_modifier
+        ䷌ FELLOWSHIP R0, R10
+        ䷍ ABUNDANCE R10, R4
+        ䷍ ABUNDANCE R10, R6
+        
+        @next_gene:
+        ䷉ STEP R6
+        ䷆ BRANCH R_always, @mutate_gene_loop
+        
+        @mutate_gene_loop_done:
+        ䷂ ALLOC R11, 0x20
+        ䷍ ABUNDANCE R11, R4
+        
+        ䷂ ALLOC R12, 0x20
+        ䷀ CREA R13, @evoc.core.string_concat
+        ䷍ ABUNDANCE R13, "init_variant_"
+        ䷍ ABUNDANCE R13, R3
+        ䷌ FELLOWSHIP R12, R13
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.evaluate_fitness {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_STATE
+        ䷁ RECV R1, env::INDIVIDUAL
+        ䷁ RECV R2, env::PLATFORM
+        
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0.0
+        
+        ䷁ RECV R4, env::GENE_COUNT
+        ䷔ BITE R4, 0
+        ䷆ BRANCH R_eq, @fitness_no_genes
+        
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, R4
+        
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, -1.0
+        ䷀ CREA R7, @evoc.core.mul
+        ䷌ FELLOWSHIP R5, R7
+        ䷍ ABUNDANCE R7, R6
+        ䷌ FELLOWSHIP R3, R7
+        
+        ䷂ ALLOC R8, 0x04
+        ䷍ ABUNDANCE R8, 10.0
+        
+        ䷂ ALLOC R9, 0x04
+        ䷍ ABUNDANCE R9, 0.5
+        
+        ䷀ CREA R10, @evoc.core.mul
+        ䷌ FELLOWSHIP R5, R10
+        ䷍ ABUNDANCE R10, R9
+        
+        ䷀ CREA R11, @evoc.core.sub
+        ䷌ FELLOWSHIP R8, R11
+        ䷍ ABUNDANCE R11, R10
+        
+        ䷀ CREA R12, @evoc.core.max
+        ䷍ ABUNDANCE R12, 0.0
+        ䷌ FELLOWSHIP R11, R12
+        
+        ䷀ CREA R13, @evoc.core.add
+        ䷌ FELLOWSHIP R3, R13
+        ䷍ ABUNDANCE R13, R12
+        
+        ䷆ BRANCH R_always, @fitness_done
+        
+        @fitness_no_genes:
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, -1000.0
+        
+        @fitness_done:
+        ䷁ RECV R14, env::FITNESS_WEIGHTS
+        
+        ䷀ CREA R15, @evoc.core.mul
+        ䷌ FELLOWSHIP R3, R15
+        ䷍ ABUNDANCE R15, R14
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.selection_roulette {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_STATE
+        ䷁ RECV R1, env::POPULATION
+        
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 0.0
+        
+        ䷁ RECV R3, env::POPULATION_SIZE
+        
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        
+        @calc_total_fitness:
+        ䷔ BITE R4, R3
+        ䷆ BRANCH R_ge, @calc_total_fitness_done
+        
+        ䷀ CREA R5, @evoc.core.get_individual
+        ䷌ FELLOWSHIP R1, R5
+        ䷍ ABUNDANCE R5, R4
+        
+        ䷀ CREA R6, @evoc.core.max
+        ䷍ ABUNDANCE R6, 0.001
+        ䷌ FELLOWSHIP R5, R6
+        
+        ䷀ CREA R7, @evoc.core.add
+        ䷌ FELLOWSHIP R2, R7
+        ䷍ ABUNDANCE R7, R6
+        
+        ䷉ STEP R4
+        ䷆ BRANCH R_always, @calc_total_fitness
+        
+        @calc_total_fitness_done:
+        ䷀ CREA R8, @evoc.core.random
+        ䷌ FELLOWSHIP R0, R8
+        
+        ䷀ CREA R9, @evoc.core.mul
+        ䷌ FELLOWSHIP R2, R9
+        ䷍ ABUNDANCE R9, R8
+        
+        ䷂ ALLOC R10, 0x04
+        ䷍ ABUNDANCE R10, 0
+        
+        ䷂ ALLOC R11, 0x04
+        ䷍ ABUNDANCE R11, 0.0
+        
+        @roulette_wheel:
+        ䷔ BITE R10, R3
+        ䷆ BRANCH R_ge, @roulette_wheel_done
+        
+        ䷀ CREA R12, @evoc.core.get_individual
+        ䷌ FELLOWSHIP R1, R12
+        ䷍ ABUNDANCE R12, R10
+        
+        ䷀ CREA R13, @evoc.core.max
+        ䷍ ABUNDANCE R13, 0.001
+        ䷌ FELLOWSHIP R12, R13
+        
+        ䷀ CREA R14, @evoc.core.add
+        ䷌ FELLOWSHIP R11, R14
+        ䷍ ABUNDANCE R14, R13
+        
+        ䷔ BITE R14, R9
+        ䷆ BRANCH R_ge, @select_individual
+        
+        ䷉ STEP R10
+        ䷆ BRANCH R_always, @roulette_wheel
+        
+        @select_individual:
+        ䷀ CREA R15, @evoc.core.get_individual
+        ䷌ FELLOWSHIP R1, R15
+        ䷍ ABUNDANCE R15, R10
+        ䷆ BRANCH R_always, @selection_done
+        
+        @roulette_wheel_done:
+        ䷀ CREA R15, @evoc.core.get_individual
+        ䷌ FELLOWSHIP R1, R15
+        ䷍ ABUNDANCE R15, R3
+        ䷍ ABUNDANCE R15, 1
+        
+        @selection_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.selection_tournament {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_STATE
+        ䷁ RECV R1, env::POPULATION
+        ䷁ RECV R2, env::TOURNAMENT_SIZE
+        ䷁ RECV R3, env::POPULATION_SIZE
+        
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, -1000.0
+        
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, 0
+        
+        @tournament_loop:
+        ䷔ BITE R4, R2
+        ䷆ BRANCH R_ge, @tournament_loop_done
+        
+        ䷀ CREA R7, @evoc.core.random_int
+        ䷍ ABUNDANCE R7, R3
+        ䷌ FELLOWSHIP R0, R7
+        
+        ䷀ CREA R8, @evoc.core.get_individual
+        ䷌ FELLOWSHIP R1, R8
+        ䷍ ABUNDANCE R8, R7
+        
+        ䷔ BITE R8, R5
+        ䷆ BRANCH R_gt, @update_best
+        
+        ䷆ BRANCH R_always, @next_contestant
+        
+        @update_best:
+        ䷍ ABUNDANCE R5, R8
+        ䷍ ABUNDANCE R6, R7
+        
+        @next_contestant:
+        ䷉ STEP R4
+        ䷆ BRANCH R_always, @tournament_loop
+        
+        @tournament_loop_done:
+        ䷀ CREA R9, @evoc.core.get_individual
+        ䷌ FELLOWSHIP R1, R9
+        ䷍ ABUNDANCE R9, R6
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.selection_rank {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_STATE
+        ䷁ RECV R1, env::POPULATION
+        ䷁ RECV R2, env::POPULATION_SIZE
+        
+        ䷀ CREA R3, @evoc.core.sort_population
+        ䷌ FELLOWSHIP R1, R3
+        ䷍ ABUNDANCE R3, "fitness"
+        ䷍ ABUNDANCE R3, "desc"
+        
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, R2
+        ䷍ ABUNDANCE R4, 1
+        ䷍ ABUNDANCE R4, 2
+        
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        
+        @calc_rank_sum:
+        ䷔ BITE R5, R2
+        ䷆ BRANCH R_ge, @calc_rank_sum_done
+        
+        ䷉ STEP R5
+        ䷀ CREA R6, @evoc.core.add
+        ䷌ FELLOWSHIP R4, R6
+        ䷍ ABUNDANCE R6, R5
+        
+        ䷆ BRANCH R_always, @calc_rank_sum
+        
+        @calc_rank_sum_done:
+        ䷀ CREA R7, @evoc.core.random
+        ䷌ FELLOWSHIP R0, R7
+        
+        ䷀ CREA R8, @evoc.core.mul
+        ䷌ FELLOWSHIP R4, R8
+        ䷍ ABUNDANCE R8, R7
+        
+        ䷂ ALLOC R9, 0x04
+        ䷍ ABUNDANCE R9, 0
+        
+        ䷂ ALLOC R10, 0x04
+        ䷍ ABUNDANCE R10, 0
+        
+        @rank_selection_loop:
+        ䷔ BITE R9, R2
+        ䷆ BRANCH R_ge, @rank_selection_loop_done
+        
+        ䷉ STEP R9
+        ䷀ CREA R11, @evoc.core.add
+        ䷌ FELLOWSHIP R10, R11
+        ䷍ ABUNDANCE R11, R9
+        
+        ䷔ BITE R11, R8
+        ䷆ BRANCH R_ge, @select_rank_individual
+        
+        ䷆ BRANCH R_always, @rank_selection_loop
+        
+        @select_rank_individual:
+        ䷀ CREA R12, @evoc.core.get_individual
+        ䷌ FELLOWSHIP R1, R12
+        ䷍ ABUNDANCE R12, R9
+        ䷆ BRANCH R_always, @rank_selection_done
+        
+        @rank_selection_loop_done:
+        ䷀ CREA R12, @evoc.core.get_individual
+        ䷌ FELLOWSHIP R1, R12
+        ䷍ ABUNDANCE R12, R2
+        ䷍ ABUNDANCE R12, 1
+        
+        @rank_selection_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.crossover_single_point {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARENT1
+        ䷁ RECV R1, env::PARENT2
+        
+        ䷁ RECV R2, env::GENE_COUNT1
+        ䷁ RECV R3, env::GENE_COUNT2
+        
+        ䷀ CREA R4, @evoc.core.min
+        ䷌ FELLOWSHIP R2, R4
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷔ BITE R4, 1
+        ䷆ BRANCH R_le, @crossover_no_op
+        
+        ䷀ CREA R5, @evoc.core.random_int
+        ䷍ ABUNDANCE R5, R4
+        ䷍ ABUNDANCE R5, 1
+        
+        ䷂ ALLOC R6, 0x20
+        ䷂ ALLOC R7, 0x20
+        
+        ䷂ ALLOC R8, 0x04
+        ䷍ ABUNDANCE R8, 0
+        
+        @copy_before_crossover:
+        ䷔ BITE R8, R5
+        ䷆ BRANCH R_ge, @copy_before_crossover_done
+        
+        ䷀ CREA R9, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R0, R9
+        ䷍ ABUNDANCE R9, R8
+        
+        ䷀ CREA R10, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R6, R10
+        ䷍ ABUNDANCE R10, R8
+        ䷍ ABUNDANCE R10, R9
+        
+        ䷀ CREA R11, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R1, R11
+        ䷍ ABUNDANCE R11, R8
+        
+        ䷀ CREA R12, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R7, R12
+        ䷍ ABUNDANCE R12, R8
+        ䷍ ABUNDANCE R12, R11
+        
+        ䷉ STEP R8
+        ䷆ BRANCH R_always, @copy_before_crossover
+        
+        @copy_before_crossover_done:
+        @copy_after_crossover:
+        ䷔ BITE R8, R4
+        ䷆ BRANCH R_ge, @copy_after_crossover_done
+        
+        ䷀ CREA R9, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R1, R9
+        ䷍ ABUNDANCE R9, R8
+        
+        ䷀ CREA R10, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R6, R10
+        ䷍ ABUNDANCE R10, R8
+        ䷍ ABUNDANCE R10, R9
+        
+        ䷀ CREA R11, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R0, R11
+        ䷍ ABUNDANCE R11, R8
+        
+        ䷀ CREA R12, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R7, R12
+        ䷍ ABUNDANCE R12, R8
+        ䷍ ABUNDANCE R12, R11
+        
+        ䷉ STEP R8
+        ䷆ BRANCH R_always, @copy_after_crossover
+        
+        @copy_after_crossover_done:
+        ䷆ BRANCH R_always, @crossover_done
+        
+        @crossover_no_op:
+        ䷀ CREA R6, @evoc.core.clone_individual
+        ䷌ FELLOWSHIP R0, R6
+        
+        ䷀ CREA R7, @evoc.core.clone_individual
+        ䷌ FELLOWSHIP R1, R7
+        
+        @crossover_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.crossover_two_point {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARENT1
+        ䷁ RECV R1, env::PARENT2
+        
+        ䷁ RECV R2, env::GENE_COUNT1
+        ䷁ RECV R3, env::GENE_COUNT2
+        
+        ䷀ CREA R4, @evoc.core.min
+        ䷌ FELLOWSHIP R2, R4
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷔ BITE R4, 2
+        ䷆ BRANCH R_le, @crossover_no_op
+        
+        ䷀ CREA R5, @evoc.core.random_int
+        ䷍ ABUNDANCE R5, R4
+        ䷍ ABUNDANCE R5, 1
+        
+        ䷀ CREA R6, @evoc.core.random_int
+        ䷍ ABUNDANCE R6, R4
+        ䷍ ABUNDANCE R6, R5
+        ䷍ ABUNDANCE R6, 1
+        
+        ䷂ ALLOC R7, 0x20
+        ䷂ ALLOC R8, 0x20
+        
+        ䷂ ALLOC R9, 0x04
+        ䷍ ABUNDANCE R9, 0
+        
+        @copy_first_segment:
+        ䷔ BITE R9, R5
+        ䷆ BRANCH R_ge, @copy_first_segment_done
+        
+        ䷀ CREA R10, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R0, R10
+        ䷍ ABUNDANCE R10, R9
+        
+        ䷀ CREA R11, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R7, R11
+        ䷍ ABUNDANCE R11, R9
+        ䷍ ABUNDANCE R11, R10
+        
+        ䷀ CREA R12, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R1, R12
+        ䷍ ABUNDANCE R12, R9
+        
+        ䷀ CREA R13, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R8, R13
+        ䷍ ABUNDANCE R13, R9
+        ䷍ ABUNDANCE R13, R12
+        
+        ䷉ STEP R9
+        ䷆ BRANCH R_always, @copy_first_segment
+        
+        @copy_first_segment_done:
+        @copy_second_segment:
+        ䷔ BITE R9, R6
+        ䷆ BRANCH R_ge, @copy_second_segment_done
+        
+        ䷀ CREA R10, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R1, R10
+        ䷍ ABUNDANCE R10, R9
+        
+        ䷀ CREA R11, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R7, R11
+        ䷍ ABUNDANCE R11, R9
+        ䷍ ABUNDANCE R11, R10
+        
+        ䷀ CREA R12, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R0, R12
+        ䷍ ABUNDANCE R12, R9
+        
+        ䷀ CREA R13, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R8, R13
+        ䷍ ABUNDANCE R13, R9
+        ䷍ ABUNDANCE R13, R12
+        
+        ䷉ STEP R9
+        ䷆ BRANCH R_always, @copy_second_segment
+        
+        @copy_second_segment_done:
+        @copy_third_segment:
+        ䷔ BITE R9, R4
+        ䷆ BRANCH R_ge, @copy_third_segment_done
+        
+        ䷀ CREA R10, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R0, R10
+        ䷍ ABUNDANCE R10, R9
+        
+        ䷀ CREA R11, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R7, R11
+        ䷍ ABUNDANCE R11, R9
+        ䷍ ABUNDANCE R11, R10
+        
+        ䷀ CREA R12, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R1, R12
+        ䷍ ABUNDANCE R12, R9
+        
+        ䷀ CREA R13, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R8, R13
+        ䷍ ABUNDANCE R13, R9
+        ䷍ ABUNDANCE R13, R12
+        
+        ䷉ STEP R9
+        ䷆ BRANCH R_always, @copy_third_segment
+        
+        @copy_third_segment_done:
+        ䷆ BRANCH R_always, @crossover_done
+        
+        @crossover_no_op:
+        ䷀ CREA R7, @evoc.core.clone_individual
+        ䷌ FELLOWSHIP R0, R7
+        
+        ䷀ CREA R8, @evoc.core.clone_individual
+        ䷌ FELLOWSHIP R1, R8
+        
+        @crossover_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.crossover_uniform {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::PARENT1
+        ䷁ RECV R1, env::PARENT2
+        
+        ䷁ RECV R2, env::GENE_COUNT1
+        ䷁ RECV R3, env::GENE_COUNT2
+        
+        ䷀ CREA R4, @evoc.core.max
+        ䷌ FELLOWSHIP R2, R4
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷂ ALLOC R5, 0x20
+        ䷂ ALLOC R6, 0x20
+        
+        ䷂ ALLOC R7, 0x04
+        ䷍ ABUNDANCE R7, 0
+        
+        @uniform_crossover_loop:
+        ䷔ BITE R7, R4
+        ䷆ BRANCH R_ge, @uniform_crossover_done
+        
+        ䷀ CREA R8, @evoc.core.random
+        ䷌ FELLOWSHIP R0, R8
+        
+        ䷔ BITE R8, 0.5
+        ䷆ BRANCH R_lt, @use_parent1
+        
+        ䷔ BITE R7, R3
+        ䷆ BRANCH R_ge, @use_parent1
+        
+        ䷆ BRANCH R_always, @use_parent2
+        
+        @use_parent1:
+        ䷔ BITE R7, R2
+        ䷆ BRANCH R_ge, @uniform_crossover_loop
+        
+        ䷀ CREA R9, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R0, R9
+        ䷍ ABUNDANCE R9, R7
+        
+        ䷀ CREA R10, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R5, R10
+        ䷍ ABUNDANCE R10, R7
+        ䷍ ABUNDANCE R10, R9
+        
+        ䷀ CREA R11, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R1, R11
+        ䷍ ABUNDANCE R11, R7
+        
+        ䷀ CREA R12, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R6, R12
+        ䷍ ABUNDANCE R12, R7
+        ䷍ ABUNDANCE R12, R11
+        
+        ䷆ BRANCH R_always, @next_gene
+        
+        @use_parent2:
+        ䷀ CREA R9, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R1, R9
+        ䷍ ABUNDANCE R9, R7
+        
+        ䷀ CREA R10, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R5, R10
+        ䷍ ABUNDANCE R10, R7
+        ䷍ ABUNDANCE R10, R9
+        
+        ䷀ CREA R11, @evoc.core.get_gene
+        ䷌ FELLOWSHIP R0, R11
+        ䷍ ABUNDANCE R11, R7
+        
+        ䷀ CREA R12, @evoc.core.set_gene
+        ䷌ FELLOWSHIP R6, R12
+        ䷍ ABUNDANCE R12, R7
+        ䷍ ABUNDANCE R12, R11
+        
+        @next_gene:
+        ䷉ STEP R7
+        ䷆ BRANCH R_always, @uniform_crossover_loop
+        
+        @uniform_crossover_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.mutation_flip_yao {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::GENE
+        ䷁ RECV R1, env::BIT_POSITION
+        
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 1
+        
+        ䷀ CREA R3, @evoc.core.shift_left
+        ䷌ FELLOWSHIP R2, R3
+        ䷍ ABUNDANCE R3, R1
+        
+        ䷀ CREA R4, @evoc.core.xor
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, R3
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.mutation_modifier {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::GENE
+        
+        ䷀ CREA R1, @evoc.core.random_int
+        ䷍ ABUNDANCE R1, 6
+        ䷌ FELLOWSHIP R0, R1
+        
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 1
+        
+        ䷀ CREA R3, @evoc.core.shift_left
+        ䷌ FELLOWSHIP R2, R3
+        ䷍ ABUNDANCE R3, R1
+        
+        ䷀ CREA R4, @evoc.core.get_modifier
+        ䷌ FELLOWSHIP R0, R4
+        
+        ䷀ CREA R5, @evoc.core.xor
+        ䷌ FELLOWSHIP R4, R5
+        ䷍ ABUNDANCE R5, R3
+        
+        ䷀ CREA R6, @evoc.core.set_modifier
+        ䷌ FELLOWSHIP R0, R6
+        ䷍ ABUNDANCE R6, R5
+        
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.convergence_check {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_STATE
+        ䷁ RECV R1, env::HISTORY_WINDOW
+        ䷁ RECV R2, env::CONVERGENCE_THRESHOLD
+        
+        ䷁ RECV R3, env::HISTORY_LENGTH
+        
+        ䷔ BITE R3, R1
+        ䷆ BRANCH R_lt, @not_converged
+        
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0.0
+        
+        ䷂ ALLOC R5, 0x04
+        ䷍ ABUNDANCE R5, 0
+        
+        ䷂ ALLOC R6, 0x04
+        ䷍ ABUNDANCE R6, R3
+        ䷍ ABUNDANCE R6, R1
+        
+        @calc_avg_fitness:
+        ䷔ BITE R5, R1
+        ䷆ BRANCH R_ge, @calc_avg_fitness_done
+        
+        ䷀ CREA R7, @evoc.core.get_history_fitness
+        ䷌ FELLOWSHIP R0, R7
+        ䷍ ABUNDANCE R7, R6
+        
+        ䷀ CREA R8, @evoc.core.add
+        ䷌ FELLOWSHIP R4, R8
+        ䷍ ABUNDANCE R8, R7
+        
+        ䷉ STEP R5
+        ䷉ STEP R6
+        ䷆ BRANCH R_always, @calc_avg_fitness
+        
+        @calc_avg_fitness_done:
+        ䷀ CREA R9, @evoc.core.div
+        ䷌ FELLOWSHIP R4, R9
+        ䷍ ABUNDANCE R9, R1
+        
+        ䷂ ALLOC R10, 0x04
+        ䷍ ABUNDANCE R10, 0.0
+        
+        ䷂ ALLOC R11, 0x04
+        ䷍ ABUNDANCE R11, 0
+        
+        ䷂ ALLOC R12, 0x04
+        ䷍ ABUNDANCE R12, R3
+        ䷍ ABUNDANCE R12, R1
+        
+        @calc_variance:
+        ䷔ BITE R11, R1
+        ䷆ BRANCH R_ge, @calc_variance_done
+        
+        ䷀ CREA R13, @evoc.core.get_history_fitness
+        ䷌ FELLOWSHIP R0, R13
+        ䷍ ABUNDANCE R13, R12
+        
+        ䷀ CREA R14, @evoc.core.sub
+        ䷌ FELLOWSHIP R13, R14
+        ䷍ ABUNDANCE R14, R9
+        
+        ䷀ CREA R15, @evoc.core.mul
+        ䷌ FELLOWSHIP R14, R15
+        ䷍ ABUNDANCE R15, R14
+        
+        ䷀ CREA R16, @evoc.core.add
+        ䷌ FELLOWSHIP R10, R16
+        ䷍ ABUNDANCE R16, R15
+        
+        ䷉ STEP R11
+        ䷉ STEP R12
+        ䷆ BRANCH R_always, @calc_variance
+        
+        @calc_variance_done:
+        ䷀ CREA R17, @evoc.core.div
+        ䷌ FELLOWSHIP R10, R17
+        ䷍ ABUNDANCE R17, R1
+        
+        ䷔ BITE R17, R2
+        ䷆ BRANCH R_lt, @is_converged
+        
+        ䷆ BRANCH R_always, @not_converged
+        
+        @is_converged:
+        ䷂ ALLOC R18, 0x04
+        ䷍ ABUNDANCE R18, 1
+        ䷆ BRANCH R_always, @convergence_check_done
+        
+        @not_converged:
+        ䷂ ALLOC R18, 0x04
+        ䷍ ABUNDANCE R18, 0
+        
+        @convergence_check_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.diversity_calculation {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::POPULATION
+        ䷁ RECV R1, env::POPULATION_SIZE
+        
+        ䷔ BITE R1, 2
+        ䷆ BRANCH R_lt, @diversity_zero
+        
+        ䷂ ALLOC R2, 0x100
+        ䷂ ALLOC R3, 0x04
+        ䷍ ABUNDANCE R3, 0
+        
+        ䷂ ALLOC R4, 0x04
+        ䷍ ABUNDANCE R4, 0
+        
+        @hash_individuals:
+        ䷔ BITE R4, R1
+        ䷆ BRANCH R_ge, @hash_individuals_done
+        
+        ䷀ CREA R5, @evoc.core.get_individual
+        ䷌ FELLOWSHIP R0, R5
+        ䷍ ABUNDANCE R5, R4
+        
+        ䷀ CREA R6, @evoc.core.hash_individual
+        ䷌ FELLOWSHIP R5, R6
+        
+        ䷀ CREA R7, @evoc.core.set_contains
+        ䷌ FELLOWSHIP R2, R7
+        ䷍ ABUNDANCE R7, R6
+        
+        ䷔ BITE R7, 0
+        ䷆ BRANCH R_eq, @add_unique
+        
+        ䷆ BRANCH R_always, @next_individual
+        
+        @add_unique:
+        ䷀ CREA R8, @evoc.core.set_add
+        ䷌ FELLOWSHIP R2, R8
+        ䷍ ABUNDANCE R8, R6
+        
+        ䷉ STEP R3
+        
+        @next_individual:
+        ䷉ STEP R4
+        ䷆ BRANCH R_always, @hash_individuals
+        
+        @hash_individuals_done:
+        ䷀ CREA R9, @evoc.core.div
+        ䷌ FELLOWSHIP R3, R9
+        ䷍ ABUNDANCE R9, R1
+        
+        ䷆ BRANCH R_always, @diversity_done
+        
+        @diversity_zero:
+        ䷂ ALLOC R9, 0x04
+        ䷍ ABUNDANCE R9, 0.0
+        
+        @diversity_done:
+        ䷾ SYNC
+    }
+}
+
+@locus evoc.evolution.evolve_full {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, env::EVOLUTION_STATE
+        ䷁ RECV R1, env::MAX_GENERATIONS
+        
+        ䷂ ALLOC R2, 0x04
+        ䷍ ABUNDANCE R2, 0
+        
+        @evolution_loop:
+        ䷔ BITE R2, R1
+        ䷆ BRANCH R_ge, @evolution_loop_done
+        
+        ䷀ CREA R3, @evoc.evolution.evaluate_population
+        ䷌ FELLOWSHIP R0, R3
+        
+        ䷀ CREA R4, @evoc.evolution.sort_population
+        ䷌ FELLOWSHIP R0, R4
+        ䷍ ABUNDANCE R4, "fitness"
+        ䷍ ABUNDANCE R4, "desc"
+        
+        ䷀ CREA R5, @evoc.evolution.select_elites
+        ䷌ FELLOWSHIP R0, R5
+        
+        ䷂ ALLOC R6, 0x10
+        ䷀ CREA R7, @evoc.core.memory_copy
+        ䷌ FELLOWSHIP R5, R7
+        ䷌ FELLOWSHIP R6, R7
+        
+        ䷁ RECV R8, env::POPULATION_SIZE
+        ䷁ RECV R9, env::ELITE_COUNT
+        
+        ䷂ ALLOC R10, 0x04
+        ䷍ ABUNDANCE R10, R9
+        
+        @create_offspring:
+        ䷔ BITE R10, R8
+        ䷆ BRANCH R_ge, @create_offspring_done
+        
+        ䷀ CREA R11, @evoc.evolution.select_parent
+        ䷌ FELLOWSHIP R0, R11
+        
+        ䷀ CREA R12, @evoc.evolution.select_parent
+        ䷌ FELLOWSHIP R0, R12
+        
+        ䷀ CREA R13, @evoc.evolution.crossover
+        ䷌ FELLOWSHIP R11, R13
+        ䷍ ABUNDANCE R13, R12
+        
+        ䷀ CREA R14, @evoc.evolution.mutate
+        ䷌ FELLOWSHIP R0, R14
+        ䷍ ABUNDANCE R14, R13
+        
+        ䷀ CREA R15, @evoc.core.list_append
+        ䷌ FELLOWSHIP R6, R15
+        ䷍ ABUNDANCE R15, R14
+        
+        ䷉ STEP R10
+        ䷆ BRANCH R_always, @create_offspring
+        
+        @create_offspring_done:
+        ䷀ CREA R16, @evoc.evolution.set_population
+        ䷌ FELLOWSHIP R0, R16
+        ䷍ ABUNDANCE R16, R6
+        
+        ䷀ CREA R17, @evoc.evolution.convergence_check
+        ䷌ FELLOWSHIP R0, R17
+        
+        ䷔ BITE R17, 1
+        ䷆ BRANCH R_eq, @evolution_loop_done
+        
+        ䷉ STEP R2
+        ䷆ BRANCH R_always, @evolution_loop
+        
+        @evolution_loop_done:
+        ䷀ CREA R18, @evoc.evolution.get_best_individual
+        ䷌ FELLOWSHIP R0, R18
+        
+        ䷾ SYNC
+    }
+}
+
+@meta_locus 进化引擎.进化策略 {
+    mut_rate = 0.001
+    fitness  = min_latency + max_throughput + min_size
+
+    卦序: {
+        ䷓ CONTEMPLATE R0
+        ䷑ MUT R0, 0x03
+        ䷫ MATE R0, R1
+        ䷏ SPECULATE R2
+        ䷾ SYNC
+    }
+}

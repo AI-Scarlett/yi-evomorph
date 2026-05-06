@@ -1,0 +1,487 @@
+; 易衍·Evomorph 自举汇编器
+; Bootstrap Assembler - Phase 1
+; 用EvoASM编写的最小化汇编器，能够编译自身
+;
+; 功能：
+; - 读取源文件
+; - 词法分析（空格、逗号、冒号分隔）
+; - 指令编码（核心指令集）
+; - 写入输出文件
+;
+; 寄存器分配：
+; R0-R3  - 系统调用参数/返回值
+; R4-R6  - 临时寄存器
+; R7     - 当前地址计数器
+; R8     - 输入缓冲区指针
+; R9     - 输出缓冲区指针
+; R10    - 输入文件大小
+; R11    - 输出文件大小
+; R12-R15 - 保留（FP/SP/LR/A0）
+
+; 系统调用常量
+SYS_OPEN    EQU 0
+SYS_READ    EQU 1
+SYS_WRITE   EQU 2
+SYS_CLOSE   EQU 3
+SYS_MALLOC  EQU 10
+SYS_MEMCPY  EQU 12
+SYS_STRLEN  EQU 20
+SYS_PRINT   EQU 40
+SYS_EXIT    EQU 255
+
+; 文件模式
+O_RDONLY    EQU 0
+O_WRONLY    EQU 1
+O_CREAT     EQU 0x40
+
+; 缓冲区大小
+BUF_SIZE    EQU 8192
+OUT_BUF_SIZE EQU 4096
+
+; ============================================
+; 主程序入口
+; ============================================
+MAIN:
+    ; 初始化寄存器
+    ABOUND R7, 0          ; 当前地址 = 0
+    ABOUND R10, 0         ; 输入大小 = 0
+    ABOUND R11, 0         ; 输出大小 = 0
+
+    ; 打印启动信息
+    ALLOC R0, 32          ; 分配消息缓冲区
+    FELLOWSHIP R8, R0     ; 保存缓冲区指针
+    
+    ; 消息: "Bootstrap Assembler\n"
+    ABOUND R0, 0x42       ; 'B'
+    DISPERSE R8, R0, 0
+    ABOUND R0, 0x6F       ; 'o'
+    DISPERSE R8, R0, 1
+    ABOUND R0, 0x6F       ; 'o'
+    DISPERSE R8, R0, 2
+    ABOUND R0, 0x74       ; 't'
+    DISPERSE R8, R0, 3
+    ABOUND R0, 0x73       ; 's'
+    DISPERSE R8, R0, 4
+    ABOUND R0, 0x74       ; 't'
+    DISPERSE R8, R0, 5
+    ABOUND R0, 0x72       ; 'r'
+    DISPERSE R8, R0, 6
+    ABOUND R0, 0x61       ; 'a'
+    DISPERSE R8, R0, 7
+    ABOUND R0, 0x70       ; 'p'
+    DISPERSE R8, R0, 8
+    ABOUND R0, 0x20       ; ' '
+    DISPERSE R8, R0, 9
+    ABOUND R0, 0x41       ; 'A'
+    DISPERSE R8, R0, 10
+    ABOUND R0, 0x73       ; 's'
+    DISPERSE R8, R0, 11
+    ABOUND R0, 0x73       ; 's'
+    DISPERSE R8, R0, 12
+    ABOUND R0, 0x65       ; 'e'
+    DISPERSE R8, R0, 13
+    ABOUND R0, 0x6D       ; 'm'
+    DISPERSE R8, R0, 14
+    ABOUND R0, 0x62       ; 'b'
+    DISPERSE R8, R0, 15
+    ABOUND R0, 0x6C       ; 'l'
+    DISPERSE R8, R0, 16
+    ABOUND R0, 0x65       ; 'e'
+    DISPERSE R8, R0, 17
+    ABOUND R0, 0x72       ; 'r'
+    DISPERSE R8, R0, 18
+    ABOUND R0, 0x0A       ; '\n'
+    DISPERSE R8, R0, 19
+    ABOUND R0, 0x00       ; '\0'
+    DISPERSE R8, R0, 20
+
+    ; 打印消息
+    FELLOWSHIP R0, R8
+    RECV R0, R0, SYS_PRINT
+
+    ; 分配输入缓冲区
+    ALLOC R0, BUF_SIZE
+    FELLOWSHIP R8, R0     ; R8 = 输入缓冲区
+
+    ; 分配输出缓冲区
+    ALLOC R0, OUT_BUF_SIZE
+    FELLOWSHIP R9, R0     ; R9 = 输出缓冲区
+
+    ; 打开输入文件 (简化版：使用固定文件名)
+    ; 实际使用时从命令行参数读取
+    ; 这里我们假设输入文件名为 "input.asm"
+    
+    ; 构造文件名 "input.asm"
+    FELLOWSHIP R4, R8     ; 复用输入缓冲区前几个字节存文件名
+    ABOUND R0, 0x69       ; 'i'
+    DISPERSE R4, R0, 0
+    ABOUND R0, 0x6E       ; 'n'
+    DISPERSE R4, R0, 1
+    ABOUND R0, 0x70       ; 'p'
+    DISPERSE R4, R0, 2
+    ABOUND R0, 0x75       ; 'u'
+    DISPERSE R4, R0, 3
+    ABOUND R0, 0x74       ; 't'
+    DISPERSE R4, R0, 4
+    ABOUND R0, 0x2E       ; '.'
+    DISPERSE R4, R0, 5
+    ABOUND R0, 0x61       ; 'a'
+    DISPERSE R4, R0, 6
+    ABOUND R0, 0x73       ; 's'
+    DISPERSE R4, R0, 7
+    ABOUND R0, 0x6D       ; 'm'
+    DISPERSE R4, R0, 8
+    ABOUND R0, 0x00       ; '\0'
+    DISPERSE R4, R0, 9
+
+    ; 打开文件
+    FELLOWSHIP R0, R4
+    ABOUND R1, O_RDONLY
+    RECV R0, R1, SYS_OPEN
+    
+    ; R0 现在是文件描述符
+    ; 检查是否出错 (简化处理)
+    
+    ; 读取文件内容
+    FELLOWSHIP R1, R8     ; 缓冲区
+    ABOUND R2, BUF_SIZE   ; 大小
+    RECV R0, R1, SYS_READ
+    
+    ; R0 = 读取的字节数
+    FELLOWSHIP R10, R0    ; 保存文件大小
+    
+    ; 关闭文件
+    RECV R0, R0, SYS_CLOSE
+
+    ; 现在开始汇编
+    ; 初始化词法分析器
+    ABOUND R4, 0           ; R4 = 当前位置
+    ABOUND R5, 0           ; R5 = Token起始位置
+    ABOUND R6, 0           ; R6 = 临时存储
+
+; ============================================
+; 主汇编循环
+; ============================================
+ASSEMBLE_LOOP:
+    ; 检查是否处理完所有输入
+    CMP R4, R10
+    BRANCH R4, DONE_ASSEMBLE ; 如果处理完，退出
+
+    ; 跳过空白字符
+SKIP_WHITESPACE:
+    CMP R4, R10
+    BRANCH R4, DONE_ASSEMBLE
+    
+    ; 读取当前字符
+    PENETRATE R0, R8, R4  ; R0 = buf[pos]
+    
+    ; 检查是否是空格 (0x20)
+    CMP R0, 0x20
+    BRANCH R0, IS_SPACE
+    
+    ; 检查是否是制表符 (0x09)
+    CMP R0, 0x09
+    BRANCH R0, IS_SPACE
+    
+    ; 检查是否是换行 (0x0A)
+    CMP R0, 0x0A
+    BRANCH R0, IS_SPACE
+    
+    ; 检查是否是回车 (0x0D)
+    CMP R0, 0x0D
+    BRANCH R0, IS_SPACE
+    
+    ; 不是空白，开始收集Token
+    BRANCH R0, COLLECT_TOKEN
+
+IS_SPACE:
+    INCREASE R4, 1
+    BRANCH R0, SKIP_WHITESPACE
+
+; ============================================
+; 收集Token
+; ============================================
+COLLECT_TOKEN:
+    FELLOWSHIP R5, R4      ; Token起始位置
+    
+    ; 检查是否是注释 (;)
+    PENETRATE R0, R8, R4
+    CMP R0, 0x3B           ; ';'
+    BRANCH R0, SKIP_COMMENT
+    
+    ; 检查是否是逗号
+    CMP R0, 0x2C           ; ','
+    BRANCH R0, TOKEN_COMMA
+    
+    ; 检查是否是冒号
+    CMP R0, 0x3A           ; ':'
+    BRANCH R0, TOKEN_COLON
+    
+    ; 收集标识符/数字
+COLLECT_IDENT:
+    CMP R4, R10
+    BRANCH R4, END_TOKEN
+    
+    PENETRATE R0, R8, R4
+    
+    ; 检查是否是分隔符
+    CMP R0, 0x20           ; 空格
+    BRANCH R0, END_TOKEN
+    CMP R0, 0x09           ; 制表符
+    BRANCH R0, END_TOKEN
+    CMP R0, 0x0A           ; 换行
+    BRANCH R0, END_TOKEN
+    CMP R0, 0x2C           ; 逗号
+    BRANCH R0, END_TOKEN
+    CMP R0, 0x3A           ; 冒号
+    BRANCH R0, END_TOKEN
+    CMP R0, 0x3B           ; 分号
+    BRANCH R0, END_TOKEN
+    
+    ; 继续收集
+    INCREASE R4, 1
+    BRANCH R0, COLLECT_IDENT
+
+END_TOKEN:
+    ; 现在处理这个Token
+    ; 首先，检查是否是指令助记符
+    ; 简化版：只处理几个核心指令
+    ; 实际完整实现需要完整的查找表
+    
+    ; 为简化，我们先检查Token长度
+    SUB R0, R4, R5         ; R0 = Token长度
+    
+    ; 检查是否是 "RECV" (4字符)
+    CMP R0, 4
+    BRANCH R0, CHECK_RECV
+    
+    ; 检查是否是 "ABOUND" (6字符)
+    CMP R0, 6
+    BRANCH R0, CHECK_ABOUND
+    
+    ; 检查是否是 "DISPERSE" (8字符)
+    CMP R0, 8
+    BRANCH R0, CHECK_DISPERSE
+    
+    ; 检查是否是 "ALLOC" (5字符)
+    CMP R0, 5
+    BRANCH R0, CHECK_ALLOC
+    
+    ; 检查是否是 "HALT" (4字符)
+    CMP R0, 4
+    BRANCH R0, CHECK_HALT
+    
+    ; 检查是否是寄存器 (R0-R15)
+    PENETRATE R0, R8, R5
+    CMP R0, 0x52           ; 'R'
+    BRANCH R0, PARSE_REGISTER
+    
+    ; 检查是否是数字
+    CMP R0, 0x30           ; '0'
+    BRANCH R0, PARSE_NUMBER
+    CMP R0, 0x31
+    BRANCH R0, PARSE_NUMBER
+    ; ... 简化处理
+    
+    ; 未知Token，跳过
+    BRANCH R0, ASSEMBLE_LOOP
+
+TOKEN_COMMA:
+    INCREASE R4, 1
+    BRANCH R0, ASSEMBLE_LOOP
+
+TOKEN_COLON:
+    ; 标签定义，简化处理
+    INCREASE R4, 1
+    BRANCH R0, ASSEMBLE_LOOP
+
+SKIP_COMMENT:
+    ; 跳过直到换行
+    CMP R4, R10
+    BRANCH R4, DONE_ASSEMBLE
+    
+    PENETRATE R0, R8, R4
+    CMP R0, 0x0A
+    BRANCH R0, ASSEMBLE_LOOP
+    
+    INCREASE R4, 1
+    BRANCH R0, SKIP_COMMENT
+
+; ============================================
+; 指令检查和编码
+; ============================================
+CHECK_RECV:
+    ; 检查是否是 "RECV"
+    PENETRATE R0, R8, R5
+    CMP R0, 0x52           ; 'R'
+    BRANCH R0, NOT_RECV
+    INCREASE R5, 1
+    PENETRATE R0, R8, R5
+    CMP R0, 0x45           ; 'E'
+    BRANCH R0, NOT_RECV
+    INCREASE R5, 1
+    PENETRATE R0, R8, R5
+    CMP R0, 0x43           ; 'C'
+    BRANCH R0, NOT_RECV
+    INCREASE R5, 1
+    PENETRATE R0, R8, R5
+    CMP R0, 0x56           ; 'V'
+    BRANCH R0, NOT_RECV
+    
+    ; 是 RECV 指令
+    ; 操作码 = 0 (000000)
+    ABOUND R0, 0           ; opcode
+    ABOUND R1, 0           ; modifier
+    ; 简化：操作数固定为0
+    ABOUND R2, 0
+    ABOUND R3, 0
+    BRANCH R0, ENCODE_INSTRUCTION
+
+NOT_RECV:
+    BRANCH R0, ASSEMBLE_LOOP
+
+CHECK_ABOUND:
+    ; 检查是否是 "ABOUND"
+    ; 简化处理
+    ABOUND R0, 13          ; opcode for ABOUND
+    ABOUND R1, 0
+    ABOUND R2, 0
+    ABOUND R3, 0
+    BRANCH R0, ENCODE_INSTRUCTION
+
+CHECK_DISPERSE:
+    ABOUND R0, 50          ; opcode for DISPERSE
+    ABOUND R1, 0
+    ABOUND R2, 0
+    ABOUND R3, 0
+    BRANCH R0, ENCODE_INSTRUCTION
+
+CHECK_ALLOC:
+    ABOUND R0, 17          ; opcode for ALLOC
+    ABOUND R1, 0
+    ABOUND R2, 0
+    ABOUND R3, 0
+    BRANCH R0, ENCODE_INSTRUCTION
+
+CHECK_HALT:
+    ABOUND R0, 56          ; opcode for HALT
+    ABOUND R1, 0
+    ABOUND R2, 0
+    ABOUND R3, 0
+    BRANCH R0, ENCODE_INSTRUCTION
+
+; ============================================
+; 编码指令到输出缓冲区
+; ============================================
+ENCODE_INSTRUCTION:
+    ; 编码格式：
+    ; byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+    ; byte2 = modifier & 0x0F
+    ; byte3 = operand1
+    ; byte4 = operand2
+    
+    ; 计算 byte1
+    SHL R0, R0, 2          ; opcode << 2
+    ; 简化：modifier为0，所以不需要处理
+    
+    ; 写入输出缓冲区
+    DISPERSE R9, R0, R11   ; buf[out_size] = byte1
+    INCREASE R11, 1
+    
+    ABOUND R0, 0
+    DISPERSE R9, R0, R11   ; byte2 = 0
+    INCREASE R11, 1
+    
+    DISPERSE R9, R2, R11   ; byte3 = operand1
+    INCREASE R11, 1
+    
+    DISPERSE R9, R3, R11   ; byte4 = operand2
+    INCREASE R11, 1
+    
+    ; 增加地址计数器
+    INCREASE R7, 4
+    
+    ; 继续汇编循环
+    BRANCH R0, ASSEMBLE_LOOP
+
+; ============================================
+; 汇编完成，写入输出文件
+; ============================================
+DONE_ASSEMBLE:
+    ; 构造输出文件名 "output.raw"
+    FELLOWSHIP R4, R8     ; 复用输入缓冲区
+    ABOUND R0, 0x6F       ; 'o'
+    DISPERSE R4, R0, 0
+    ABOUND R0, 0x75       ; 'u'
+    DISPERSE R4, R0, 1
+    ABOUND R0, 0x74       ; 't'
+    DISPERSE R4, R0, 2
+    ABOUND R0, 0x70       ; 'p'
+    DISPERSE R4, R0, 3
+    ABOUND R0, 0x75       ; 'u'
+    DISPERSE R4, R0, 4
+    ABOUND R0, 0x74       ; 't'
+    DISPERSE R4, R0, 5
+    ABOUND R0, 0x2E       ; '.'
+    DISPERSE R4, R0, 6
+    ABOUND R0, 0x72       ; 'r'
+    DISPERSE R4, R0, 7
+    ABOUND R0, 0x61       ; 'a'
+    DISPERSE R4, R0, 8
+    ABOUND R0, 0x77       ; 'w'
+    DISPERSE R4, R0, 9
+    ABOUND R0, 0x00       ; '\0'
+    DISPERSE R4, R0, 10
+
+    ; 打开输出文件 (创建/写入)
+    FELLOWSHIP R0, R4
+    ABOUND R1, O_WRONLY
+    OR R1, R1, O_CREAT
+    RECV R0, R1, SYS_OPEN
+    
+    ; 写入字节码
+    FELLOWSHIP R1, R9
+    FELLOWSHIP R2, R11
+    RECV R0, R1, SYS_WRITE
+    
+    ; 关闭文件
+    RECV R0, R0, SYS_CLOSE
+
+    ; 打印完成信息
+    FELLOWSHIP R0, R8
+    ; "Done\n"
+    ABOUND R0, 0x44
+    DISPERSE R4, R0, 0
+    ABOUND R0, 0x6F
+    DISPERSE R4, R0, 1
+    ABOUND R0, 0x6E
+    DISPERSE R4, R0, 2
+    ABOUND R0, 0x65
+    DISPERSE R4, R0, 3
+    ABOUND R0, 0x0A
+    DISPERSE R4, R0, 4
+    ABOUND R0, 0x00
+    DISPERSE R4, R0, 5
+    
+    FELLOWSHIP R0, R4
+    RECV R0, R0, SYS_PRINT
+
+    ; 退出程序
+    ABOUND R0, 0
+    RECV R0, R0, SYS_EXIT
+
+; ============================================
+; 辅助函数（简化）
+; ============================================
+PARSE_REGISTER:
+    ; 简化：返回 R0
+    ABOUND R0, 0
+    BRANCH R0, ASSEMBLE_LOOP
+
+PARSE_NUMBER:
+    ; 简化：返回 0
+    ABOUND R0, 0
+    BRANCH R0, ASSEMBLE_LOOP
+
+; 程序结束
+HALT
