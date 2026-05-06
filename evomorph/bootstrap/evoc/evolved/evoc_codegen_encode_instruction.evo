@@ -1,0 +1,22 @@
+@evolang "3.0"
+
+@locus evoc.codegen.encode_instruction {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::OPCODE
+        ䷁ RECV R1, env::MODIFIER
+        ䷁ RECV R2, env::OP1
+        ䷁ RECV R3, env::OP2
+        ䷂ ALLOC R4, R4
+        ䷩ INCREASE R0, R1
+        ䷍ ABUNDANCE R4, R0
+        ䷍ ABUNDANCE R4, R2
+        ䷍ ABUNDANCE R4, R3
+        ䷾ SYNC
+    }
+}

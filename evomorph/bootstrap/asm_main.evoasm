@@ -1,0 +1,434 @@
+; ============================================================
+; 自举汇编器 - 主模块 (两遍扫描)
+; 依赖 asm_core.evoasm 已加载到 VM 中
+; 输入: R0 指向堆中源码文本; 输出: R0=字节数, 数据在 0x11000
+; ============================================================
+BRANCH.1 @asm_main
+
+; === 第一遍: 收集标签 + 计算指令大小 ===
+pass1:
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+    PUSH_UP.1 R6, R6
+    PUSH_UP.1 R7, R7
+    CREA.1 R0, R0, #0x1000
+    FELLOWSHIP.0 R8, R0
+    CREA.1 R10, R10, #0
+p1_loop:
+    RECV.2 R0, R8
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @p1_done
+    ; 跳过空行
+    FELLOWSHIP.2 R0, R0, #10
+    BRANCH.2 @p1_advance
+    FELLOWSHIP.2 R0, R0, #13
+    BRANCH.2 @p1_advance
+    ; 跳过注释
+    FELLOWSHIP.2 R0, R0, #59
+    BRANCH.2 @p1_comment
+    ; 检查标签 (扫描到 : 或空格)
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+    FELLOWSHIP.0 R4, R8
+    CREA.1 R7, R7, #0
+p1_label_scan:
+    RECV.2 R5, R4
+    FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @p1_is_instr
+    FELLOWSHIP.2 R5, R5, #10
+    BRANCH.2 @p1_is_instr
+    FELLOWSHIP.2 R5, R5, #58
+    BRANCH.2 @p1_has_label
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p1_is_instr
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.2 @p1_is_instr
+    FELLOWSHIP.2 R5, R5, #46
+    BRANCH.2 @p1_is_instr
+    MICRO.1 R4, R4
+    MICRO.1 R7, R7
+    BRANCH.1 @p1_label_scan
+p1_has_label:
+    ; 复制标签名并记录地址
+    FELLOWSHIP.2 R7, R7, #0
+    BRANCH.2 @p1_next_line
+    PUSH_UP.1 R6, R6
+    FELLOWSHIP.0 R6, R8
+    ; 保存冒号字符，临时替换为 \0 以便 add_label 使用
+    RECV.2 R7, R4
+    CREA.1 R0, R0, #0
+    ALLOC.2 R4, R0
+    FELLOWSHIP.0 R0, R6
+    FELLOWSHIP.0 R1, R10
+    ABUNDANCE.1 R0, R0, @add_label
+    ; 恢复冒号字符，保留源码完整性
+    ALLOC.2 R4, R7
+    WELL.1 R6, R6
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    BRANCH.1 @p1_next_line
+p1_is_instr:
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    ; 计算指令大小: 检查是否有 # 或 @ 决定 4 或 8 字节
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+    FELLOWSHIP.0 R4, R8
+    CREA.1 R5, R5, #4
+p1_scan_imm:
+    RECV.2 R0, R4
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @p1_size_done
+    FELLOWSHIP.2 R0, R0, #10
+    BRANCH.2 @p1_size_done
+    FELLOWSHIP.2 R0, R0, #35
+    BRANCH.2 @p1_has_imm
+    FELLOWSHIP.2 R0, R0, #64
+    BRANCH.2 @p1_has_imm
+    MICRO.1 R4, R4
+    BRANCH.1 @p1_scan_imm
+p1_has_imm:
+    CREA.1 R5, R5, #8
+p1_size_done:
+    GATHER.0 R10, R5
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    BRANCH.1 @p1_next_line
+p1_comment:
+    ABUNDANCE.1 R0, R0, @skip_line
+    BRANCH.1 @p1_advance
+p1_next_line:
+    ABUNDANCE.1 R0, R0, @skip_line
+    BRANCH.1 @p1_advance
+p1_advance:
+    RECV.2 R0, R8
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @p1_done
+    FELLOWSHIP.2 R0, R0, #10
+    BRANCH.3 @p1_loop
+    MICRO.1 R8, R8
+    BRANCH.1 @p1_advance
+p1_done:
+    WELL.1 R7, R7
+    WELL.1 R6, R6
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+
+; === 第二遍: 生成字节码 ===
+pass2:
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+    PUSH_UP.1 R6, R6
+    PUSH_UP.1 R7, R7
+    PUSH_UP.1 R11, R11
+    CREA.1 R0, R0, #0x1000
+    FELLOWSHIP.0 R8, R0
+    CREA.1 R9, R9, #0x11000
+    CREA.1 R10, R10, #0
+p2_loop:
+    RECV.2 R0, R8
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @p2_eof
+    ; 跳过空行
+    FELLOWSHIP.2 R0, R0, #10
+    BRANCH.2 @p2_advance
+    FELLOWSHIP.2 R0, R0, #13
+    BRANCH.2 @p2_advance
+    ; 跳过注释
+    FELLOWSHIP.2 R0, R0, #59
+    BRANCH.2 @p2_comment
+    ; 检查标签行
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+    FELLOWSHIP.0 R4, R8
+p2_scan:
+    RECV.2 R5, R4
+    FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @p2_encode
+    FELLOWSHIP.2 R5, R5, #10
+    BRANCH.2 @p2_encode
+    FELLOWSHIP.2 R5, R5, #58
+    BRANCH.2 @p2_is_label
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p2_encode
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.2 @p2_encode
+    FELLOWSHIP.2 R5, R5, #46
+    BRANCH.2 @p2_encode
+    MICRO.1 R4, R4
+    BRANCH.1 @p2_scan
+p2_is_label:
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    ABUNDANCE.1 R0, R0, @skip_line
+    BRANCH.1 @p2_advance
+p2_encode:
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    ; === 解析助记符 ===
+    FELLOWSHIP.0 R4, R8
+    ; 跳过行首空白
+p2_skip_ws:
+    RECV.2 R5, R4
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p2_ws
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.3 @p2_parse_mnem
+    BRANCH.1 @p2_parse_mnem
+p2_ws:
+    MICRO.1 R4, R4
+    BRANCH.1 @p2_skip_ws
+    ; 复制助记符到临时缓冲区
+p2_parse_mnem:
+    FELLOWSHIP.0 R0, R4
+    CREA.1 R1, R1, #0x18100
+    CREA.1 R2, R2, #0
+p2_copy_mnem:
+    RECV.2 R5, R4
+    FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @p2_mnem_done
+    FELLOWSHIP.2 R5, R5, #10
+    BRANCH.2 @p2_mnem_done
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p2_mnem_done
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.2 @p2_mnem_done
+    FELLOWSHIP.2 R5, R5, #46
+    BRANCH.2 @p2_mnem_done
+    ALLOC.2 R1, R5
+    MICRO.1 R1, R1
+    MICRO.1 R4, R4
+    MICRO.1 R2, R2
+    BRANCH.1 @p2_copy_mnem
+p2_mnem_done:
+    CREA.1 R5, R5, #0
+    ALLOC.2 R1, R5
+    ; 查找操作码
+    CREA.1 R0, R0, #0x18100
+    ABUNDANCE.1 R0, R0, @lookup_opcode
+    FELLOWSHIP.0 R6, R0
+    FELLOWSHIP.2 R6, R6, #4294967295
+    BRANCH.2 @p2_bad_instr
+    ; 解析 .N 扩展
+    CREA.1 R7, R7, #0
+    RECV.2 R5, R4
+    FELLOWSHIP.2 R5, R5, #46
+    BRANCH.3 @p2_no_ext
+    MICRO.1 R4, R4
+    RECV.2 R5, R4
+    FELLOWSHIP.0 R7, R5
+    GATHER.1 R7, R7, #48
+    MICRO.1 R4, R4
+p2_no_ext:
+    ; 跳过空白
+p2_skip_ws2:
+    RECV.2 R5, R4
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p2_ws2
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.3 @p2_parse_ops
+    BRANCH.1 @p2_parse_ops
+p2_ws2:
+    MICRO.1 R4, R4
+    BRANCH.1 @p2_skip_ws2
+p2_parse_ops:
+    ; 解析操作数 (用 R11/R12/R13 避免函数调用破坏)
+    CREA.1 R11, R11, #0
+    CREA.1 R12, R12, #0
+    CREA.1 R13, R13, #0
+    FELLOWSHIP.0 R3, R4
+p2_scan_ops:
+    RECV.2 R5, R3
+    FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @p2_emit
+    FELLOWSHIP.2 R5, R5, #10
+    BRANCH.2 @p2_emit
+    ; 解析寄存器
+    FELLOWSHIP.2 R5, R5, #82
+    BRANCH.3 @p2_check_hash
+    MICRO.1 R3, R3
+    PUSH_UP.1 R4, R4
+    FELLOWSHIP.0 R4, R3
+    FELLOWSHIP.2 R11, R11, #0
+    BRANCH.3 @p2_read_reg2
+    FELLOWSHIP.0 R0, R4
+    ABUNDANCE.1 R0, R0, @parse_reg
+    FELLOWSHIP.0 R11, R0
+    WELL.1 R4, R4
+    BRANCH.1 @p2_scan_next
+p2_read_reg2:
+    FELLOWSHIP.0 R0, R4
+    ABUNDANCE.1 R0, R0, @parse_reg
+    FELLOWSHIP.0 R12, R0
+    WELL.1 R4, R4
+    BRANCH.1 @p2_scan_next
+p2_check_hash:
+    FELLOWSHIP.2 R5, R5, #35
+    BRANCH.3 @p2_check_at
+    ; 解析十进制或十六进制立即数
+    MICRO.1 R3, R3
+    RECV.2 R5, R3
+    FELLOWSHIP.2 R5, R5, #48
+    BRANCH.4 @p2_parse_hex
+    CREA.1 R13, R13, #0
+p2_dec_loop:
+    RECV.2 R5, R3
+    FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @p2_scan_next
+    FELLOWSHIP.2 R5, R5, #10
+    BRANCH.2 @p2_scan_next
+    FELLOWSHIP.2 R5, R5, #44
+    BRANCH.2 @p2_scan_next
+    CREA.1 R0, R0, #10
+    GATHER.2 R13, R0
+    GATHER.1 R5, R5, #48
+    GATHER.0 R13, R5
+    MICRO.1 R3, R3
+    BRANCH.1 @p2_dec_loop
+p2_parse_hex:
+    RECV.2 R5, R3
+    CREA.1 R0, R0, #120
+    FELLOWSHIP.1 R5, R0
+    BRANCH.3 @p2_dec_loop
+    MICRO.1 R3, R3
+    CREA.1 R13, R13, #0
+p2_hex_loop:
+    RECV.2 R5, R3
+    FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @p2_scan_next
+    FELLOWSHIP.2 R5, R5, #10
+    BRANCH.2 @p2_scan_next
+    CREA.1 R0, R0, #16
+    GATHER.2 R13, R0
+    FELLOWSHIP.2 R5, R5, #48
+    BRANCH.4 @p2_hex_a
+    FELLOWSHIP.2 R5, R5, #57
+    BRANCH.5 @p2_hex_d
+    BRANCH.1 @p2_hex_a
+p2_hex_d:
+    GATHER.1 R5, R5, #48
+    BRANCH.1 @p2_hex_add
+p2_hex_a:
+    FELLOWSHIP.2 R5, R5, #65
+    BRANCH.4 @p2_hex_lo
+    FELLOWSHIP.2 R5, R5, #70
+    BRANCH.5 @p2_hex_up
+    BRANCH.1 @p2_hex_lo
+p2_hex_up:
+    GATHER.1 R5, R5, #55
+    BRANCH.1 @p2_hex_add
+p2_hex_lo:
+    FELLOWSHIP.2 R5, R5, #97
+    BRANCH.4 @p2_scan_next
+    FELLOWSHIP.2 R5, R5, #102
+    BRANCH.6 @p2_scan_next
+    GATHER.1 R5, R5, #87
+p2_hex_add:
+    GATHER.0 R13, R5
+    MICRO.1 R3, R3
+    BRANCH.1 @p2_hex_loop
+p2_check_at:
+    FELLOWSHIP.2 R5, R5, #64
+    BRANCH.3 @p2_scan_next
+    ; 标签引用
+    MICRO.1 R3, R3
+    FELLOWSHIP.0 R0, R3
+    ABUNDANCE.1 R0, R0, @lookup_label
+    FELLOWSHIP.0 R13, R0
+    ; 跳过到行尾
+p2_skip_to_eol:
+    RECV.2 R5, R3
+    FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @p2_emit
+    FELLOWSHIP.2 R5, R5, #10
+    BRANCH.2 @p2_emit
+    MICRO.1 R3, R3
+    BRANCH.1 @p2_skip_to_eol
+p2_scan_next:
+    RECV.2 R5, R3
+    FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @p2_emit
+    FELLOWSHIP.2 R5, R5, #10
+    BRANCH.2 @p2_emit
+    FELLOWSHIP.2 R5, R5, #44
+    BRANCH.3 @p2_skip_comma
+    BRANCH.1 @p2_emit
+p2_skip_comma:
+    MICRO.1 R3, R3
+    BRANCH.1 @p2_scan_ops
+    ; === 发射字节码 ===
+p2_emit:
+    ; 从 R11/R12/R13 恢复操作数值 (不会被函数调用破坏)
+    FELLOWSHIP.0 R0, R11
+    FELLOWSHIP.0 R1, R12
+    FELLOWSHIP.0 R2, R13
+    ; byte1: R0 = 0x80 | opcode(R6)
+    FELLOWSHIP.0 R0, R6
+    MATE.3 R0, R0, #128
+    ABUNDANCE.1 R0, R0, @emit_byte
+    ; byte2: mode<<6 | sub_op(R7)
+    FELLOWSHIP.2 R2, R2, #0
+    BRANCH.3 @p2_by2_imm
+    ; no immediate (mode=1)
+    FELLOWSHIP.0 R0, R7
+    MATE.3 R0, R0, #64
+    BRANCH.1 @p2_emit_byte2
+p2_by2_imm:
+    ; has immediate (mode=2)
+    FELLOWSHIP.0 R0, R7
+    MATE.3 R0, R0, #128
+p2_emit_byte2:
+    ABUNDANCE.1 R0, R0, @emit_byte
+    ; byte3: dst register
+    FELLOWSHIP.0 R0, R11
+    ABUNDANCE.1 R0, R0, @emit_byte
+    ; byte4: src register
+    FELLOWSHIP.0 R0, R12
+    ABUNDANCE.1 R0, R0, @emit_byte
+    ; 如果有立即数, emit 4 bytes (emit_word 内部通过 emit_byte 递增 R10)
+    FELLOWSHIP.2 R13, R13, #0
+    BRANCH.2 @p2_line_done
+    FELLOWSHIP.0 R0, R13
+    ABUNDANCE.1 R0, R0, @emit_word
+p2_line_done:
+    BRANCH.1 @p2_next_line
+p2_bad_instr:
+    BRANCH.1 @p2_next_line
+p2_comment:
+    ABUNDANCE.1 R0, R0, @skip_line
+    BRANCH.1 @p2_advance
+p2_next_line:
+    ABUNDANCE.1 R0, R0, @skip_line
+    BRANCH.1 @p2_advance
+p2_advance:
+    RECV.2 R0, R8
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @p2_eof
+    FELLOWSHIP.2 R0, R0, #10
+    BRANCH.3 @p2_loop
+    MICRO.1 R8, R8
+    BRANCH.1 @p2_advance
+p2_eof:
+    WELL.1 R11, R11
+    WELL.1 R7, R7
+    WELL.1 R6, R6
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+
+; === 主入口 ===
+asm_main:
+    ; 保存输入指针
+    PUSH_UP.1 R4, R4
+    FELLOWSHIP.0 R4, R0
+    ; 第一遍
+    ABUNDANCE.1 R0, R0, @pass1
+    ; 重置输入指针
+    CREA.1 R0, R0, #0x1000
+    ; 第二遍
+    ABUNDANCE.1 R0, R0, @pass2
+    ; 返回输出大小，然后 HLT (防止 LR 回退导致无限循环)
+    FELLOWSHIP.0 R0, R10
+    WELL.1 R4, R4
+    RETURN.1 R0, R0

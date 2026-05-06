@@ -1,0 +1,22 @@
+@evolang "3.0"
+
+@locus evoc.parser.parse_program {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::TOKEN_STREAM
+        ䷂ ALLOC R1, 0x1000
+        ䷌ FELLOWSHIP R0, R1
+        ䷉ STEP R0
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_check_evolang
+        ䷆ BRANCH R_check_locus
+        ䷆ BRANCH R_check_meta_locus
+        ䷆ BRANCH R_check_xiangci
+        ䷾ SYNC
+    }
+}

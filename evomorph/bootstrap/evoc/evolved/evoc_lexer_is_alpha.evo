@@ -1,0 +1,29 @@
+@evolang "3.0"
+
+@locus evoc.lexer.is_alpha {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷔ BITE R0, 0x0041
+        ䷆ BRANCH R_below_A
+        ䷔ BITE R0, 0x005A
+        ䷆ BRANCH R_above_Z
+        ䷍ ABUNDANCE R1, R1
+        ䷗ RETURN
+        ䷔ BITE R0, 0x0061
+        ䷆ BRANCH R_below_a
+        ䷔ BITE R0, 0x007A
+        ䷆ BRANCH R_above_z
+        ䷍ ABUNDANCE R1, R1
+        ䷗ RETURN
+        ䷔ BITE R0, 0x005F
+        ䷆ BRANCH R_is_underscore
+        ䷍ ABUNDANCE R1, R0
+        ䷾ SYNC
+    }
+}

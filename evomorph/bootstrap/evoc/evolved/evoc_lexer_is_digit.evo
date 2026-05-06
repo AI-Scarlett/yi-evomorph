@@ -1,0 +1,21 @@
+@evolang "3.0"
+
+@locus evoc.lexer.is_digit {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::CHAR
+        ䷔ BITE R0, 0x0030
+        ䷆ BRANCH R_below_zero
+        ䷔ BITE R0, 0x0039
+        ䷆ BRANCH R_above_nine
+        ䷍ ABUNDANCE R1, R1
+        ䷗ RETURN
+        ䷍ ABUNDANCE R1, R0
+        ䷾ SYNC
+    }
+}

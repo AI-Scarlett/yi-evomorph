@@ -66,11 +66,85 @@ class EvoRuntime:
         return None
 
     def _native_compile_source(self, source_text):
+        """编译 .evo 源码 (自举路径: IChing EVB 编译器 + Python 元数据提取)."""
         try:
             result = self.compiler.compile(source_text, output_format="dict")
             return result
         except Exception as e:
             return {"error": str(e)}
+
+    def compile_to_evb(self, source_text: str) -> Optional[bytes]:
+        """使用自举编译器直接将 .evo 源码编译为 EVB 字节码.
+
+        这是真正的自举编译: 编译器逻辑完全在 EVB 字节码中执行,
+        不依赖 Python 编译器类.
+        """
+        try:
+            return self.compiler.compile(source_text, output_format="evb")
+        except Exception:
+            return None
+
+    def self_compile_verify(self, source: str) -> dict:
+        """自举验证: 同一编译器逻辑在 VM 裸执行 vs Python 辅助执行下逐字节对比.
+
+        验证原理:
+          - 路径 A (裸 VM): compiler.evoasm → EVB → VM 直接执行 → 输出 EVB A
+          - 路径 B (Python 辅助): compiler.evoasm → EVB → Python IChingBootstrapCompiler 执行 → 输出 EVB B
+          - 验证: A == B (字节级)
+
+        这证明了 EVB 字节码加载和执行机制的正确性:
+        无论是通过 Python 辅助管理还是 VM 裸执行, 相同的编译器 EVB 字节码产出相同结果.
+
+        Returns:
+            {
+                "bytes_match": bool,
+                "raw_vm_hash": str, "python_vm_hash": str,
+                "raw_vm_size": int, "python_vm_size": int,
+                "diff_positions": [...],
+            }
+        """
+        import hashlib
+
+        # 路径 A: 裸 VM 执行 (IChingEvocCompiler → evb 格式)
+        raw_vm_bytes = self.compile_to_evb(source)
+
+        # 路径 B: Python 辅助执行 (IChingBootstrapCompiler.compile_source)
+        from evomorph.bootstrap.iching.iching_compiler import IChingBootstrapCompiler
+        py_vm_bytes = b""
+        try:
+            py_bc = IChingBootstrapCompiler()
+            py_result = py_bc.compile_source(source)
+            if py_result.get("success") and py_result.get("evob_valid"):
+                py_vm_bytes = py_result.get("output_bytes", b"")
+        except Exception:
+            pass
+
+        result = {
+            "raw_vm_size": len(raw_vm_bytes) if raw_vm_bytes else 0,
+            "python_vm_size": len(py_vm_bytes),
+            "bytes_match": False,
+        }
+
+        if raw_vm_bytes and py_vm_bytes:
+            result["raw_vm_hash"] = hashlib.sha256(raw_vm_bytes).hexdigest()[:16]
+            result["python_vm_hash"] = hashlib.sha256(py_vm_bytes).hexdigest()[:16]
+            result["bytes_match"] = (raw_vm_bytes == py_vm_bytes)
+
+            if not result["bytes_match"]:
+                min_len = min(len(raw_vm_bytes), len(py_vm_bytes))
+                diffs = []
+                for i in range(min_len):
+                    if raw_vm_bytes[i] != py_vm_bytes[i]:
+                        diffs.append(i)
+                        if len(diffs) >= 10:
+                            break
+                result["diff_positions"] = diffs
+        elif raw_vm_bytes:
+            result["raw_vm_hash"] = hashlib.sha256(raw_vm_bytes).hexdigest()[:16]
+        elif py_vm_bytes:
+            result["python_vm_hash"] = hashlib.sha256(py_vm_bytes).hexdigest()[:16]
+
+        return result
 
     def _native_load_evo(self, filepath):
         try:
@@ -247,16 +321,108 @@ class EvoRuntime:
         lines.append(f"@locus {locus_name} {{")
         lines.append(f"    mut_rate   = {locus.get('mut_rate', 0.02)}")
         lines.append(f"    cross_pool = \"{locus.get('cross_pool', 'default')}\"")
+        fitness_expr = locus.get("fitness", "min_latency + max_throughput")
+        if isinstance(fitness_expr, dict) and "terms" in fitness_expr:
+            terms = fitness_expr["terms"]
+            parts = []
+            for t in terms:
+                kw = t.get("keyword", "min_latency")
+                w = t.get("weight", 1.0)
+                if w == 1.0:
+                    parts.append(kw)
+                else:
+                    parts.append(f"{w}*{kw}")
+            fitness_expr = " + ".join(parts)
+        elif not isinstance(fitness_expr, str):
+            fitness_expr = "min_latency + max_throughput"
+        lines.append(f"    fitness    = {fitness_expr}")
         if locus.get("env_targets"):
             targets = ", ".join(f'"{t}"' for t in locus["env_targets"])
             lines.append(f"    env_target = [{targets}]")
+        max_gen = locus.get("max_generations", 100)
+        lines.append(f"    max_generations = {max_gen}")
         lines.append("")
         lines.append("    卦序: {")
         for instr in locus.get("instructions", []):
             symbol = instr.get("symbol", "")
             mnemonic = instr.get("mnemonic", "")
-            line = f"        {symbol} {mnemonic}" if symbol else f"        {mnemonic}"
+            operands = instr.get("operands", [])
+            operand_str = ""
+            if operands:
+                parts = []
+                for op in operands:
+                    if isinstance(op, dict):
+                        val = op.get("value", 0)
+                        name = op.get("name", "")
+                        if name:
+                            parts.append(name)
+                        elif isinstance(val, int) and val >= 0 and val < 20:
+                            parts.append(f"R{val}")
+                        elif isinstance(val, int):
+                            parts.append(f"0x{val & 0xFFFF:04X}")
+                        else:
+                            parts.append(str(val))
+                    elif isinstance(op, int):
+                        if 0 <= op < 20:
+                            parts.append(f"R{op}")
+                        else:
+                            parts.append(f"0x{op & 0xFFFF:04X}")
+                    else:
+                        parts.append(str(op))
+                operand_str = " " + ", ".join(parts)
+            line = f"        {symbol} {mnemonic}{operand_str}" if symbol else f"        {mnemonic}{operand_str}"
             lines.append(line)
         lines.append("    }")
         lines.append("}")
+        if locus.get("evolved_fitness") is not None:
+            lines.append("")
+            lines.append(f"// 进化适应度: {locus['evolved_fitness']:.4f}")
+            if locus.get("evolved_origin"):
+                lines.append(f"// 进化来源: {locus['evolved_origin']}")
         return "\n".join(lines)
+
+    def bootstrap_self_compile(self, evo_source: str, generations: int = 20,
+                               population_size: int = 32) -> dict:
+        step1 = self.load_evo_source(evo_source)
+        loci_names = [l["name"] for l in step1.get("loci", [])]
+        meta_names = [f"meta:{m['name']}" for m in step1.get("meta_loci", [])]
+        results = {
+            "compilation": {"loci_count": len(loci_names), "meta_loci_count": len(meta_names)},
+            "evolution": {},
+            "execution": {},
+            "self_compilation": None,
+            "cross_validation": None,
+        }
+        for name in loci_names:
+            evo_result = self.evolve_locus(name, generations=generations, population_size=population_size)
+            if evo_result:
+                results["evolution"][name] = evo_result
+        for name in loci_names:
+            exec_result = self.execute_locus(name, max_cycles=1000)
+            results["execution"][name] = exec_result
+        self_comp = self.self_compile(evo_source)
+        self_loci = [l["name"] for l in self_comp.get("loci", [])]
+        results["self_compilation"] = {"loci_count": len(self_loci)}
+        orig_loci = {l["name"]: l for l in step1.get("loci", [])}
+        evolved_loci = {l["name"]: l for l in self_comp.get("loci", [])}
+        match = 0
+        partial = 0
+        for name in evolved_loci:
+            if name in orig_loci:
+                e_instrs = evolved_loci[name].get("instructions", [])
+                o_instrs = orig_loci[name].get("instructions", [])
+                if len(e_instrs) == len(o_instrs):
+                    opcode_match = sum(
+                        1 for e, o in zip(e_instrs, o_instrs)
+                        if e.get("opcode") == o.get("opcode")
+                    )
+                    if opcode_match == len(e_instrs):
+                        match += 1
+                    elif opcode_match > 0:
+                        partial += 1
+        total = max(len(evolved_loci), 1)
+        results["cross_validation"] = {
+            "match": f"{match}/{total}",
+            "partial_match": partial,
+        }
+        return results

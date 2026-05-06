@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@locus evoc.vm.init {
+    mut_rate   = 0.005
+    cross_pool = "vm_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷂ ALLOC R0, 0x0040
+        ䷂ ALLOC R1, 0x0000
+        ䷂ ALLOC R2, 0x0000
+        ䷍ ABUNDANCE R0, R0
+        ䷍ ABUNDANCE R1, R0
+        ䷍ ABUNDANCE R2, R0
+        ䷾ SYNC
+    }
+}

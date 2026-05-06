@@ -42,13 +42,13 @@ python3 -m build
 ```
 
 构建产物在 `dist/` 目录下：
-- `evomorph-3.0.0-py3-none-any.whl` — wheel 包（跨平台）
-- `evomorph-3.0.0.tar.gz` — 源码包
+- `evomorph-0.0.6-py3-none-any.whl` — wheel 包（跨平台）
+- `evomorph-0.0.6.tar.gz` — 源码包
 
 将 `.whl` 文件拷贝到目标机器后安装：
 
 ```bash
-pip install evomorph-3.0.0-py3-none-any.whl
+pip install evomorph-0.0.6-py3-none-any.whl
 ```
 
 ### 方式四：开发模式安装
@@ -146,10 +146,10 @@ evomorph/
 │   ├── lsp/
 │   │   └── language_server.py    # LSP 语言服务器
 │   ├── compiler/
-│   │   ├── __init__.py           # EvocCompiler 编译器
-│   │   ├── lexer.py              # 词法分析器
-│   │   ├── parser.py             # 语法分析器
-│   │   └── codegen.py            # 代码生成器
+│   │   ├── __init__.py           # IChingEvocCompiler 主编译路径
+│   │   ├── lexer.py              # 词法分析器 (legacy)
+│   │   ├── parser.py             # 语法分析器 (legacy)
+│   │   └── codegen.py            # 代码生成器 (legacy)
 │   ├── vm/
 │   │   └── virtual_machine.py    # IChingVM 卦象虚拟机
 │   ├── evolution/

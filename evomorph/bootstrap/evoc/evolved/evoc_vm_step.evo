@@ -1,0 +1,23 @@
+@evolang "3.0"
+
+@locus evoc.vm.step {
+    mut_rate   = 0.01
+    cross_pool = "vm_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::PC
+        ䷁ RECV R1, env::PROGRAM
+        ䷂ ALLOC R2, R8
+        ䷈ PREFETCH R1
+        ䷍ ABUNDANCE R2, R1
+        ䷆ BRANCH R_decode_opcode
+        ䷆ BRANCH R_decode_modifier
+        ䷆ BRANCH R_read_operands
+        ䷆ BRANCH R_execute_op
+        ䷉ STEP R0
+        ䷾ SYNC
+    }
+}

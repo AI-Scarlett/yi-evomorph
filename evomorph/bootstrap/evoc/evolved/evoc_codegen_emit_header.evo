@@ -3,12 +3,18 @@
 @locus evoc.codegen.emit_header {
     mut_rate   = 0.005
     cross_pool = "evoc_core"
+    fitness    = min_size + min_latency
     env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
 
     卦序: {
-        ䷂ ALLOC
-        ䷍ ABUNDANCE
-        ䷍ ABUNDANCE
+        ䷂ ALLOC R0, R16
+        ䷍ ABUNDANCE R0, 0x0045
+        ䷍ ABUNDANCE R0, 0x0056
+        ䷍ ABUNDANCE R0, 0x004F
+        ䷍ ABUNDANCE R0, 0x0042
+        ䷍ ABUNDANCE R0, R0
+        ䷍ ABUNDANCE R0, R3
         ䷾ SYNC
     }
 }

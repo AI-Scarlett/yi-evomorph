@@ -4,7 +4,7 @@
 
 易衍（Evomorph）是一种基于《易经》六十四卦的进化编程语言。每条指令的操作码等于其对应卦象的六爻二进制值，代码通过遗传算法自动进化优化，适应不同目标平台。
 
-**当前版本**: v0.0.4
+**当前版本**: v0.0.6
 
 ## 特性
 
@@ -15,146 +15,61 @@
 - **IChingVM** — 卦象虚拟机，执行 EVB 字节码
 - **AI 驱动** — 内置 11 家大模型厂商支持，自然语言直接生成 .evo 代码
 - **交互式 CLI** — 下拉菜单命令选择，上下键导航，回车确认
-- **✅ 完全自举** — 第2代编译器（进化后）已完全可用，输出与Python编译器100%一致
+- **✅ IChing EVB 自举编译器** — 编译器核心完全用 IChing 汇编(.evoasm)实现，运行于 ExtendedIChingVM2
 - **🧬 MCP Server（双版本）** — 提供Python版和Evomorph版MCP Server，支持编译、象辞翻译、进化编译、运行、查询卦象、列出平台
 
 ## 自举状态
 
-### 🎉 完全自举已实现！
+### 🎉 IChing EVB 自举编译器已实现！
 
-易衍·Evomorph已经实现了完全自举！这意味着：
+v0.0.6 实现了用 IChing 汇编直接编写的自举编译器，消除了对 Python 编译器类的依赖。
 
-1. **第0代编译器（Python）** 可以编译第2代编译器的源码
-2. **第2代编译器（进化后）** 可以编译.evo程序，包括自身
-3. **第0代和第2代编译器** 的输出100%一致
+**编译链路**: `compiler.evoasm` (36KB 汇编) → VM 汇编器 → `compiler.evob` (7.9KB 字节码) → 加载到 VM → 编译 .evo 源码
 
-### 编译器代次
+### 编译器架构
 
-| 代次 | 实现语言 | 状态 | 模块数量 | 说明 |
-|------|----------|------|----------|------|
-| 第0代 | Python | ✅ 可用 | - | 稳定可靠，用于编译第2代编译器 |
-| 第1代 | 易衍（.evo） | ⚠️ 不可用 | 0 | 已被第2代编译器取代 |
-| 第2代 | 易衍（.evo，进化后） | ✅ 可用 | **157个模块** | 进化优化后的编译器，输出与Python编译器100%一致 |
-
-### 第2代编译器模块覆盖范围
-
-第2代编译器有157个进化后的.evo模块，涵盖了：
-
-| 模块类型 | 数量 | 说明 |
-|----------|------|------|
-| 词法分析器（lexer） | 19个 | 完整的词法分析功能 |
-| 语法分析器（parser） | 17个 | 完整的语法分析功能 |
-| 代码生成器（codegen） | 11个 | 完整的代码生成功能 |
-| 虚拟机（vm） | 43个 | 完整的虚拟机执行引擎 |
-| 进化引擎（evolution） | 11个 | 完整的进化优化功能 |
-| 标准库（stdlib） | 39个 | 完整的标准库（字符串、集合、IO、数学等） |
-| CLI工具 | 7个 | 完整的命令行工具 |
-| 自举核心 | 3个 | 自举相关功能 |
-
-### 自举验证结果
-
-#### 简单程序测试
 ```
-第0代编译器（Python）编译: ✅ 成功
-第2代编译器（进化后）编译: ✅ 成功
-基因座数量: 1
-指令数量: 3
-完全一致: ✅ 是
-指令匹配率: 100.00%
-```
-
-#### 完整自举文件测试
-```
-自举文件: full_self_bootstrap.evo（64,493字符）
-
-第0代编译器（Python）编译:
-  ✅ 成功
-  基因座数量: 152
-  元基因座数量: 1
-
-第2代编译器（进化后）编译:
-  ✅ 成功
-  基因座数量: 152
-  元基因座数量: 1
-
-一致性比较:
-  共同基因座数量: 148
-  匹配的基因座数量: 148/148
-  总指令数: 1166
-  匹配指令: 1166
-  指令匹配率: 100.00%
-  完全一致: ✅ 是
+compiler.evoasm  (36KB IChing 汇编)
+  ├── 词法分析器  — tokenize .evo 源码
+  ├── 语法分析器  — 递归下降解析
+  └── 代码生成器  — 直接生成 EVB 字节码
+       │
+       ▼ Python 汇编器 (唯一不可替代的 Python 依赖)
+  compiler.evob  (7.9KB 编译产物)
+       │
+       ▼ 加载到 ExtendedIChingVM2
+  IChingEvocCompiler  — 主编译路径
 ```
 
 ### 最小可信计算基（TCB）
 
-| 组件 | 状态 | 说明 |
+| 组件 | 实现 | 说明 |
 |------|------|------|
-| C虚拟机 | ✅ 可用 | 已编译成功 |
-| 汇编器 | ✅ 可用 | 能够编译.evo文件为ASM格式 |
-| 原始字节码执行 | ✅ 可用 | 能够执行RAW格式的字节码 |
+| ExtendedIChingVM2 | Python | 32寄存器 VM，执行 EVB 字节码 |
+| Assembler | Python | 将 .evoasm 汇编为 EVB 字节码 |
+| compiler.evoasm | IChing 汇编 | 编译器核心（lexer/parser/codegen） |
+| compiler.evob | EVB 字节码 | 编译器可执行体 |
 
-### 自举循环
+### 编译路径
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    自举循环（已验证）                         │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  第0代编译器（Python）                                       │
-│       │                                                     │
-│       ▼                                                     │
-│  编译第2代编译器的源码（full_self_bootstrap.evo）           │
-│       │                                                     │
-│       ▼                                                     │
-│  第2代编译器（进化后的.evo版本）                             │
-│       │                                                     │
-│       ▼                                                     │
-│  编译.evo程序（包括自身）                                    │
-│       │                                                     │
-│       ▼                                                     │
-│  验证输出与第0代编译器100%一致 ✅                           │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+| 输出格式 | 编译路径 |
+|----------|----------|
+| `evb` | IChing EVB 编译器（纯自举路径，失败即报错） |
+| `dict/json` | 文本元数据提取 + IChing 字节码注入 |
 
-### 新增优化（第0代编译器）
+### 已消除的 Python 依赖
 
-在自举验证过程中，第0代编译器（Python）也进行了多项优化：
+- ❌ `lexer.py` → 标记 legacy，保留供 bootstrap 脚本使用
+- ❌ `parser.py` → 标记 legacy
+- ❌ `codegen.py` → 标记 legacy
+- ❌ `ir.py` → 已删除（546行死代码）
+- ❌ `PythonEvocCompiler` → 已移除（~376行）
+- ❌ `ASTToIRConverter` → 已移除
 
-1. **中间表示（IR）层**
-   - 新增`evomorph/compiler/ir.py`模块
-   - 实现了IRProgram、IRLocus、IRBasicBlock、IRInstruction、IROperand等核心数据结构
-   - 支持多优化级别（0-3级）
+### 新增 .evo 替代文件
 
-2. **优化Pass**
-   - 死代码消除（DeadCodeEliminationPass）
-   - 常量折叠（ConstantFoldingPass）
-   - 拷贝传播（CopyPropagationPass）
-   - 循环优化（LoopOptimizationPass）
-   - 强度缩减（StrengthReductionPass）
-
-3. **错误诊断系统**
-   - 新增`CompilerError`和`CompilerDiagnostics`类
-   - 支持多级诊断（错误、警告、提示）
-   - 详细的错误信息和位置
-
-4. **语义分析阶段**
-   - 新增`_semantic_analysis`方法
-   - 检查基因座属性完整性
-   - 验证指令和操作数的有效性
-   - 类型检查
-
-5. **代码生成器优化**
-   - 扩展了优化级别，从2级增加到3级
-   - 新增多个优化Pass：
-     - `_remove_redundant_moves()`：移除冗余的移动指令
-     - `_merge_adjacent_instructions()`：合并相邻的相同操作指令
-     - `_dead_code_elimination()`：死代码消除
-     - `_register_allocation_optimization()`：寄存器分配优化
-     - `_loop_optimization()`：循环优化
-     - `_instruction_scheduling()`：指令调度
-     - `_strength_reduction()`：强度缩减
+- `evomorph/native/bytecode_utils.evo` — 字节码编解码（IChing 汇编 132 行）
+- `evomorph/sdk/xiangci_data.evo` — 象辞模板数据（69 行）
 
 ## 快速开始
 
@@ -350,38 +265,38 @@ evo-ai
 ```
 evomorph/
 ├── evomorph/
-│   ├── __init__.py              # 版本定义 (v0.0.4)
+│   ├── __init__.py              # 版本定义 (v0.0.6)
 │   ├── cli/evo_ai.py             # AI 编程 CLI（交互式 Shell）
 │   ├── prompts/system_prompt.md  # LLM 系统提示词
 │   ├── lsp/language_server.py    # LSP 语言服务器
 │   ├── compiler/                 # EvocCompiler 编译器
-│   │   ├── __init__.py           # 编译器主文件（新增错误诊断、语义分析、IR集成）
-│   │   ├── codegen.py            # 代码生成器（扩展优化级别，新增多个优化Pass）
-│   │   ├── ir.py                 # 中间表示（IR）模块（含多个优化Pass）
-│   │   ├── lexer.py              # 词法分析器
-│   │   └── parser.py             # 语法分析器
-│   ├── vm/virtual_machine.py     # IChingVM 卦象虚拟机
+│   │   ├── __init__.py           # IChingEvocCompiler 主编译路径
+│   │   ├── codegen.py            # 代码生成器 (legacy)
+│   │   ├── lexer.py              # 词法分析器 (legacy)
+│   │   └── parser.py             # 语法分析器 (legacy)
+│   ├── vm/
+│   │   ├── extended_vm2.py       # ExtendedIChingVM2 (32寄存器)
+│   │   └── virtual_machine.py    # IChingVM 基础虚拟机
 │   ├── evolution/                # 进化引擎
-│   │   ├── engine.py             # Python版进化引擎（遗传算法）
-│   │   ├── evolution_core.evo    # Evomorph版进化引擎核心（.evo实现）
-│   │   └── evolution_meta.evo    # Evomorph版元基因座（进化之进化）
+│   │   ├── engine.py             # Python版进化引擎
+│   │   ├── evolution_core.evo    # Evomorph版进化引擎核心
+│   │   └── evolution_meta.evo    # Evomorph版元基因座
 │   ├── hexagrams/instruction_set.py  # 六十四卦指令集
 │   ├── simulator/niche.py        # 平台模拟生态位
-│   ├── sdk/xiangci.py            # 象辞翻译 SDK
+│   ├── sdk/
+│   │   ├── xiangci.py            # 象辞翻译 SDK
+│   │   └── xiangci_data.evo      # 象辞模板数据 (.evo)
 │   ├── stdlib/                   # 标准库（.evo 格式）
 │   ├── debugger/                 # 爻镜调试器
-│   ├── native/                   # 原生加载器
-│   └── bootstrap/                # 自举相关
-│       ├── enhanced_bootstrap.py # 增强自举模块（多代编译器、进化优化、一致性验证）
-│       ├── full_self_bootstrap.evo  # 第2代编译器完整源码（152个基因座）
+│   ├── native/                   # 原生模块
+│   │   ├── bytecode_utils.py     # 字节码工具 (桥接层)
+│   │   └── bytecode_utils.evo    # 字节码工具 (.evo)
+│   └── bootstrap/                # 自举编译器
+│       ├── compiler.evoasm       # IChing 汇编编译器 (36KB)
+│       ├── compiler.evob         # 编译器可执行体 (7.9KB)
+│       ├── assembler.evoasm      # 汇编器源码
 │       ├── self_compile.py       # 自举过程实现
-│       ├── evoc/                 # 第2代编译器组件
-│       │   ├── gen3_compiler.evo # 第3代编译器框架
-│       │   ├── lexer.evo         # 词法分析器（.evo实现）
-│       │   ├── parser.evo        # 语法分析器（.evo实现）
-│       │   ├── codegen.evo       # 代码生成器（.evo实现）
-│       │   └── compile_evo_for_vm.py # 编译为C虚拟机格式
-│       └── evolved/              # 进化后的第2代编译器模块（157个.evo文件）
+│       └── iching/               # IChing 编译器桥接
 ├── ai/
 │   ├── mcp/
 │   │   ├── evomorph_mcp_server.py   # Python版MCP Server
@@ -444,6 +359,31 @@ python3 -m pytest tests/ -v
 ```
 
 ## 更新日志
+
+### v0.0.6 (2026-05-06)
+
+#### 🔥 重大变更：IChing EVB 自举编译器成为唯一编译路径
+
+- **移除 PythonEvocCompiler** — Python 编译器类已完全移除，不再作为回退路径
+- **删除 ir.py** (546行) — 中间表示层，仅被已废弃的 Python 编译器引用
+- **标记 legacy** — lexer.py / parser.py / codegen.py 保留供 bootstrap 脚本使用
+- **新增 .evo 替代** — bytecode_utils.evo (132行) / xiangci_data.evo (69行)
+
+#### 🐛 VM Bug 修复 (ExtendedIChingVM2)
+- PC 推进: ext_mode=2 缺少立即数时正确报错 (不再静默继续)
+- 寄存器掩码: ext_mode=0 支持全部 32 个寄存器 R0-R31 (之前只有 R0-R15)
+- 编码注释修正与实际派发逻辑一致
+
+#### 🧹 清理
+- 删除根目录 92 个临时 test/debug 脚本
+- README 和文档更新至 v0.0.6
+
+### v0.0.5
+- IChing EVB 编译器集成
+- ExtendedIChingVM2 (32寄存器, 双指令集)
+- self_compile.py 自举引导
+- continuous_bootstrap.py 持续自举循环
+- 元数据提取 (_extract_evo_metadata)
 
 ### v0.0.4 (2026-05-04)
 

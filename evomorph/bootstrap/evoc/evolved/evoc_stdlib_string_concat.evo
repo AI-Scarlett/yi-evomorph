@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@locus evoc.stdlib.string.concat {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::STR1
+        ䷁ RECV R1, env::STR2
+        ䷂ ALLOC R2, 0x0200
+        ䷌ FELLOWSHIP R0, R2
+        ䷌ FELLOWSHIP R1, R2
+        ䷾ SYNC
+    }
+}

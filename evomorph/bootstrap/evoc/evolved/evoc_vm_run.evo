@@ -1,0 +1,21 @@
+@evolang "3.0"
+
+@locus evoc.vm.run {
+    mut_rate   = 0.02
+    cross_pool = "vm_core"
+    fitness    = max_throughput + min_energy
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::MAX_CYCLES
+        ䷂ ALLOC R1, R4
+        ䷍ ABUNDANCE R1, R0
+        ䷓ CONTEMPLATE R1
+        ䷆ BRANCH R_run_loop
+        ䷀ CREA R2, @step
+        ䷉ STEP R1
+        ䷨ REDUCE R0, R1
+        ䷾ SYNC
+    }
+}

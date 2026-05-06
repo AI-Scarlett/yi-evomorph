@@ -1,0 +1,216 @@
+; ============================================================
+; 自举汇编器 - 核心模块 (函数定义)
+; ============================================================
+
+; === 跳过空白 ===
+skip_spaces:
+    RECV.2 R2, R8
+    FELLOWSHIP.2 R2, R2, #32
+    BRANCH.2 @ssp_yes
+    FELLOWSHIP.2 R2, R2, #9
+    BRANCH.2 @ssp_yes
+    FELLOWSHIP.2 R2, R2, #13
+    BRANCH.2 @ssp_yes
+    RETURN.0 R0, R0
+ssp_yes:
+    MICRO.1 R8, R8
+    BRANCH.1 @skip_spaces
+
+; === 跳过整行 ===
+skip_line:
+    RECV.2 R2, R8
+    FELLOWSHIP.2 R2, R2, #10
+    BRANCH.2 @skl_eol
+    FELLOWSHIP.2 R2, R2, #0
+    BRANCH.2 @skl_ret
+    MICRO.1 R8, R8
+    BRANCH.1 @skip_line
+skl_eol:
+    MICRO.1 R8, R8
+skl_ret:
+    RETURN.0 R0, R0
+
+; === parse_reg: 解析 Rd/Rs 数字 (R0=字符串指针 → R0=寄存器号) ===
+parse_reg:
+    PUSH_UP.1 R4, R4
+    MICRO.1 R0, R0        ; 跳过 'R'
+    CREA.1 R4, R4, #0     ; R4 = 累计值
+pr_lp:
+    RECV.2 R2, R0
+    FELLOWSHIP.2 R2, R2, #48
+    BRANCH.4 @pr_done      ; < '0'
+    FELLOWSHIP.2 R2, R2, #57
+    BRANCH.5 @pr_done      ; > '9'
+    CREA.1 R3, R3, #10
+    GATHER.2 R4, R3        ; R4 *= 10
+    GATHER.1 R2, R2, #48   ; char to digit
+    GATHER.0 R4, R2        ; R4 += digit
+    MICRO.1 R0, R0
+    BRANCH.1 @pr_lp
+pr_done:
+    FELLOWSHIP.0 R0, R4
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+
+; === strcmp ===
+strcmp:
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+sc_lp:
+    RECV.2 R4, R0
+    RECV.2 R5, R1
+    FELLOWSHIP.1 R4, R5
+    BRANCH.3 @sc_df
+    FELLOWSHIP.2 R4, R4, #0
+    BRANCH.2 @sc_eq
+    MICRO.1 R0, R0
+    MICRO.1 R1, R1
+    BRANCH.1 @sc_lp
+sc_df:
+    CREA.1 R0, R0, #1
+    BRANCH.1 @sc_rt
+sc_eq:
+    CREA.1 R0, R0, #0
+sc_rt:
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+
+; === 查找 IChing 操作码 (R0=mnenmonic→R0=opcode 或 -1) ===
+lookup_opcode:
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+    FELLOWSHIP.0 R4, R0
+    CREA.1 R5, R5, #0x16000
+lko_lp:
+    RECV.2 R0, R5
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @lko_nf
+    FELLOWSHIP.0 R0, R4
+    FELLOWSHIP.0 R1, R5
+    ABUNDANCE.1 R0, R0, @strcmp
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @lko_fd
+    CREA.1 R0, R0, #14
+    GATHER.0 R5, R0
+    BRANCH.1 @lko_lp
+lko_fd:
+    CREA.1 R0, R0, #12
+    GATHER.0 R5, R0
+    RECV.2 R0, R5
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+lko_nf:
+    CREA.1 R0, R0, #4294967295
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+
+; === 查找标签地址 (R0=标签名→R0=地址 或 -1) ===
+lookup_label:
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+    FELLOWSHIP.0 R4, R0
+    CREA.1 R5, R5, #0x12000
+lkl_lp:
+    RECV.2 R0, R5
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @lkl_nf
+    FELLOWSHIP.0 R0, R4
+    FELLOWSHIP.0 R1, R5
+    ABUNDANCE.1 R0, R0, @strcmp
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @lkl_fd
+    CREA.1 R0, R0, #12
+    GATHER.0 R5, R0
+    BRANCH.1 @lkl_lp
+lkl_fd:
+    CREA.1 R0, R0, #12
+    GATHER.0 R5, R0
+    RECV.1 R0, R5
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+lkl_nf:
+    CREA.1 R0, R0, #4294967295
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+
+; === 添加标签 (R0=名称指针, R1=地址) ===
+add_label:
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+    PUSH_UP.1 R6, R6
+    PUSH_UP.1 R7, R7
+    FELLOWSHIP.0 R4, R0
+    CREA.1 R5, R5, #0x12000
+al_fs:
+    RECV.2 R0, R5
+    FELLOWSHIP.2 R0, R0, #0
+    BRANCH.2 @al_wr
+    CREA.1 R0, R0, #12
+    GATHER.0 R5, R0
+    BRANCH.1 @al_fs
+al_wr:
+    FELLOWSHIP.0 R6, R5
+    CREA.1 R7, R7, #0
+al_cp:
+    RECV.2 R2, R4
+    FELLOWSHIP.2 R2, R2, #0
+    BRANCH.2 @al_pd
+    ALLOC.2 R6, R2
+    MICRO.1 R6, R6
+    MICRO.1 R4, R4
+    MICRO.1 R7, R7
+    BRANCH.1 @al_cp
+al_pd:
+    ALLOC.2 R6, R2
+    MICRO.1 R6, R6
+    MICRO.1 R7, R7
+al_pad_lp:
+    FELLOWSHIP.1 R7, R7, #12
+    BRANCH.5 @al_wr_a
+    CREA.1 R0, R0, #0
+    ALLOC.2 R6, R0
+    MICRO.1 R6, R6
+    MICRO.1 R7, R7
+    BRANCH.1 @al_pad_lp
+al_wr_a:
+    ALLOC.1 R6, R1
+    WELL.1 R7, R7
+    WELL.1 R6, R6
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+
+; === emit_byte ===
+emit_byte:
+    ALLOC.2 R9, R0
+    MICRO.1 R9, R9
+    MICRO.1 R10, R10
+    RETURN.0 R0, R0
+
+; === emit_word (4-byte LE) ===
+emit_word:
+    PUSH_UP.1 R4, R4
+    FELLOWSHIP.0 R4, R0
+    MATE.1 R0, R0, #0xFF
+    ABUNDANCE.1 R0, R0, @emit_byte
+    FELLOWSHIP.0 R0, R4
+    MUT.2 R0, R0, #8
+    MATE.1 R0, R0, #0xFF
+    ABUNDANCE.1 R0, R0, @emit_byte
+    FELLOWSHIP.0 R0, R4
+    MUT.2 R0, R0, #16
+    MATE.1 R0, R0, #0xFF
+    ABUNDANCE.1 R0, R0, @emit_byte
+    FELLOWSHIP.0 R0, R4
+    MUT.2 R0, R0, #24
+    MATE.1 R0, R0, #0xFF
+    ABUNDANCE.1 R0, R0, @emit_byte
+    WELL.1 R4, R4
+    RETURN.0 R0, R0
+
+; --- end of core functions ---

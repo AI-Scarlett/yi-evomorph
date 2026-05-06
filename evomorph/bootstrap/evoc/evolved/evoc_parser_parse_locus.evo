@@ -1,0 +1,20 @@
+@evolang "3.0"
+
+@locus evoc.parser.parse_locus {
+    mut_rate   = 0.01
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::LOCUS_KW
+        ䷁ RECV R1, env::LOCUS_NAME
+        ䷂ ALLOC R2, 0x0200
+        ䷌ FELLOWSHIP R0, R2
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R_parse_locus_attrs
+        ䷆ BRANCH R_parse_guaxu
+        ䷾ SYNC
+    }
+}

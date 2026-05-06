@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@locus evoc.lexer.scan_number {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_PTR
+        ䷂ ALLOC R1, 0x0020
+        ䷂ ALLOC R2, R4
+        ䷂ ALLOC R3, R4
+        ䷍ ABUNDANCE R2, R0
+        ䷍ ABUNDANCE R3, R10
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_num_loop
+        ䷍ ABUNDANCE R0, R1
+        ䷗ RETURN
+        ䷁ RECV R4, env::SOURCE_PTR
+        ䷈ PREFETCH R4
+        ䷀ CREA R5, @is_digit
+        ䷔ BITE R1, R0
+        ䷆ BRANCH R_not_digit
+        ䷍ ABUNDANCE R1, R4
+        ䷉ STEP R0
+        ䷉ STEP R1
+        ䷉ STEP R2
+        ䷾ SYNC
+    }
+}

@@ -1,13 +1,8 @@
 {
-  "timestamp": 1777944397.8674712,
+  "timestamp": 1778038537.714902,
   "generation": 5,
   "evolved_versions": 5,
-  "compilation_result": {
-    "loci_count": 9,
-    "meta_loci_count": 2
-  },
-  "self_compile_result": {
-    "loci_count": 9,
-    "meta_loci_count": 2
-  }
+  "self_compile_verified": true,
+  "raw_vm_size": 46,
+  "python_vm_size": 46
 }

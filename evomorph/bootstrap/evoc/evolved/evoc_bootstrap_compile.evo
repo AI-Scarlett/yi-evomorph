@@ -1,0 +1,22 @@
+@evolang "3.0"
+
+@locus evoc.bootstrap.compile {
+    mut_rate   = 0.02
+    cross_pool = "evoc_core"
+    fitness    = max_throughput + min_energy + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::SOURCE_CODE
+        ䷀ CREA R1, @lexer
+        ䷀ CREA R2, @lexer
+        ䷀ CREA R3, @parser
+        ䷀ CREA R4, @parser
+        ䷀ CREA R5, @codegen
+        ䷀ CREA R6, @codegen
+        ䷌ FELLOWSHIP R2, R4
+        ䷌ FELLOWSHIP R4, R6
+        ䷾ SYNC
+    }
+}

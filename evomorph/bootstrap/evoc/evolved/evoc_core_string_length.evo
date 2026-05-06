@@ -1,0 +1,26 @@
+@evolang "3.0"
+
+@locus evoc.core.string_length {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::STR_ADDR
+        ䷂ ALLOC R1, R4
+        ䷍ ABUNDANCE R1, R0
+        ䷓ CONTEMPLATE R0
+        ䷆ BRANCH R_len_loop
+        ䷍ ABUNDANCE R0, R1
+        ䷗ RETURN
+        ䷁ RECV R2, env::STR_ADDR
+        ䷈ PREFETCH R2
+        ䷔ BITE R2, R0
+        ䷆ BRANCH R_end_of_string
+        ䷉ STEP R0
+        ䷉ STEP R1
+        ䷾ SYNC
+    }
+}

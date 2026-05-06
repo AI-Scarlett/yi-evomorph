@@ -1,0 +1,16 @@
+@evolang "3.0"
+
+@locus evoc.stdlib.math.sub {
+    mut_rate   = 0.005
+    cross_pool = "stdlib"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::A
+        ䷁ RECV R1, env::B
+        ䷨ REDUCE R0, R1
+        ䷾ SYNC
+    }
+}

@@ -1,0 +1,29 @@
+@evolang "3.0"
+
+@locus evoc.core.memory_compare {
+    mut_rate   = 0.001
+    cross_pool = "evoc_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+    max_generations = 100
+
+    卦序: {
+        ䷁ RECV R0, env::SRC1
+        ䷁ RECV R1, env::SRC2
+        ䷁ RECV R2, env::LENGTH
+        ䷓ CONTEMPLATE R2
+        ䷆ BRANCH R_cmp_loop
+        ䷍ ABUNDANCE R3, R0
+        ䷗ RETURN
+        ䷁ RECV R4, env::SRC1
+        ䷁ RECV R5, env::SRC2
+        ䷈ PREFETCH R4
+        ䷈ PREFETCH R5
+        ䷔ BITE R4, R5
+        ䷆ BRANCH R_not_equal
+        ䷉ STEP R0
+        ䷉ STEP R1
+        ䷨ REDUCE R2, R1
+        ䷾ SYNC
+    }
+}
