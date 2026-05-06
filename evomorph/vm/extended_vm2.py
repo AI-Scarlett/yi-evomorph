@@ -2,10 +2,10 @@
 """
 扩展的易衍虚拟机 v2 - 重新设计指令编码
 - 使用高2位作为指令类型标记
-- 00xxxxxx: 六十四卦指令（原opcode 0-63 → 新编码 0x00-0x3F）
-- 01xxxxxx: 传统CPU指令
-- 10xxxxxx: 扩展/预留
-- 11xxxxxx: 长指令/多字节
+- 00xxxxxx: 扩展/预留 (当前触发ERROR)
+- 01xxxxxx: 传统CPU指令 (Native)
+- 10xxxxxx: 六十四卦指令 (IChing, opcode 0-63)
+- 11xxxxxx: 长指令/多字节 (当前触发ERROR)
 
 完全自举版本 - 支持标签、CALL/RET、完整条件跳转
 """
@@ -317,8 +317,8 @@ class ExtendedIChingVM2(IChingVM):
         ext_mode = (modifier >> 6) & 0x03
         
         if ext_mode == 0:
-            dst = op1 & 0x0F
-            src = op2 & 0x0F
+            dst = op1 & 0x1F
+            src = op2 & 0x1F
             imm = None
         elif ext_mode == 1:
             dst = op1 & 0x1F
@@ -331,7 +331,8 @@ class ExtendedIChingVM2(IChingVM):
                 imm = struct.unpack('<I', bytes(self.program[self.pc:self.pc+4]))[0]
                 self.pc += 4
             else:
-                imm = 0
+                self.state = VMState.ERROR
+                return
         else:
             dst = op1 & 0x1F
             src = op2 & 0x1F
@@ -677,11 +678,17 @@ class ExtendedIChingVM2(IChingVM):
                 imm = struct.unpack('<I', bytes(self.program[self.pc:self.pc+4]))[0]
                 self.pc += 4
                 has_imm = True
+            else:
+                self.state = VMState.ERROR
+                return
         elif native_opcode in TWO_REG_IMM_OPS and (byte2 & 0x20):
             if self.pc + 3 < len(self.program):
                 imm = struct.unpack('<I', bytes(self.program[self.pc:self.pc+4]))[0]
                 self.pc += 4
                 has_imm = True
+            else:
+                self.state = VMState.ERROR
+                return
         
         handler = self.native_handlers.get(native_opcode)
         if handler:
@@ -1182,9 +1189,16 @@ class ExtendedIChingVM2(IChingVM):
                     if operands_str:
                         ops = [p.strip() for p in operands_str.split(',')]
                         for op in ops:
-                            if op.startswith('#'):
+                            if op.startswith('#') or op.startswith('@'):
                                 has_imm_operand = True
                                 break
+                        # Also check if any operand is just a label name (no prefix)
+                        for op in ops:
+                            if op and not op.startswith('R') and not op.startswith('#') and not op.startswith('@'):
+                                if not op.isdigit() and not op.startswith('0x') and not op.startswith('0X'):
+                                    if op in labels:
+                                        has_imm_operand = True
+                                        break
                     
                     ext_mode = 2 if has_imm_operand else 1
                     byte2 = (ext_mode << 6) | sub_op

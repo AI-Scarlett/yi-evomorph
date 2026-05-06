@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import time
+import traceback
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -20,13 +21,38 @@ class SelfCompiler:
         self.generation = 0
         self.compile_history = []
 
+    def _safe_compile(self, source, output_format="dict"):
+        """使用 IChing EVB 编译器编译，失败时报错而不降级."""
+        compiler = EvocCompiler()
+        result = compiler.compile(source, output_format=output_format)
+        if isinstance(result, dict) and result.get("error"):
+            errors = result.get("errors", [])
+            raise RuntimeError(f"IChing compilation error: {errors}")
+        return result
+
+    def _safe_load_evo_file(self, filepath):
+        try:
+            result = self.runtime.load_evo_file(filepath)
+            if isinstance(result, dict) and result.get("error"):
+                raise RuntimeError(f"加载失败: {result.get('errors', [])}")
+            return result
+        except Exception as e:
+            print(f"  [错误] EvoRuntime加载失败: {e}")
+            raise
+
     def bootstrap(self, evo_compiler_path: str) -> dict:
         print("=" * 60)
         print("易衍·Evomorph 道枢自举")
         print("=" * 60)
 
         print("\n[第一步] 加载自编译器 .evo 源码")
-        result = self.runtime.load_evo_file(evo_compiler_path)
+        try:
+            result = self._safe_load_evo_file(evo_compiler_path)
+        except Exception as e:
+            print(f"  [错误] 无法加载编译器源码: {e}")
+            traceback.print_exc()
+            return {"generation": 0, "error": str(e)}
+
         loci_names = [l["name"] for l in result.get("loci", [])]
         meta_names = [m["name"] for m in result.get("meta_loci", [])]
         print(f"  加载基因座: {len(loci_names)}")
@@ -36,23 +62,42 @@ class SelfCompiler:
         for name in meta_names:
             print(f"    - meta:{name}")
 
+        if not loci_names:
+            print("  [警告] 未找到基因座，跳过执行和进化步骤")
+
         print("\n[第二步] 执行编译器各基因座")
+        exec_results = {}
         for name in loci_names:
-            exec_result = self.runtime.execute_locus(name, max_cycles=100)
-            print(f"  {name}: 状态={exec_result['state']}, 周期={exec_result['cycle_count']}, 能耗={exec_result['energy_cost']:.2f}")
+            try:
+                exec_result = self.runtime.execute_locus(name, max_cycles=100)
+                exec_results[name] = exec_result
+                print(f"  {name}: 状态={exec_result['state']}, 周期={exec_result['cycle_count']}, 能耗={exec_result['energy_cost']:.2f}")
+            except Exception as e:
+                print(f"  {name}: 执行失败 - {e}")
+                exec_results[name] = {"error": str(e)}
 
         print("\n[第三步] 进化编译器各基因座")
         evolution_results = {}
         for name in loci_names:
-            evo_result = self.runtime.evolve_locus(name, generations=10, population_size=16)
-            if evo_result:
-                evolution_results[name] = evo_result
-                print(f"  {name}: 最佳适应度={evo_result['best_fitness']:.4f}, 基因数={evo_result['best_genes_count']}")
+            try:
+                evo_result = self.runtime.evolve_locus(name, generations=10, population_size=16)
+                if evo_result:
+                    evolution_results[name] = evo_result
+                    print(f"  {name}: 最佳适应度={evo_result['best_fitness']:.4f}, 基因数={evo_result['best_genes_count']}")
+                else:
+                    print(f"  {name}: 进化未产生结果")
+            except Exception as e:
+                print(f"  {name}: 进化失败 - {e}")
 
         print("\n[第四步] 用进化后的编译器编译自身")
         with open(evo_compiler_path, "r", encoding="utf-8") as f:
             original_source = f.read()
-        self_compilation = self.runtime.self_compile(original_source)
+        try:
+            self_compilation = self.runtime.self_compile(original_source)
+        except Exception as e:
+            print(f"  [错误] 自编译失败: {e}")
+            raise
+
         self_loci = [l["name"] for l in self_compilation.get("loci", [])]
         print(f"  自编译成功: {len(self_loci)} 个基因座")
         for name in self_loci:
@@ -61,35 +106,48 @@ class SelfCompiler:
             print(f"    - {name}: {instr_count} 条指令")
 
         print("\n[第五步] 交叉验证——自编译结果与原始编译结果对比")
-        compiler = EvocCompiler()
-        original_result = compiler.compile(original_source, output_format="dict")
+        try:
+            original_result = self._safe_compile(original_source, output_format="dict")
+        except Exception as e:
+            print(f"  [警告] 原始编译失败: {e}")
+            original_result = {"loci": []}
+
         original_loci = {l["name"]: l for l in original_result.get("loci", [])}
         evolved_loci = {l["name"]: l for l in self_compilation.get("loci", [])}
         match_count = 0
+        partial_match = 0
         for name in evolved_loci:
             if name in original_loci:
                 evo_instrs = evolved_loci[name].get("instructions", [])
                 orig_instrs = original_loci[name].get("instructions", [])
                 if len(evo_instrs) == len(orig_instrs):
-                    match = all(
-                        e.get("opcode") == o.get("opcode")
-                        for e, o in zip(evo_instrs, orig_instrs)
+                    opcode_matches = sum(
+                        1 for e, o in zip(evo_instrs, orig_instrs)
+                        if e.get("opcode") == o.get("opcode")
                     )
-                    if match:
+                    if opcode_matches == len(evo_instrs):
                         match_count += 1
-        total = len(evolved_loci)
+                    elif opcode_matches > 0:
+                        partial_match += 1
+        total = len(evolved_loci) if evolved_loci else 1
         print(f"  完全匹配: {match_count}/{total}")
+        print(f"  部分匹配: {partial_match}/{total}")
 
         print("\n[第六步] 导出进化后的编译器")
+        exported_count = 0
         for name in loci_names:
-            evolved_source = self.runtime.export_evolved_locus(name)
-            if evolved_source:
-                output_dir = os.path.join(os.path.dirname(evo_compiler_path), "evolved")
-                os.makedirs(output_dir, exist_ok=True)
-                output_path = os.path.join(output_dir, f"{name.replace('.', '_')}.evo")
-                with open(output_path, "w", encoding="utf-8") as f:
-                    f.write(evolved_source)
-                print(f"  导出: {output_path}")
+            try:
+                evolved_source = self.runtime.export_evolved_locus(name)
+                if evolved_source:
+                    output_dir = os.path.join(os.path.dirname(evo_compiler_path), "evolved")
+                    os.makedirs(output_dir, exist_ok=True)
+                    output_path = os.path.join(output_dir, f"{name.replace('.', '_')}.evo")
+                    with open(output_path, "w", encoding="utf-8") as f:
+                        f.write(evolved_source)
+                    print(f"  导出: {output_path}")
+                    exported_count += 1
+            except Exception as e:
+                print(f"  {name}: 导出失败 - {e}")
 
         self.generation += 1
         summary = {
@@ -101,6 +159,8 @@ class SelfCompiler:
                 for k, v in evolution_results.items()
             },
             "self_compilation_match": f"{match_count}/{total}",
+            "partial_match": partial_match,
+            "exported_loci": exported_count,
             "timestamp": time.time(),
         }
         self.compile_history.append(summary)

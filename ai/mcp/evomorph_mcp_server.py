@@ -17,7 +17,7 @@ from evomorph.native.loader.evb_loader import NativeLoader
 
 MCP_VERSION = "2024-11-05"
 SERVER_NAME = "evomorph-mcp"
-SERVER_VERSION = "0.0.5"
+SERVER_VERSION = "0.0.6"
 
 isa = HexagramInstructionSet()
 compiler = EvocCompiler()
@@ -44,7 +44,7 @@ def handle_tools_list(params):
         "tools": [
             {
                 "name": "evomorph_compile",
-                "description": "编译易衍 .evo 源代码为字节码或 JSON。输入 .evo 源码，输出编译结果。",
+                "description": "使用 IChing EVB 自举编译器编译易衍 .evo 源代码。编译路径完全走 IChing 六十四卦指令集 (VM 中执行) 生成 EVB 字节码，不依赖 Python 编译器。输入 .evo 源码，输出编译结果。",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -54,8 +54,8 @@ def handle_tools_list(params):
                         },
                         "format": {
                             "type": "string",
-                            "enum": ["json", "dict"],
-                            "description": "输出格式，默认 json",
+                            "enum": ["json", "dict", "evb"],
+                            "description": "输出格式: json/dict(含元数据+字节码), evb(纯 EVB 字节码)",
                         },
                     },
                     "required": ["source"],
