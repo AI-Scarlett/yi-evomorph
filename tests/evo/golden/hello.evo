@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "最小自举测试：创建进程并同步"
+}
+
+@locus hello.bootstrap {
+    mut_rate   = 0.02
+    cross_pool = "default"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷀ CREA R0, R1
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+    }
+}

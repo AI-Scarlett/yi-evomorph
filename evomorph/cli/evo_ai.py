@@ -11,7 +11,7 @@ from typing import Optional, List, Dict, Any, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from evomorph.compiler import EvocCompiler
+from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 from evomorph.vm.virtual_machine import IChingVM, VMState
 from evomorph.evolution.engine import EvolutionEngine, EvolutionConfig, GeneInstruction
 from evomorph.simulator.niche import PlatformSimNiche
@@ -714,16 +714,16 @@ def extract_evo_code(llm_output: str) -> str:
 
 
 def do_compile(source: str, fmt: str = "json") -> str:
-    compiler = EvocCompiler()
-    result = compiler.compile(source, output_format=fmt)
+    compiler = EnhancedEvoRuntime()
+    result = compiler.full_compile(source)
     if isinstance(result, str):
         return result
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
 def do_run(source: str, max_cycles: int = 10000) -> str:
-    compiler = EvocCompiler()
-    ast = compiler.compile(source, output_format="dict")
+    compiler = EnhancedEvoRuntime()
+    ast = compiler.full_compile(source)
     loci = ast.get("loci", [])
     if not loci:
         return "错误：未找到基因座"
@@ -751,9 +751,9 @@ def do_run(source: str, max_cycles: int = 10000) -> str:
 
 def do_evolve(source: str, generations: int = 50, population: int = 32,
               platforms: Optional[List[str]] = None) -> str:
-    compiler = EvocCompiler()
+    compiler = EnhancedEvoRuntime()
     sim = PlatformSimNiche()
-    ast = compiler.compile(source, output_format="dict")
+    ast = compiler.full_compile(source)
     loci = ast.get("loci", [])
     if not loci:
         return "错误：未找到基因座"

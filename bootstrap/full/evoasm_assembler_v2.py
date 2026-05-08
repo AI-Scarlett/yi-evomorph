@@ -44,7 +44,7 @@ SYSCALLS = {
     "EXIT": 255
 }
 
-LONG_JUMP_EXTRA_BYTES = 28
+LONG_JUMP_EXTRA_BYTES = 20  # ABOUND + ABOUND_8 + SHL + MICRO + ASYNC_BRANCH = 5*4
 
 
 class Macro:
@@ -76,8 +76,8 @@ class Assembler:
         self.current_address = 0
         self.long_jumps: List[LongJumpInfo] = []
         self.long_jump_map: Dict[int, LongJumpInfo] = {}
-        self.temp_reg = "R5"
-        self.shift_reg = "R6"
+        self.temp_reg = "R14"
+        self.shift_reg = "R3"
     
     def tokenize(self, line: str) -> List[str]:
         """词法分析"""
@@ -236,6 +236,9 @@ class Assembler:
         注意：PREFETCH 助记符映射到操作码 57，在虚拟机中是寄存器复制（INTRINSIC）
               正确的左移助记符是 SHL（操作码 55）
         
+        重要：为保证地址计算的一致性，当 byte2 > 0 时始终生成 MICRO（即使 byte3==0），
+        避免地址在 256 字节边界处振荡。
+        
         对于地址 0x032C (812):
             ABOUND R5, 3           ; R5 = 3 (byte2)
             ABOUND R6, 8            ; R6 = 8
@@ -263,28 +266,19 @@ class Assembler:
             if ins:
                 code += ins
             
-            if byte2 > 0:
-                ins = self.encode_instruction_simple("ABOUND", [self.shift_reg, "8"], line_num=line_num)
-                if ins:
-                    code += ins
-                ins = self.encode_instruction_simple("SHL", [self.temp_reg, self.shift_reg], line_num=line_num)
-                if ins:
-                    code += ins
-                ins = self.encode_instruction_simple("MICRO", [self.temp_reg, str(byte2)], line_num=line_num)
-                if ins:
-                    code += ins
-            
-            if byte3 > 0:
-                if byte2 == 0:
-                    ins = self.encode_instruction_simple("ABOUND", [self.shift_reg, "8"], line_num=line_num)
-                    if ins:
-                        code += ins
-                    ins = self.encode_instruction_simple("SHL", [self.temp_reg, self.shift_reg], line_num=line_num)
-                    if ins:
-                        code += ins
-                ins = self.encode_instruction_simple("MICRO", [self.temp_reg, str(byte3)], line_num=line_num)
-                if ins:
-                    code += ins
+            # Always generate byte2 and byte3 handling for consistent size
+            ins = self.encode_instruction_simple("ABOUND", [self.shift_reg, "8"], line_num=line_num)
+            if ins:
+                code += ins
+            ins = self.encode_instruction_simple("SHL", [self.temp_reg, self.shift_reg], line_num=line_num)
+            if ins:
+                code += ins
+            ins = self.encode_instruction_simple("MICRO", [self.temp_reg, str(byte2)], line_num=line_num)
+            if ins:
+                code += ins
+            ins = self.encode_instruction_simple("MICRO", [self.temp_reg, str(byte3)], line_num=line_num)
+            if ins:
+                code += ins
         
         elif byte2 > 0:
             ins = self.encode_instruction_simple("ABOUND", [self.temp_reg, str(byte2)], line_num=line_num)
@@ -298,10 +292,11 @@ class Assembler:
             if ins:
                 code += ins
             
-            if byte3 > 0:
-                ins = self.encode_instruction_simple("MICRO", [self.temp_reg, str(byte3)], line_num=line_num)
-                if ins:
-                    code += ins
+            # Always generate MICRO for byte3, even if byte3 == 0,
+            # to ensure consistent instruction count and prevent address oscillation
+            ins = self.encode_instruction_simple("MICRO", [self.temp_reg, str(byte3)], line_num=line_num)
+            if ins:
+                code += ins
         
         else:
             ins = self.encode_instruction_simple("ABOUND", [self.temp_reg, str(byte3)], line_num=line_num)
@@ -334,7 +329,7 @@ class Assembler:
         tokens = self.tokenize(line)
         if tokens and tokens[0].upper() in self.macros:
             macro = self.macros[tokens[0].upper()]
-            args = tokens[1:] if len(tokens) > 1 else []
+            args = [t for t in tokens[1:] if t != ","] if len(tokens) > 1 else []
             expanded_lines = self.expand_macro(macro, args)
             
             result = []
@@ -430,6 +425,42 @@ class Assembler:
         
         return result, labels
 
+    @staticmethod
+    def calc_long_jump_size(target_address: int) -> int:
+        """Calculate exact byte size of a long jump expansion for given target address.
+        
+        IMPORTANT: Always uses a FIXED size for each byte-level range to prevent
+        address oscillation during convergence. When byte2 > 0, always includes
+        MICRO for byte3 (even if byte3 == 0) to keep size consistent regardless
+        of whether the low byte crosses a page boundary.
+        """
+        byte1 = (target_address >> 16) & 0xFF
+        byte2 = (target_address >> 8) & 0xFF
+        
+        instr_count = 1  # BRANCH (.ASYNC) = 4 bytes
+        
+        if byte1 > 0:
+            # Full 3-byte expansion: always fixed 9 instructions = 36 bytes
+            instr_count += 1  # ABOUND temp, byte1
+            instr_count += 1  # ABOUND shift, 16
+            instr_count += 1  # SHL temp, shift
+            # Always include byte2+byte3 handling for consistent size
+            instr_count += 1  # ABOUND shift, 8
+            instr_count += 1  # SHL temp, shift
+            instr_count += 1  # MICRO temp, byte2
+            instr_count += 1  # MICRO temp, byte3
+        elif byte2 > 0:
+            # Always include MICRO for byte3 (even if byte3==0) to prevent
+            # oscillation when target crosses 256-byte boundary
+            instr_count += 1  # ABOUND temp, byte2
+            instr_count += 1  # ABOUND shift, 8
+            instr_count += 1  # SHL temp, shift
+            instr_count += 1  # MICRO temp, byte3
+        else:
+            instr_count += 1  # ABOUND temp, byte3
+        
+        return instr_count * 4
+
     def analyze_long_jumps(self, instructions: List[Tuple[str, int, List[str]]], labels: Dict[str, int]) -> List[LongJumpInfo]:
         """分析哪些BRANCH指令需要长跳转处理"""
         long_jumps = []
@@ -469,9 +500,9 @@ class Assembler:
                     
                     if target_addr > 255 and not is_async:
                         lj = LongJumpInfo(line_num, labels.get("START", 0), cond_reg, label_name)
-                        lj.extra_bytes = LONG_JUMP_EXTRA_BYTES
+                        lj.extra_bytes = self.calc_long_jump_size(target_addr)
                         long_jumps.append(lj)
-                        print(f"Info: Detected long jump at line {line_num} to {label_name} (0x{target_addr:04X})")
+                        print(f"Info: Detected long jump at line {line_num} to {label_name} (0x{target_addr:04X}) size={lj.extra_bytes}")
         
         return long_jumps
 
@@ -480,7 +511,7 @@ class Assembler:
         adjusted_labels = {}
         current_address = 0
         
-        long_jump_set = {lj.line_num for lj in long_jumps}
+        long_jump_map = {lj.line_num: lj.extra_bytes for lj in long_jumps}
         
         for line_num, line in enumerate(lines, 1):
             tokens = self.tokenize(line)
@@ -500,8 +531,8 @@ class Assembler:
             
             if tokens and (tokens[0].upper() in OPCODES or 
                           tokens[0].upper() in MODIFIERS):
-                if line_num in long_jump_set:
-                    current_address += LONG_JUMP_EXTRA_BYTES
+                if line_num in long_jump_map:
+                    current_address += long_jump_map[line_num]
                 else:
                     current_address += 4
         
@@ -529,14 +560,18 @@ class Assembler:
                 
                 new_long_jumps = self.analyze_long_jumps(instructions, self.adjusted_labels)
                 
-                old_set = {(lj.line_num, lj.target_label) for lj in self.long_jumps}
-                new_set = {(lj.line_num, lj.target_label) for lj in new_long_jumps}
+                # Include extra_bytes in convergence check: the same (line, label)
+                # pair can need different expansion sizes once target addresses shift
+                old_set = {(lj.line_num, lj.target_label, lj.extra_bytes) for lj in self.long_jumps}
+                new_set = {(lj.line_num, lj.target_label, lj.extra_bytes) for lj in new_long_jumps}
+                
+                # Always update with fresh data so next calculate_adjusted_addresses
+                # uses the sizes computed from current adjusted labels
+                self.long_jumps = new_long_jumps
                 
                 if old_set == new_set:
                     print(f"Address calculation stabilized after {iteration + 1} iterations")
                     break
-                
-                self.long_jumps = new_long_jumps
             else:
                 print("Warning: Address calculation did not stabilize, using last iteration")
         else:

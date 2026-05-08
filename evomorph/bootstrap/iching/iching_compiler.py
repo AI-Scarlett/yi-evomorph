@@ -1604,33 +1604,35 @@ main:
 FULL_COMPILER_ASM = "BRANCH.1 @main\n" + STDLIB_ASM + LEXER_ASM + LOOKUP_ASM + CODEGEN_ASM + PARSER_ASM + MAIN_ASM
 
 
+def _bootstrap_dir() -> str:
+    return os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+
+
 def _load_compiler_asm() -> str:
-    """从独立的 .evoasm 文件加载编译器 ASM.
-    
-    优先加载外部文件, 文件不存在时回退到内联字符串.
-    这是实现真正自举的关键改造: 编译器逻辑不再是 Python 内联字符串,
-    而是独立的汇编文件.
-    """
-    asm_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "..", "compiler.evoasm"
-    )
-    # 规范化路径
-    asm_path = os.path.normpath(asm_path)
-    
+    """从独立的 .evoasm 文件加载编译器 ASM，仅作为无 EVOB 快照时的构建输入。"""
+    asm_path = os.path.join(_bootstrap_dir(), "compiler.evoasm")
     if os.path.exists(asm_path):
         with open(asm_path, "r", encoding="utf-8") as f:
             content = f.read()
-        # 验证文件完整性
         if len(content) > 1000 and "BRANCH.1 @main" in content:
             return content
-    
-    # 回退到内联字符串
     return FULL_COMPILER_ASM
 
 
-# 编译器 ASM 源码 (从外部文件加载, 回退到内联)
+def _load_compiler_evob() -> bytes:
+    """加载 Evomorph/EVB 编译器快照，避免运行时依赖 Python 汇编器。"""
+    evob_path = os.path.join(_bootstrap_dir(), "compiler.evob")
+    if os.path.exists(evob_path):
+        with open(evob_path, "rb") as f:
+            data = f.read()
+        if len(data) >= 10 and data[:4] == b"EVOB":
+            return data
+    return b""
+
+
+# 编译器源码和 EVB 快照。优先执行 compiler.evob；仅缺失快照时才使用 .evoasm 构建。
 COMPILER_ASM = _load_compiler_asm()
+COMPILER_EVOB = _load_compiler_evob()
 
 
 class IChingBootstrapCompiler:
@@ -1639,126 +1641,18 @@ class IChingBootstrapCompiler:
         self._mnemonic_table_loaded = False
 
     def _preprocess_source(self, source: str) -> str:
-        result = source
-        result = re.sub(r'[\u4DC0-\u4DFF]', '', result)
-        result = result.replace('\u5366\u5E8F', 'GUAXU')
-        result = result.replace('\u201C', '"')
-        result = result.replace('\u201D', '"')
-        result = result.replace('\uFF08', '(')
-        result = result.replace('\uFF09', ')')
-        result = self._resolve_guaxu_labels(result)
-        return result
-
-    def _resolve_guaxu_labels(self, source: str):
+        """源码预处理: 规范化 + GUAXU label 解析。
+        委托给 evomorph.bootstrap.preprocess 模块 (Stage-0 Python 实现)。
+        未来替换为 preprocess.evob。"""
+        from evomorph.bootstrap.preprocess import normalize_source, resolve_guaxu_labels
         iching_opcodes = {m for m, _ in MNEMONICS}
         native_opcodes = {m for m, _ in NATIVE_MNEMONICS}
         native_imm_always = {"CMPI", "JMP", "JE", "JNE", "JL", "JLE", "JG", "JGE",
                              "JC", "JNC", "MOVI", "CALL"}
         native_no_operand = {"NOP", "HLT", "RET", "PUSHA", "POPA"}
-
-        lines = source.split('\n')
-        result_lines = []
-        in_guaxu = False
-        guaxu_lines = []
-        brace_depth = 0
-
-        for line in lines:
-            stripped = line.strip()
-            if not in_guaxu:
-                if 'GUAXU' in stripped and ':' in stripped:
-                    in_guaxu = True
-                    guaxu_lines = []
-                    brace_depth = stripped.count('{') - stripped.count('}')
-                result_lines.append(line)
-                continue
-
-            brace_depth += stripped.count('{') - stripped.count('}')
-            guaxu_lines.append(line)
-
-            if brace_depth <= 0:
-                resolved = self._resolve_labels_in_block(guaxu_lines, iching_opcodes,
-                                                          native_opcodes, native_imm_always,
-                                                          native_no_operand)
-                result_lines.extend(resolved)
-                in_guaxu = False
-                guaxu_lines = []
-
-        if in_guaxu and guaxu_lines:
-            resolved = self._resolve_labels_in_block(guaxu_lines, iching_opcodes,
-                                                      native_opcodes, native_imm_always,
-                                                      native_no_operand)
-            result_lines.extend(resolved)
-
-        return '\n'.join(result_lines)
-
-    def _resolve_labels_in_block(self, lines, iching_opcodes, native_opcodes,
-                                  native_imm_always, native_no_operand):
-        labels = {}
-        instructions = []
-        offset = 0
-
-        for line in lines:
-            stripped = line.strip()
-            if not stripped or stripped.startswith('//'):
-                instructions.append((offset, line, None))
-                continue
-
-            words = stripped.split()
-            if not words:
-                instructions.append((offset, line, None))
-                continue
-
-            raw_first = words[0]
-            first = raw_first.rstrip(':')
-            is_label = raw_first.endswith(':') or (stripped.rstrip().endswith(':')
-                                                    and first not in iching_opcodes
-                                                    and first not in native_opcodes)
-            if is_label:
-                labels[first] = offset
-                instructions.append((offset, line, None))
-                continue
-
-            if first in iching_opcodes:
-                size = 4
-                instructions.append((offset, line, first))
-                offset += size
-            elif first in native_opcodes:
-                if first in native_no_operand:
-                    size = 3
-                elif first in native_imm_always:
-                    size = 7
-                else:
-                    has_imm = False
-                    for w in words[1:]:
-                        w = w.rstrip(',').lstrip(',')
-                        if w.startswith('#') or w.isdigit() or (w.startswith('0x') and len(w) > 2):
-                            has_imm = True
-                            break
-                    size = 7 if has_imm else 3
-                instructions.append((offset, line, first))
-                offset += size
-            else:
-                instructions.append((offset, line, None))
-
-        result = []
-        for off, line, mnemonic in instructions:
-            if mnemonic is None:
-                result.append(line)
-                continue
-
-            stripped = line.strip()
-
-            if any(lbl in stripped for lbl in labels):
-                import re as _re
-                resolved = _re.sub(
-                    r'(?<![a-zA-Z_#])(' + '|'.join(_re.escape(k) for k in labels) + r')(?![a-zA-Z_0-9])',
-                    lambda m: '#' + str(labels[m.group(1)]),
-                    stripped
-                )
-                result.append('    ' + resolved)
-            else:
-                result.append(line)
-
+        result = normalize_source(source)
+        result = resolve_guaxu_labels(result, iching_opcodes, native_opcodes,
+                                       native_imm_always, native_no_operand)
         return result
 
     def _load_mnemonic_table(self):
@@ -1799,7 +1693,8 @@ class IChingBootstrapCompiler:
             vm._store_word_heap(entry_addr + 4, opcode)
             str_offset += len(mnemonic) + 1
 
-    def compile_source(self, source: str) -> dict:
+    def compile_source(self, source: str, stage0: bool = False) -> dict:
+        """主编译路径。要求 compiler.evob 存在；stage0=True 时允许回退到 Python 汇编器。"""
         vm = self.vm
         vm.__init__()
 
@@ -1808,7 +1703,14 @@ class IChingBootstrapCompiler:
 
         processed = self._preprocess_source(source)
         vm.load_string(INPUT_BUF, processed)
-        vm.load_assembled(COMPILER_ASM)
+        if COMPILER_EVOB:
+            if not vm.load_evob(COMPILER_EVOB):
+                return {"success": False, "error": "Invalid compiler.evob snapshot"}
+        elif stage0:
+            vm.load_assembled(COMPILER_ASM)
+        else:
+            return {"success": False,
+                    "error": "compiler.evob not found. Run 'python3 build_assembler.py' (stage0) to build it first."}
 
         vm.registers[0] = INPUT_BUF
         vm.registers[29] = vm.STACK_SIZE
@@ -1911,6 +1813,11 @@ class IChingBootstrapCompiler:
             result["output_hex"] = raw.hex()
             result["evob_valid"] = False
         return result
+
+    def compile_source_stage0(self, source: str) -> dict:
+        """Stage-0 编译路径：使用 Python 汇编器从 compiler.evoasm 构建编译器。
+        仅在 compiler.evob 不存在时用于灾难恢复或首次构建。"""
+        return self.compile_source(source, stage0=True)
 
 
 def test_all():

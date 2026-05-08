@@ -1,0 +1,21 @@
+@evolang "3.0"
+
+@xiangci {
+    "分支跳转测试"
+}
+
+@locus branch_test {
+    mut_rate   = 0.01
+    cross_pool = "default"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷀ CREA R0, @target
+        ䷆ BRANCH R0, @skip
+        ䷁ RECV R1, env::FALLTHROUGH
+        ䷏ RETREAT
+        ䷀ CREA R2, @ok
+        ䷾ SYNC
+    }
+}

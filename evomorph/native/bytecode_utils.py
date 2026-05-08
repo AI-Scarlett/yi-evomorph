@@ -35,13 +35,20 @@ def locus_to_bytecode(locus_data: dict) -> bytes:
 
 def source_to_segments(compiler, source: str) -> list:
     from evomorph.native.loader.evb_loader import LocusSegment
-    ast = compiler.compile(source, output_format="dict")
+    # 支持 EnhancedEvoRuntime (full_compile) 和 EvocCompiler (compile) 两种接口
+    if hasattr(compiler, 'full_compile'):
+        ast = compiler.full_compile(source)
+    else:
+        ast = compiler.compile(source, output_format="dict")
     segments = []
     for locus_data in ast.get("loci", []):
+        cross_pool = locus_data.get("cross_pool", "default")
+        if not isinstance(cross_pool, str):
+            cross_pool = "default"
         seg = LocusSegment(
             name=locus_data["name"],
             mut_rate=locus_data.get("mut_rate", 0.02),
-            cross_pool=locus_data.get("cross_pool", "default"),
+            cross_pool=cross_pool,
             bytecode=locus_to_bytecode(locus_data),
         )
         segments.append(seg)

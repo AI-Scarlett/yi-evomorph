@@ -1,0 +1,66 @@
+; Minimal I/O test - open and read input.evoasm
+SYS_OPEN EQU 0
+SYS_READ EQU 1
+SYS_CLOSE EQU 3
+SYS_PRINT EQU 40
+SYS_EXIT EQU 255
+MODE_READ EQU 0
+
+START:
+    ; Write filename to heap
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    FELLOWSHIP R5, R0
+    ABOUND R1, 105      ; 'i'
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 110      ; 'n'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 112      ; 'p'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 117      ; 'u'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 116      ; 't'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 46       ; '.'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 101      ; 'e'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 118      ; 'v'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 111      ; 'o'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 97       ; 'a'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 115      ; 's'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 109      ; 'm'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ZERO
+    DISPERSE R5, R1     ; null terminator
+
+    ; Open file
+    ABOUND R0, SYS_OPEN
+    FELLOWSHIP R1, R10
+    ABOUND R2, MODE_READ
+    RECV R0, 0
+    FELLOWSHIP R12, R0
+
+    ; Print fd
+    ABOUND R0, SYS_PRINT
+    FELLOWSHIP R1, R10
+    RECV R0, 0
+
+    HALT

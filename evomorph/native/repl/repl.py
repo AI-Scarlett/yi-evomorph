@@ -4,7 +4,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from evomorph.compiler import EvocCompiler
+from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 from evomorph.vm.virtual_machine import IChingVM, VMState
 from evomorph.hexagrams import HexagramInstructionSet
 from evomorph.evolution.engine import EvolutionEngine, EvolutionConfig, GeneInstruction
@@ -15,7 +15,7 @@ from evomorph.debugger.yaojing import YaoJingDebugger
 
 class EvoREPL:
     def __init__(self):
-        self.compiler = EvocCompiler()
+        self.compiler = EnhancedEvoRuntime()
         self.vm = IChingVM()
         self.isa = HexagramInstructionSet()
         self.sdk = XiangciSDK()
@@ -140,7 +140,7 @@ class EvoREPL:
             return
         try:
             source = f'@locus repl_session {{ mut_rate = 0.02; 卦序: {{ {code} }} }}'
-            result = self.compiler.compile(source, output_format="dict")
+            result = self.compiler.full_compile(source)
             loci = result.get("loci", [])
             if loci:
                 program = []

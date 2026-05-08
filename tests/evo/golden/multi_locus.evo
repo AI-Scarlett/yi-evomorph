@@ -1,0 +1,41 @@
+@evolang "3.0"
+
+@xiangci {
+    "多基因座测试：验证编译器正确处理多个 locus"
+}
+
+@locus multi.first {
+    mut_rate   = 0.02
+    cross_pool = "default"
+    fitness    = min_latency
+
+    卦序: {
+        ䷀ CREA R0, R1
+        ䷌ FELLOWSHIP R0, R1
+    }
+}
+
+@locus multi.second {
+    mut_rate   = 0.01
+    cross_pool = "secondary"
+    fitness    = max_throughput
+    env_target = ["linux-6.x", "android-14"]
+
+    卦序: {
+        ䷁ RECV R2, env::INPUT
+        ䷂ ALLOC R3, 0x100
+        ䷾ SYNC
+    }
+}
+
+@meta_locus multi.controller {
+    mut_rate = 0.005
+    fitness  = min_size
+
+    卦序: {
+        ䷀ CREA R0, @multi.first
+        ䷀ CREA R1, @multi.second
+        ䷌ FELLOWSHIP R0, R1
+        ䷾ SYNC
+    }
+}

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #ifdef _WIN32
 #include <io.h>
@@ -185,10 +186,17 @@ static void vm_syscall(IChingVM *vm) {
         case SYSCALL_OPEN: {
             char *filename = (char*)vm_ptr(vm, arg1);
             int mode = (int)arg2;
+            fprintf(stderr, "[DEBUG SYS_OPEN] arg1=0x%08X filename='%s' mode=%d\n", arg1, filename ? filename : "(null)", mode);
+            if (filename && arg1 >= 0x10000) {
+                fprintf(stderr, "[DEBUG SYS_OPEN] memory[arg1]=0x%02X '%c' memory[arg1+1]=0x%02X '%c'\n",
+                    (unsigned char)filename[0], filename[0]>=32?filename[0]:'.',
+                    (unsigned char)filename[1], filename[1]>=32?filename[1]:'.');
+            }
             FILE *f = NULL;
             if (mode == 0) f = fopen(filename, "rb");
             else if (mode == 1) f = fopen(filename, "wb");
             else if (mode == 2) f = fopen(filename, "rb+");
+            fprintf(stderr, "[DEBUG SYS_OPEN] fopen result=%p errno=%d\n", (void*)f, f ? 0 : errno);
             if (f) {
                 for (int i = 0; i < MAX_FILES; i++) {
                     if (!vm->files[i]) {
@@ -202,10 +210,16 @@ static void vm_syscall(IChingVM *vm) {
         }
         case SYSCALL_READ: {
             int fd = (int)arg1 - 1;
+            fprintf(stderr, "[DEBUG SYS_READ] arg1(fd+1)=%u fd=%d file=%p arg2(buf)=0x%08X arg3(count)=%u\n",
+                arg1, fd, (fd>=0&&fd<MAX_FILES)?(void*)vm->files[fd]:(void*)0, arg2, arg3);
             if (fd >= 0 && fd < MAX_FILES && vm->files[fd]) {
                 uint8_t *buf = vm_ptr(vm, arg2);
                 size_t count = (size_t)arg3;
                 result = (uint32_t)fread(buf, 1, count, vm->files[fd]);
+                fprintf(stderr, "[DEBUG SYS_READ] fread result=%u buf[0]=0x%02X '%c'\n",
+                    result, buf ? buf[0] : 0, (buf&&buf[0]>=32)?buf[0]:'.');
+            } else {
+                fprintf(stderr, "[DEBUG SYS_READ] FAILED: invalid fd or null file\n");
             }
             break;
         }
@@ -376,6 +390,8 @@ static void op_recv(IChingVM *vm, uint8_t modifier, uint8_t *operands) {
     (void)modifier;
     uint8_t dst = operands[0] & 0x0F;
     uint8_t port = operands[1] & 0x0F;
+    fprintf(stderr, "[RECV] PC=0x%08X dst=R%d port=%d R0=%u R1=0x%08X R2=%u\n",
+            vm->pc - 4, dst, port, vm->registers[0], vm->registers[1], vm->registers[2]);
     if (port == 0) {
         vm_syscall(vm);
     } else {
@@ -420,6 +436,7 @@ static void op_lock(IChingVM *vm, uint8_t modifier, uint8_t *operands) {
 
 static void op_branch(IChingVM *vm, uint8_t modifier, uint8_t *operands) {
     uint8_t cond = operands[0] & 0x0F;
+    uint32_t old_pc = vm->pc - 4;
     if (vm->registers[cond] != 0) {
         uint32_t target;
         if (modifier != 0) {
@@ -429,8 +446,13 @@ static void op_branch(IChingVM *vm, uint8_t modifier, uint8_t *operands) {
             target = operands[1];
         }
         if (target < VM_MEMORY_SIZE) {
+            fprintf(stderr, "[BRANCH] PC=0x%08X R%d=0x%08X -> 0x%08X (mod=0x%02X)\n",
+                    old_pc, cond, vm->registers[cond], target, modifier);
             vm->pc = target;
         }
+    } else {
+        fprintf(stderr, "[BRANCH] PC=0x%08X R%d=0x%08X NOT TAKEN (mod=0x%02X)\n",
+                old_pc, cond, vm->registers[cond], modifier);
     }
 }
 

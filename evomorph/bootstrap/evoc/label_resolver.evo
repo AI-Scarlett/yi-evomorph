@@ -1,0 +1,28 @@
+@evolang "3.0"
+
+@xiangci {
+    "Label 解析器：在 GUAXU 块中解析标签引用，将 @label 转换为 #offset。"
+    "替代 _resolve_guaxu_labels() 的 Python 实现。"
+}
+
+@meta_locus preprocess.label_resolver {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11"]
+
+    卦序: {
+        CREA R0, R0, #0x01
+        SYNC
+    }
+}
+
+# TODO: 实现完整的 label 解析逻辑
+# 当前为 stub — 实际功能由 evomorph/bootstrap/preprocess.py 的 Python 实现提供。
+# 待编译器支持字符串解析后，迁移至此。
+#
+# 需要实现的功能:
+#   1. 扫描 GUAXU 块
+#   2. 收集所有 label 定义 (label_name:)
+#   3. 计算每条指令的偏移量
+#   4. 替换 @label 引用为 #offset

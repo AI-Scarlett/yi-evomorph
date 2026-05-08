@@ -1,0 +1,1350 @@
+; ===== EvoASM Self-Bootstrapping Two-Pass Assembler v2.0 =====
+; Assembled by Python assembler v2 (auto long-jump support)
+
+; ===== Macros =====
+%macro ZERO 0
+    ABOUND R1, 16
+    ABOUND R2, 16
+    REDUCE R1, R2
+%endmacro
+
+%macro WB 1
+    ABOUND R1, %1
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+%endmacro
+
+%macro WB0 0
+    ZERO
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+%endmacro
+
+%macro LOADB 2
+    ZERO
+    FELLOWSHIP %1, R0
+    PENETRATE %2, %1
+%endmacro
+
+; ===== Constants =====
+SYS_OPEN EQU 0
+SYS_READ EQU 1
+SYS_WRITE EQU 2
+SYS_CLOSE EQU 3
+SYS_PRINT EQU 40
+SYS_EXIT EQU 255
+SYS_MALLOC EQU 10
+MODE_READ EQU 0
+MODE_WRITE EQU 1
+CHAR_NL EQU 10
+CHAR_SP EQU 32
+CHAR_SEMI EQU 59
+CHAR_COLON EQU 58
+CHAR_COMMA EQU 44
+CHAR_0 EQU 48
+OP_ABOUND EQU 13
+OP_ALLOC EQU 17
+OP_BRANCH EQU 2
+OP_CREA EQU 63
+OP_DISPERSE EQU 50
+OP_FELLOWSHIP EQU 61
+OP_GATHER EQU 24
+OP_HALT EQU 56
+OP_INCREASE EQU 49
+OP_MERGE EQU 16
+OP_MICRO EQU 12
+OP_PENETRATE EQU 54
+OP_PUSH_UP EQU 6
+OP_RECV EQU 0
+OP_REDUCE EQU 35
+OP_REPLACE EQU 29
+OP_RETURN EQU 1
+OP_SHL EQU 55
+OP_SHR EQU 7
+OP_SPRT EQU 34
+OP_STEP EQU 59
+OP_XOR EQU 37
+
+; ===== MAIN =====
+START:
+    ; Build input filename 'input.evoasm'
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0
+    FELLOWSHIP R5, R0
+    ABOUND R1, 105
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 110
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 112
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 117
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 116
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 46
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 101
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 118
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 111
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 97
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 115
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 109
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    WB0
+    ; Open for reading
+    ABOUND R0, SYS_OPEN
+    FELLOWSHIP R1, R10
+    ABOUND R2, MODE_READ
+    RECV R0, 0
+    FELLOWSHIP R12, R0       ; fd
+
+    ; Alloc input buffer (64KB via SYS_MALLOC)
+    ABOUND R0, 10             ; SYS_MALLOC
+    ABOUND R1, 64       ; base = 64
+    ABOUND R14, 10            ; shift = 10 (×1024)
+    SHL R1, R14               ; size = 64×1024 = 65536
+    RECV R0, 0
+    FELLOWSHIP R6, R0
+    FELLOWSHIP R4, R6        ; in_buf ptr
+
+READ_CHUNK:
+    ABOUND R0, SYS_READ
+    FELLOWSHIP R1, R12
+    ABOUND R3, 1
+    ABOUND R14, 8
+    SHL R3, R14              ; R3 = 256
+    FELLOWSHIP R2, R4         ; R2 = buffer
+    RECV R0, 0
+    FELLOWSHIP R15, R0       ; bytes_read
+    ZERO
+    FELLOWSHIP R1, R0
+    BRANCH R15, READ_HAS_DATA
+    BRANCH R2, READ_DONE
+READ_HAS_DATA:
+    ABOUND R2, 1
+    ABOUND R14, 8
+    SHL R2, R14              ; R2 = 256
+    INCREASE R4, R2
+    BRANCH R2, READ_CHUNK
+READ_DONE:
+    ; Close input
+    ABOUND R0, SYS_CLOSE
+    FELLOWSHIP R1, R12
+    RECV R0, 0
+
+    ; ===== PASS 1: Collect labels =====
+    FELLOWSHIP R4, R6        ; reset ptr
+    ZERO
+    FELLOWSHIP R7, R1        ; R7 = addr = 0
+    ; Alloc label table (32KB via SYS_MALLOC)
+    ABOUND R0, 10             ; SYS_MALLOC
+    ABOUND R1, 32       ; base = 32
+    ABOUND R14, 10            ; shift = 10 (×1024)
+    SHL R1, R14               ; size = 32×1024 = 32768
+    RECV R0, 0
+    FELLOWSHIP R8, R0
+    ZERO
+    FELLOWSHIP R13, R1       ; R13 = label count = 0
+
+P1_LINE:
+    ; Skip leading spaces
+P1_SKIP_WS:
+    LOADB R1, R4
+    ABOUND R2, CHAR_SP
+    XOR R1, R2
+    BRANCH R1, P1_CHECK_CHAR
+    ABOUND R2, 1
+    INCREASE R4, R2
+    BRANCH R2, P1_SKIP_WS
+
+P1_CHECK_CHAR:
+    LOADB R1, R4
+    ; Null byte -> end of pass 1
+    BRANCH R1, P1_CHK_CONT
+    BRANCH R2, P1_END
+P1_CHK_CONT:
+    ; Newline -> next line
+    ABOUND R2, CHAR_NL
+    XOR R1, R2
+    BRANCH R1, P1_NOT_NL
+    ABOUND R2, 1
+    INCREASE R4, R2
+    BRANCH R2, P1_LINE
+
+P1_NOT_NL:
+    ; Comment -> skip line
+    ABOUND R2, CHAR_SEMI
+    XOR R1, R2
+    BRANCH R1, P1_NOT_COMMENT
+    ; Skip comment
+P1_SKIP_CMT:
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    BRANCH R1, P1_CMT_NL
+    BRANCH R2, P1_END
+P1_CMT_NL:
+    ABOUND R2, CHAR_NL
+    XOR R1, R2
+    BRANCH R1, P1_SKIP_CMT
+    BRANCH R2, P1_LINE
+
+P1_NOT_COMMENT:
+    FELLOWSHIP R15, R4      ; R15 = line scan pointer
+P1_SCAN:
+    ZERO                     ; R1=0, R2=16
+    PENETRATE R15, R1        ; R1 = memory[R15] (read byte)
+    BRANCH R1, P1_SCN_CONT   ; non-null byte -> continue
+    BRANCH R2, P1_END        ; null byte -> end of pass 1
+P1_SCN_CONT:
+    ABOUND R2, 1
+    INCREASE R15, R2         ; R15++
+    FELLOWSHIP R3, R1        ; R3 = byte (save for comparisons)
+    ; Check for ':' -> label
+    ABOUND R2, CHAR_COLON
+    REDUCE R3, R2            ; R3 = byte - ':'
+    BRANCH R3, P1_CHK_SP     ; R3 != 0 -> check space
+    BRANCH R2, P1_IS_LABEL   ; R3 == 0 -> matched ':'
+P1_CHK_SP:
+    FELLOWSHIP R3, R1        ; R3 = byte (restore)
+    ABOUND R2, CHAR_SP
+    REDUCE R3, R2            ; R3 = byte - ' '
+    BRANCH R3, P1_CHK_NL     ; R3 != 0 -> check newline
+    BRANCH R2, P1_IS_INSN    ; R3 == 0 -> matched ' '
+P1_CHK_NL:
+    ABOUND R2, CHAR_NL
+    REDUCE R1, R2            ; R1 = byte - '\n'
+    BRANCH R1, P1_SCAN       ; R1 != 0 -> continue scanning
+    BRANCH R2, P1_IS_INSN    ; R1 == 0 -> matched '\n'
+
+P1_IS_LABEL:
+    ; R15 points past colon char, label name from R4 to R15-1
+    FELLOWSHIP R2, R15
+    DISPERSE R8, R7          ; addr low byte
+    ABOUND R2, 1
+    INCREASE R8, R2
+    DISPERSE R8, R4          ; name_start
+    INCREASE R8, R2
+    REDUCE R15, R2           ; R15 = name_end (before colon)
+    DISPERSE R8, R15         ; name_end
+    INCREASE R8, R2
+    INCREASE R13, R2         ; label_count++
+    FELLOWSHIP R4, R15
+    ABOUND R2, 2
+    INCREASE R4, R2          ; skip ':' char
+P1_SKIP_LINE:
+    LOADB R1, R4
+    BRANCH R1, P1_SL_CONT
+    BRANCH R2, P1_END
+P1_SL_CONT:
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R2, CHAR_NL
+    XOR R1, R2
+    BRANCH R1, P1_SKIP_LINE
+    BRANCH R2, P1_LINE
+
+P1_IS_INSN:
+    FELLOWSHIP R2, R15
+    ABOUND R15, 4
+    INCREASE R7, R15         ; addr += 4
+    FELLOWSHIP R4, R2
+    BRANCH R2, P1_LINE
+
+P1_END:
+    ; Pass 1 complete, continue to Pass 2
+
+    ; ===== PASS 2: Encode instructions =====
+    FELLOWSHIP R4, R6        ; reset ptr
+    ZERO
+    FELLOWSHIP R7, R1        ; addr = 0
+    ; Alloc output buffer (64KB via SYS_MALLOC)
+    ABOUND R0, 10             ; SYS_MALLOC
+    ABOUND R1, 64       ; base = 64
+    ABOUND R14, 10            ; shift = 10 (×1024)
+    SHL R1, R14               ; size = 64×1024 = 65536
+    RECV R0, 0
+    FELLOWSHIP R9, R0
+    FELLOWSHIP R5, R9        ; output buf ptr = out base
+
+P2_LINE:
+P2_SKIP_WS:
+    LOADB R1, R4
+    ABOUND R2, CHAR_SP
+    XOR R1, R2
+    BRANCH R1, P2_CHECK_CHAR
+    ABOUND R2, 1
+    INCREASE R4, R2
+    BRANCH R2, P2_SKIP_WS
+
+P2_CHECK_CHAR:
+    LOADB R1, R4
+    ; Null byte -> end of pass 2
+    BRANCH R1, P2_CHK_CONT
+    BRANCH R2, P2_END
+P2_CHK_CONT:
+    ; Newline
+    ABOUND R2, CHAR_NL
+    XOR R1, R2
+    BRANCH R1, P2_NOT_NL
+    ABOUND R2, 1
+    INCREASE R4, R2
+    BRANCH R2, P2_LINE
+
+P2_NOT_NL:
+    ; Comment
+    ABOUND R2, CHAR_SEMI
+    XOR R1, R2
+    BRANCH R1, P2_NOT_CMT
+P2_SKIP_CMT:
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    BRANCH R1, P2_SC_NL
+    BRANCH R2, P2_END
+P2_SC_NL:
+    ABOUND R2, CHAR_NL
+    XOR R1, R2
+    BRANCH R1, P2_SKIP_CMT
+    BRANCH R2, P2_LINE
+
+P2_NOT_CMT:
+    ; Scan for colon (label line vs instruction)
+    FELLOWSHIP R15, R4
+P2_SCAN_COLON:
+    LOADB R1, R15
+    BRANCH R1, P2_SCO_CONT
+    BRANCH R2, P2_END
+P2_SCO_CONT:
+    ABOUND R2, 1
+    INCREASE R15, R2
+    FELLOWSHIP R3, R1         ; save byte
+    ABOUND R2, CHAR_COLON
+    REDUCE R3, R2             ; R3 = byte - ':'
+    BRANCH R3, P2_CHK_NL2     ; not ':'
+    BRANCH R2, P2_IS_LABEL_LINE ; is ':', skip label line
+P2_CHK_NL2:
+    ABOUND R2, CHAR_NL
+    REDUCE R1, R2             ; R1 = byte - '\n'
+    BRANCH R1, P2_SCAN_COLON  ; not '\n', continue scan
+    BRANCH R2, P2_ENCODE      ; is '\n', encode instruction
+
+P2_IS_LABEL_LINE:
+    FELLOWSHIP R4, R15
+P2_AFTER_COLON:
+    LOADB R1, R4
+    BRANCH R1, P2_AC_CONT
+    BRANCH R2, P2_END
+P2_AC_CONT:
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R2, CHAR_NL
+    XOR R1, R2
+    BRANCH R1, P2_AFTER_COLON
+    BRANCH R2, P2_LINE
+
+    ; ===== Mnemonic Recognition =====
+P2_ENCODE:
+    LOADB R1, R4              ; First char of token
+    FELLOWSHIP R12, R4        ; Save R4 starting position for NOT_xxx restore
+    ; Check 'ABOUND'
+    ABOUND R2, 65
+    XOR R1, R2
+    BRANCH R1, NOT_ABOUND
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 66
+    XOR R1, R2
+    BRANCH R1, NOT_ABOUND
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 79
+    XOR R1, R2
+    BRANCH R1, NOT_ABOUND
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 85
+    XOR R1, R2
+    BRANCH R1, NOT_ABOUND
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 78
+    XOR R1, R2
+    BRANCH R1, NOT_ABOUND
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 68
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_ABOUND
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_ABOUND:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'ALLOC'
+    ABOUND R2, 65
+    XOR R1, R2
+    BRANCH R1, NOT_ALLOC
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 76
+    XOR R1, R2
+    BRANCH R1, NOT_ALLOC
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 76
+    XOR R1, R2
+    BRANCH R1, NOT_ALLOC
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 79
+    XOR R1, R2
+    BRANCH R1, NOT_ALLOC
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 67
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_ALLOC
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_ALLOC:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'BRANCH'
+    ABOUND R2, 66
+    XOR R1, R2
+    BRANCH R1, NOT_BRANCH
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_BRANCH
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 65
+    XOR R1, R2
+    BRANCH R1, NOT_BRANCH
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 78
+    XOR R1, R2
+    BRANCH R1, NOT_BRANCH
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 67
+    XOR R1, R2
+    BRANCH R1, NOT_BRANCH
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 72
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_BRANCH
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_BRANCH:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'CREA'
+    ABOUND R2, 67
+    XOR R1, R2
+    BRANCH R1, NOT_CREA
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_CREA
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_CREA
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 65
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_CREA
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_CREA:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'DISPERSE'
+    ABOUND R2, 68
+    XOR R1, R2
+    BRANCH R1, NOT_DISPERSE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 73
+    XOR R1, R2
+    BRANCH R1, NOT_DISPERSE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 83
+    XOR R1, R2
+    BRANCH R1, NOT_DISPERSE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 80
+    XOR R1, R2
+    BRANCH R1, NOT_DISPERSE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_DISPERSE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_DISPERSE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 83
+    XOR R1, R2
+    BRANCH R1, NOT_DISPERSE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_DISPERSE
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_DISPERSE:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'FELLOWSHIP'
+    ABOUND R2, 70
+    XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 76
+    XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 76
+    XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 79
+    XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 87
+    XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 83
+    XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 72
+    XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 73
+    XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 80
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_FELLOWSHIP
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_FELLOWSHIP:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'GATHER'
+    ABOUND R2, 71
+    XOR R1, R2
+    BRANCH R1, NOT_GATHER
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 65
+    XOR R1, R2
+    BRANCH R1, NOT_GATHER
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 84
+    XOR R1, R2
+    BRANCH R1, NOT_GATHER
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 72
+    XOR R1, R2
+    BRANCH R1, NOT_GATHER
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_GATHER
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_GATHER
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_GATHER:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'HALT'
+    ABOUND R2, 72
+    XOR R1, R2
+    BRANCH R1, NOT_HALT
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 65
+    XOR R1, R2
+    BRANCH R1, NOT_HALT
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 76
+    XOR R1, R2
+    BRANCH R1, NOT_HALT
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 84
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_HALT
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_HALT:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'INCREASE'
+    ABOUND R2, 73
+    XOR R1, R2
+    BRANCH R1, NOT_INCREASE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 78
+    XOR R1, R2
+    BRANCH R1, NOT_INCREASE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 67
+    XOR R1, R2
+    BRANCH R1, NOT_INCREASE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_INCREASE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_INCREASE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 65
+    XOR R1, R2
+    BRANCH R1, NOT_INCREASE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 83
+    XOR R1, R2
+    BRANCH R1, NOT_INCREASE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_INCREASE
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_INCREASE:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'MERGE'
+    ABOUND R2, 77
+    XOR R1, R2
+    BRANCH R1, NOT_MERGE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_MERGE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_MERGE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 71
+    XOR R1, R2
+    BRANCH R1, NOT_MERGE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_MERGE
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_MERGE:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'MICRO'
+    ABOUND R2, 77
+    XOR R1, R2
+    BRANCH R1, NOT_MICRO
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 73
+    XOR R1, R2
+    BRANCH R1, NOT_MICRO
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 67
+    XOR R1, R2
+    BRANCH R1, NOT_MICRO
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_MICRO
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 79
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_MICRO
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_MICRO:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'PENETRATE'
+    ABOUND R2, 80
+    XOR R1, R2
+    BRANCH R1, NOT_PENETRATE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_PENETRATE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 78
+    XOR R1, R2
+    BRANCH R1, NOT_PENETRATE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_PENETRATE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 84
+    XOR R1, R2
+    BRANCH R1, NOT_PENETRATE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_PENETRATE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 65
+    XOR R1, R2
+    BRANCH R1, NOT_PENETRATE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 84
+    XOR R1, R2
+    BRANCH R1, NOT_PENETRATE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_PENETRATE
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_PENETRATE:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'PUSH_UP'
+    ABOUND R2, 80
+    XOR R1, R2
+    BRANCH R1, NOT_PUSH_UP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 85
+    XOR R1, R2
+    BRANCH R1, NOT_PUSH_UP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 83
+    XOR R1, R2
+    BRANCH R1, NOT_PUSH_UP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 72
+    XOR R1, R2
+    BRANCH R1, NOT_PUSH_UP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 95
+    XOR R1, R2
+    BRANCH R1, NOT_PUSH_UP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 85
+    XOR R1, R2
+    BRANCH R1, NOT_PUSH_UP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 80
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_PUSH_UP
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_PUSH_UP:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'RECV'
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_RECV
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_RECV
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 67
+    XOR R1, R2
+    BRANCH R1, NOT_RECV
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 86
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_RECV
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_RECV:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'REDUCE'
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_REDUCE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_REDUCE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 68
+    XOR R1, R2
+    BRANCH R1, NOT_REDUCE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 85
+    XOR R1, R2
+    BRANCH R1, NOT_REDUCE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 67
+    XOR R1, R2
+    BRANCH R1, NOT_REDUCE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_REDUCE
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_REDUCE:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'REPLACE'
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_REPLACE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_REPLACE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 80
+    XOR R1, R2
+    BRANCH R1, NOT_REPLACE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 76
+    XOR R1, R2
+    BRANCH R1, NOT_REPLACE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 65
+    XOR R1, R2
+    BRANCH R1, NOT_REPLACE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 67
+    XOR R1, R2
+    BRANCH R1, NOT_REPLACE
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_REPLACE
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_REPLACE:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'RETURN'
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_RETURN
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_RETURN
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 84
+    XOR R1, R2
+    BRANCH R1, NOT_RETURN
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 85
+    XOR R1, R2
+    BRANCH R1, NOT_RETURN
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_RETURN
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 78
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_RETURN
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_RETURN:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'SHL'
+    ABOUND R2, 83
+    XOR R1, R2
+    BRANCH R1, NOT_SHL
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 72
+    XOR R1, R2
+    BRANCH R1, NOT_SHL
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 76
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_SHL
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_SHL:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'SHR'
+    ABOUND R2, 83
+    XOR R1, R2
+    BRANCH R1, NOT_SHR
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 72
+    XOR R1, R2
+    BRANCH R1, NOT_SHR
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_SHR
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_SHR:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'SPRT'
+    ABOUND R2, 83
+    XOR R1, R2
+    BRANCH R1, NOT_SPRT
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 80
+    XOR R1, R2
+    BRANCH R1, NOT_SPRT
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    BRANCH R1, NOT_SPRT
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 84
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_SPRT
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_SPRT:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'STEP'
+    ABOUND R2, 83
+    XOR R1, R2
+    BRANCH R1, NOT_STEP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 84
+    XOR R1, R2
+    BRANCH R1, NOT_STEP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 69
+    XOR R1, R2
+    BRANCH R1, NOT_STEP
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 80
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_STEP
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_STEP:
+    FELLOWSHIP R4, R12        ; Restore R4 to line start using saved R12
+    LOADB R1, R4              ; Reload first char from correct position
+    ; Check 'XOR'
+    ABOUND R2, 88
+    XOR R1, R2
+    BRANCH R1, NOT_XOR
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 79
+    XOR R1, R2
+    BRANCH R1, NOT_XOR
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    ABOUND R2, 82
+    XOR R1, R2
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R11, OP_XOR
+    FELLOWSHIP R11, R11
+    BRANCH R2, P2_EMIT
+NOT_XOR:
+    ; Unknown mnemonic - skip line
+P2_SKIP_LINE2:
+    ABOUND R2, 1
+    INCREASE R4, R2
+    LOADB R1, R4
+    BRANCH R1, P2_SL2_CONT
+    BRANCH R2, P2_END
+P2_SL2_CONT:
+    ABOUND R2, CHAR_NL
+    XOR R1, R2
+    BRANCH R1, P2_SKIP_LINE2
+    BRANCH R2, P2_LINE
+
+    ; ===== Emit 4-byte instruction =====
+P2_EMIT:
+    ; byte1 = opcode << 2
+    ABOUND R3, 1      ; shift amount (R3 corrupted by long jump code)
+    FELLOWSHIP R1, R11
+    SHL R1, R3
+    SHL R1, R3
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ; byte2 = 0, byte3 = 0, byte4 = 0 (no operands parsed)
+    WB0
+    WB0
+    WB0
+    ; addr += 4
+    ABOUND R2, 4
+    INCREASE R7, R2
+
+    ; Skip to next line
+P2_TO_NL:
+    LOADB R1, R4
+    BRANCH R1, P2_TNL_CONT
+    BRANCH R2, P2_END
+P2_TNL_CONT:
+    ABOUND R2, 1
+    INCREASE R4, R2
+    ABOUND R2, CHAR_NL
+    XOR R1, R2
+    BRANCH R1, P2_TO_NL
+    BRANCH R2, P2_LINE
+
+P2_END:
+    ; Pass 2 complete
+
+DONE:
+    ; Calculate output size: R5 - R9
+    FELLOWSHIP R1, R5
+    REDUCE R1, R9
+    FELLOWSHIP R13, R1
+
+    ; Build 'output.evob' filename
+    ALLOC R0, 0
+    FELLOWSHIP R10, R0     ; Save base for later SYS_OPEN (R14 corrupt by long jumps)
+    FELLOWSHIP R5, R0
+    ABOUND R1, 111
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 117
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 116
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 112
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 117
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 116
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 46
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 101
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 118
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 111
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 98
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    WB0
+
+    ; Open output file
+    ABOUND R0, SYS_OPEN
+    FELLOWSHIP R1, R10     ; Use saved base (R5 was advanced by wb())
+    ABOUND R2, MODE_WRITE
+    RECV R0, 0
+    FELLOWSHIP R12, R0
+
+    ; Write bytecode
+    ABOUND R0, SYS_WRITE
+    FELLOWSHIP R1, R12
+    FELLOWSHIP R2, R9
+    FELLOWSHIP R3, R13
+    RECV R0, 0
+
+    ; Close & exit
+    ABOUND R0, SYS_CLOSE
+    FELLOWSHIP R1, R12
+    RECV R0, 0
+    ABOUND R0, SYS_EXIT
+    RECV R0, 0
+HALT

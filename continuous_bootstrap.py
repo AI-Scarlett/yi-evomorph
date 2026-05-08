@@ -28,9 +28,7 @@ PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from evomorph.compiler import EvocCompiler, CompilerError, ErrorType, ErrorSeverity
-from evomorph.compiler.lexer import Lexer, TokenType, Token
-from evomorph.compiler.parser import Parser, ProgramNode, LocusNode, InstructionNode
-from evomorph.compiler.codegen import CodeGenerator, CodeGeneratorError
+from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 from evomorph.vm.virtual_machine import IChingVM, VMState
 from evomorph.evolution.engine import (
     EvolutionEngine, EvolutionConfig, GeneInstruction, Individual,
@@ -306,7 +304,7 @@ class ContinuousBootstrapSystem:
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or PROJECT_ROOT
         self.isa = HexagramInstructionSet()
-        self.python_compiler = EvocCompiler(self.isa)
+        self.primitive_runtime = EnhancedEvoRuntime()
         self.vm = IChingVM()
         
         self.generations: List[BootstrapGeneration] = []
@@ -421,11 +419,11 @@ class ContinuousBootstrapSystem:
     def print_error(self, msg: str):
         print(f"  ❌ {msg}")
     
-    def compile_with_python(self, source: str) -> Tuple[bool, Dict[str, Any]]:
-        self.print_step("PYTHON", "使用Python编译器编译...")
+    def compile_with_evo(self, source: str) -> Tuple[bool, Dict[str, Any]]:
+        self.print_step("EVO", "使用Evomorph primitive编译链编译...")
         
         try:
-            result = self.python_compiler.compile(source, output_format="dict")
+            result = self.primitive_runtime.full_compile(source)
             
             if result.get("error") or result.get("errors"):
                 errors = result.get("errors", [])
@@ -1005,8 +1003,8 @@ class ContinuousBootstrapSystem:
             with open(self.bootstrap_file, "r", encoding="utf-8") as f:
                 bootstrap_source = f.read()
             
-            self.print_step("1", "用Python编译器编译自举代码...")
-            py_success, py_result = self.compile_with_python(bootstrap_source)
+            self.print_step("1", "用Evomorph primitive编译链编译自举代码...")
+            py_success, py_result = self.compile_with_evo(bootstrap_source)
             verification["python_compile"]["success"] = py_success
             verification["python_compile"]["result"] = py_result
             
@@ -1021,7 +1019,7 @@ class ContinuousBootstrapSystem:
                 runtime = EvoRuntime()
                 
                 runtime.native_handlers["compile_source"] = lambda src: (
-                    self.python_compiler.compile(src, output_format="dict")
+                    self.primitive_runtime.full_compile(src)
                 )
                 
                 loci = py_result.get("loci", [])

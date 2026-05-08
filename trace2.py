@@ -1,94 +1,65 @@
 #!/usr/bin/env python3
-"""简单追踪 - 看 EVB 汇编器对 compiler.evoasm 做了什么"""
-import sys, os, struct
+"""Trace EVB assembler comparing HALT-only vs CREA+HALT to find divergence"""
+import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from evomorph.vm.extended_vm2 import ExtendedIChingVM2
-from build_assembler import (
-    build_opcode_table, load_assembler_source,
-    INPUT_BUF, OUTPUT_BUF, LABEL_TABLE, OPCODE_TABLE
-)
+from build_assembler import build_opcode_table, OPCODE_TABLE, INPUT_BUF, OUTPUT_BUF, LABEL_TABLE
 
-# Load assembler
-vm = ExtendedIChingVM2()
-opcode_table = build_opcode_table()
-for i, b in enumerate(opcode_table):
-    vm.heap[OPCODE_TABLE + i] = b
-
-asm_source = load_assembler_source()
-evob = vm.assemble(asm_source)
-
-# Ensure label addresses are preserved
-label_addrs = dict(vm.labels)
-print("Key function addresses:")
-for name in ['asm_main', 'pass1', 'pass2', 'skip_line', 'lookup_opcode', 'lookup_label', 'add_label', 'emit_byte', 'p1_done']:
-    if name in label_addrs:
-        print(f"  {name}: {label_addrs[name]}")
-print(f"  evob total: {len(evob)} bytes")
-
-# Load test source
 base_dir = os.path.dirname(os.path.abspath(__file__))
-compiler_path = os.path.join(base_dir, 'evomorph', 'bootstrap', 'compiler.evoasm')
-with open(compiler_path, 'r') as f:
-    compiler_source = f.read()
 
-vm2 = ExtendedIChingVM2()
-for i, b in enumerate(opcode_table):
-    vm2.heap[OPCODE_TABLE + i] = b
+with open(os.path.join(base_dir, 'evomorph', 'bootstrap', 'assembler.evob'), 'rb') as f:
+    assembler_evob = f.read()
 
-source_bytes = compiler_source.encode('ascii', errors='replace') + b'\x00'
-for i, b in enumerate(source_bytes):
-    vm2.heap[INPUT_BUF + i] = b
-for i in range(LABEL_TABLE, LABEL_TABLE + 0x4000):
-    vm2.heap[i] = 0
+def run_asm(source, max_cycles=50000):
+    vm = ExtendedIChingVM2()
+    opcode_table = build_opcode_table()
+    for i, byte_val in enumerate(opcode_table):
+        vm.heap[OPCODE_TABLE + i] = byte_val
+    source_bytes = source.encode('ascii') + b'\x00'
+    for i, byte_val in enumerate(source_bytes):
+        vm.heap[INPUT_BUF + i] = byte_val
+    for i in range(LABEL_TABLE, LABEL_TABLE + 0x4000):
+        vm.heap[i] = 0
+    vm.program = bytearray(assembler_evob)
+    vm.pc = 0
+    vm.registers[0] = INPUT_BUF
+    vm.registers[29] = vm.STACK_SIZE
+    vm.run(max_cycles=max_cycles)
+    return vm
 
-vm2.program = bytearray(evob)
-vm2.pc = 0
-vm2.registers[0] = INPUT_BUF
-vm2.registers[29] = vm2.STACK_SIZE
+# Test 1: HALT only
+print("=== Test 1: HALT.0 only ===")
+vm1 = run_asm("  HALT.0\n")
+print(f"R10 (bytecount): {vm1.registers[10]}, cycles: {vm1.cycle_count}")
+if vm1.registers[10] > 0:
+    out = bytes(vm1.heap[OUTPUT_BUF:OUTPUT_BUF+vm1.registers[10]])
+    print(f"Output ({len(out)} bytes): {out.hex()}")
+else:
+    print("No output")
 
-# Track only CALLs and RETs
-call_trace = []
-orig_step = vm2._step
+# Test 2: CREA.1 R0, R0, #42 only
+print("\n=== Test 2: CREA.1 R0, R0, #42 only ===")
+vm2 = run_asm("  CREA.1 R0, R0, #42\n", max_cycles=50000)
+print(f"R10 (bytecount): {vm2.registers[10]}, cycles: {vm2.cycle_count}, PC: {vm2.pc}")
+print(f"R0: {vm2.registers[0]}, R6: {vm2.registers[6]}, R9: {vm2.registers[9]:#x}")
+if vm2.registers[10] > 0:
+    out = bytes(vm2.heap[OUTPUT_BUF:OUTPUT_BUF+min(vm2.registers[10], 32)])
+    print(f"Output: {out.hex()}")
+else:
+    print("No output")
 
-def track():
-    pc = vm2.pc
-    if pc < len(vm2.program):
-        b1 = vm2.program[pc]
-        if (b1 >> 6) == 2 and pc + 7 < len(vm2.program):
-            op = b1 & 0x3F
-            mod = vm2.program[pc + 1]
-            sub = mod & 0x3F
-            em = (mod >> 6) & 3
-            if op == 47 and sub == 1 and em == 2:
-                addr = struct.unpack('<I', bytes(vm2.program[pc+4:pc+8]))[0]
-                # Find label name
-                label = ''
-                for n, a in label_addrs.items():
-                    if a == addr:
-                        label = n
-                        break
-                call_trace.append(f'CALL pc={pc:5d} → {addr:5d} ({label}) R0={vm2.registers[0]} R10={vm2.registers[10]} R8={vm2.registers[8]}')
-            elif op == 1 and sub == 0:
-                call_trace.append(f'RET  pc={pc:5d} R0={vm2.registers[0]} R10={vm2.registers[10]}')
-    orig_step()
+# Test 3: CREA+HALT with more cycle limit
+print("\n=== Test 3: CREA + HALT ===")
+vm3 = run_asm("  CREA.1 R0, R0, #42\n  HALT.0\n", max_cycles=10000)
+print(f"R10: {vm3.registers[10]}, cycles: {vm3.cycle_count}, PC: {vm3.pc}, state: {vm3.state}")
+print(f"R8 (cursor): {vm3.registers[8]:#x}")
+print(f"R9 (out ptr): {vm3.registers[9]:#x}")
 
-vm2._step = track
-
-try:
-    vm2.run(max_cycles=100000)
-    print(f'\nState: {vm2.state}, Cycles: {vm2.cycle_count}')
-    print(f'R0: {vm2.registers[0]}, R10: {vm2.registers[10]}')
-    print(f'SP: {vm2.registers[29]}')
-    
-    print(f'\nCall trace:')
-    for t in call_trace:
-        print(f'  {t}')
-    
-    if vm2.registers[0] > 0 and vm2.registers[0] < 1000:
-        ob = bytes(vm2.heap[OUTPUT_BUF:OUTPUT_BUF + vm2.registers[0]])
-        print(f'\nOutput first {min(64, len(ob))} bytes: {ob[:64].hex()}')
-        
-except Exception as e:
-    print(f'Error: {e}')
-    import traceback
-    traceback.print_exc()
+# Check if it halted or hit max
+if vm3.state.value == 1:  # HALTED
+    print("VM halted normally")
+    if vm3.registers[10] > 0:
+        out = bytes(vm3.heap[OUTPUT_BUF:OUTPUT_BUF+min(vm3.registers[10], 32)])
+        print(f"Output: {out.hex()}")
+elif vm3.state.value == 2:  # RUNNING
+    print(f"VM still running after {vm3.cycle_count} cycles (stuck in loop)")

@@ -1,0 +1,27 @@
+@evolang "3.0"
+
+@xiangci {
+    "元数据读取器：解析 .evo 源码中的 locus 定义和属性。"
+    "替代 _extract_evo_metadata() 的 Python 实现。"
+}
+
+@meta_locus preprocess.metadata {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11"]
+
+    卦序: {
+        CREA R0, R0, #0x00
+        SYNC
+    }
+}
+
+# TODO: 实现完整的元数据提取逻辑
+# 当前为 stub — 实际功能由 evomorph/bootstrap/preprocess.py 的 Python 实现提供。
+# 待编译器支持字符串解析和正则匹配后，迁移至此。
+#
+# 需要实现的功能:
+#   1. 扫描 @locus / @meta_locus 声明
+#   2. 提取 mut_rate, fitness, env_target, max_generations 等属性
+#   3. 输出结构化元数据

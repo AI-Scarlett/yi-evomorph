@@ -15,10 +15,6 @@ from enum import Enum
 
 from evomorph.vm.virtual_machine import IChingVM, VMState
 from evomorph.hexagrams import HexagramInstructionSet
-from evomorph.compiler import EvocCompiler
-from evomorph.compiler.lexer import Lexer, TokenType, Token
-from evomorph.compiler.parser import Parser, ProgramNode, LocusNode, InstructionNode
-from evomorph.compiler.codegen import CodeGenerator
 from evomorph.evolution.engine import (
     EvolutionEngine, EvolutionConfig, GeneInstruction, Individual,
     SelectionMethod, CrossoverMethod
@@ -127,7 +123,6 @@ class EnhancedEvoRuntime:
     def __init__(self):
         self.vm = IChingVM()
         self.isa = HexagramInstructionSet()
-        self.compiler = EvocCompiler()
         
         self.loaded_loci: Dict[str, dict] = {}
         self.env_bindings: Dict[str, Any] = {}
@@ -234,7 +229,7 @@ class EnhancedEvoRuntime:
     
     def _native_compile_source(self, source_text):
         try:
-            result = self.compiler.compile(source_text, output_format="dict")
+            result = self.full_compile(source_text)
             for locus in result.get("loci", []):
                 self.loaded_loci[locus["name"]] = locus
             return result
@@ -245,7 +240,7 @@ class EnhancedEvoRuntime:
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 source = f.read()
-            result = self.compiler.compile(source, output_format="dict")
+            result = self.full_compile(source)
             for locus in result.get("loci", []):
                 self.loaded_loci[locus["name"]] = locus
             return result
@@ -1231,11 +1226,8 @@ class EnhancedEvoRuntime:
             
             result = self.full_compile(source)
             
-            gen0_result = self._native_compile_source(source)
-            
             return {
                 "evo_compile": result,
-                "python_compile": gen0_result,
                 "loci_count": len(result.get("loci", [])),
                 "success": len(result.get("loci", [])) > 0,
             }
@@ -1291,18 +1283,12 @@ class EnhancedEvoRuntime:
         
         try:
             evo_result = self.full_compile(test_source)
-            gen0_result = self._native_compile_source(test_source)
             
             verification["comparison"] = {
                 "evo_loci_count": len(evo_result.get("loci", [])),
-                "python_loci_count": len(gen0_result.get("loci", [])),
-                "match": len(evo_result.get("loci", [])) == len(gen0_result.get("loci", [])),
             }
             
-            verification["full_bootstrap_works"] = (
-                len(evo_result.get("loci", [])) > 0 and
-                len(evo_result.get("loci", [])) == len(gen0_result.get("loci", []))
-            )
+            verification["full_bootstrap_works"] = len(evo_result.get("loci", [])) > 0
         except Exception as e:
             verification["errors"].append(f"Full bootstrap error: {e}")
         

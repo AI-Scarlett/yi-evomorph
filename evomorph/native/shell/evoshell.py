@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 from evomorph.native.loader.evb_loader import NativeLoader
 from evomorph.native.linker.linker import EvoLinker
 from evomorph.native.image.evo_image import EvoImage
-from evomorph.compiler import EvocCompiler
+from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 from evomorph.vm.virtual_machine import IChingVM, VMState
 from evomorph.hexagrams import HexagramInstructionSet
 from evomorph.evolution.engine import EvolutionEngine, EvolutionConfig, GeneInstruction
@@ -21,7 +21,7 @@ from evomorph.debugger.yaojing import YaoJingDebugger
 
 class EvoShell:
     def __init__(self):
-        self.compiler = EvocCompiler()
+        self.compiler = EnhancedEvoRuntime()
         self.loader = NativeLoader()
         self.linker = EvoLinker()
         self.image_builder = EvoImage()
@@ -44,7 +44,7 @@ class EvoShell:
                 self.loader.save_evb(out, segments)
                 print(f"✓ 编译完成: {out} ({len(segments)} 个基因座)")
             else:
-                result = self.compiler.compile_file(input_path, output_format=fmt)
+                result = self.compiler.full_compile(source)
                 out = output_path or input_path.replace(".evo", f".{fmt}")
                 with open(out, "w", encoding="utf-8") as f:
                     if isinstance(result, str):
@@ -76,7 +76,7 @@ class EvoShell:
             else:
                 with open(input_path, "r", encoding="utf-8") as f:
                     source = f.read()
-                ast = self.compiler.compile(source, output_format="dict")
+                ast = self.compiler.full_compile(source)
                 loci = ast.get("loci", [])
                 if not loci:
                     print("✗ 未找到基因座", file=sys.stderr)
@@ -118,7 +118,7 @@ class EvoShell:
         try:
             with open(input_path, "r", encoding="utf-8") as f:
                 source = f.read()
-            ast = self.compiler.compile(source, output_format="dict")
+            ast = self.compiler.full_compile(source)
             loci = ast.get("loci", [])
             if not loci:
                 print("✗ 未找到基因座", file=sys.stderr)

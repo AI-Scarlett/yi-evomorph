@@ -5,7 +5,7 @@ import asyncio
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from evomorph.compiler import EvocCompiler
+from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 from evomorph.vm.virtual_machine import IChingVM, VMState
 from evomorph.evolution.engine import EvolutionEngine, EvolutionConfig, GeneInstruction
 from evomorph.simulator.niche import PlatformSimNiche
@@ -20,7 +20,7 @@ SERVER_NAME = "evomorph-mcp"
 SERVER_VERSION = "0.0.6"
 
 isa = HexagramInstructionSet()
-compiler = EvocCompiler()
+compiler = EnhancedEvoRuntime()
 sdk = XiangciSDK()
 sim = PlatformSimNiche()
 loader = NativeLoader()
@@ -228,7 +228,7 @@ def handle_tools_call(params):
 def _tool_compile(args):
     source = args.get("source", "")
     fmt = args.get("format", "json")
-    result = compiler.compile(source, output_format=fmt)
+    result = compiler.full_compile(source)
     if isinstance(result, str):
         text = result
     else:
@@ -260,7 +260,7 @@ def _tool_evolve(args):
     generations = args.get("generations", 20)
     population = args.get("population_size", 32)
     platforms = args.get("target_platforms", ["linux-6.x"])
-    ast = compiler.compile(source, output_format="dict")
+    ast = compiler.full_compile(source)
     loci = ast.get("loci", [])
     if not loci:
         return {"content": [{"type": "text", "text": "未找到基因座"}], "isError": True}
@@ -294,7 +294,7 @@ def _tool_evolve(args):
 def _tool_run(args):
     source = args.get("source", "")
     max_cycles = args.get("max_cycles", 10000)
-    ast = compiler.compile(source, output_format="dict")
+    ast = compiler.full_compile(source)
     loci = ast.get("loci", [])
     if not loci:
         return {"content": [{"type": "text", "text": "未找到基因座"}], "isError": True}
@@ -500,7 +500,7 @@ def _tool_evolution_analyze(args):
     if source:
         lines.append("\n【基因座分析】")
         try:
-            ast = compiler.compile(source, output_format="dict")
+            ast = compiler.full_compile(source)
             loci = ast.get("loci", [])
             meta_loci = ast.get("meta_loci", [])
             

@@ -34,4 +34,16 @@ evo-ai = "evomorph.cli.evo_ai:main"
 include = ["evomorph*"]
 
 [tool.setuptools.package-data]
-evomorph = ["prompts/*.md", "stdlib/*.evo"]
+evomorph = [
+    "prompts/*.md",
+    "stdlib/*.evo",
+    "bootstrap/*.evo",
+    "bootstrap/*.evoasm",
+    "bootstrap/*.evob",
+    "bootstrap/evoc/*.evo",
+    "hexagrams/*.evo",
+    "sdk/*.evo",
+    "simulator/*.evo",
+    "monitor/*.evo",
+    "native/*.evo",
+]

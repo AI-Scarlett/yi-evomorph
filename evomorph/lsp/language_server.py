@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Any
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from evomorph.compiler import EvocCompiler
+from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 from evomorph.hexagrams import HexagramInstructionSet
 
 HEXAGRAM_DATA = [
@@ -100,7 +100,7 @@ FITNESS_KW = {
 
 PLATFORMS = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
 
-compiler = EvocCompiler()
+compiler = EnhancedEvoRuntime()
 isa = HexagramInstructionSet()
 
 
@@ -254,7 +254,7 @@ def get_diagnostics(uri, source):
         return locus_start_line
     
     try:
-        result = compiler.compile(source, output_format="dict")
+        result = compiler.full_compile(source)
         loci = result.get("loci", [])
         
         for locus in loci:

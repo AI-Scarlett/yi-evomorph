@@ -69,95 +69,14 @@ class CompilerDiagnostics:
 def _extract_evo_metadata(source: str) -> Dict[str, Any]:
     """从 .evo 源码中提取元数据 (不依赖 lexer/parser)。
 
+    委托给 evomorph.bootstrap.preprocess 模块 (Stage-0 Python 实现)。
+    未来替换为 metadata_reader.evob。
+
     返回:
         {"loci": [...], "meta_loci": [...], "xiangci": [...], "version": "3.0"}
-    每个 locus 包含 name 和基本属性，instructions 为空列表。
     """
-    import re
-
-    loci = []
-    meta_loci = []
-    xiangci = []
-    version = "3.0"
-
-    # 提取版本
-    vm = re.search(r'@evolang\s+"([^"]*)"', source)
-    if vm:
-        version = vm.group(1)
-
-    # 提取象辞块
-    for m in re.finditer(r'@xiangci\s*\{([^}]*)\}', source, re.DOTALL):
-        xiangci.append(m.group(1).strip())
-
-    # 提取 gene locus 和 meta locus 块
-    for m in re.finditer(
-        r'@(?P<type>locus|meta_locus)\s+(?P<name>[\w.]+)\s*\{',
-        source
-    ):
-        is_meta = m.group("type") == "meta_locus"
-        name = m.group("name")
-        locus = {
-            "name": name,
-            "instructions": [],
-            "bytecode": [],
-            "mut_rate": 0.02,
-            "cross_pool": 0,
-            "env_targets": [],
-            "max_generations": 0,
-            "fitness_terms": [],
-        }
-
-        # 在 locus 块内提取属性
-        brace_open = m.end()
-        depth = 1
-        i = brace_open
-        block = ""
-        while i < len(source) and depth > 0:
-            c = source[i]
-            if c == '{':
-                depth += 1
-            elif c == '}':
-                depth -= 1
-            if depth > 0:
-                block += c
-            i += 1
-
-        # mut_rate
-        mr = re.search(r'mut_rate\s*=\s*([0-9.]+)', block)
-        if mr:
-            locus["mut_rate"] = float(mr.group(1))
-
-        # fitness
-        fm = re.search(r'fitness\s*=\s*(\S+)', block)
-        if fm:
-            locus["fitness_terms"] = [{
-                "keyword": fm.group(1),
-                "weight": 1.0
-            }]
-
-        # env_target
-        et = re.search(r'env_target\s*=\s*\[([^\]]*)\]', block)
-        if et:
-            locus["env_targets"] = [
-                t.strip().strip('"') for t in et.group(1).split(",") if t.strip()
-            ]
-
-        # max_generations
-        mg = re.search(r'max_generations\s*=\s*(\d+)', block)
-        if mg:
-            locus["max_generations"] = int(mg.group(1))
-
-        if is_meta:
-            meta_loci.append(locus)
-        else:
-            loci.append(locus)
-
-    return {
-        "loci": loci,
-        "meta_loci": meta_loci,
-        "xiangci": xiangci,
-        "version": version,
-    }
+    from evomorph.bootstrap.preprocess import extract_evo_metadata
+    return extract_evo_metadata(source)
 
 
 class IChingEvocCompiler:

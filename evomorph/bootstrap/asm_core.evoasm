@@ -52,20 +52,29 @@ pr_done:
     WELL.1 R4, R4
     RETURN.0 R0, R0
 
-; === strcmp ===
+; === strcmp (支持 \n 作为终止符) ===
 strcmp:
     PUSH_UP.1 R4, R4
     PUSH_UP.1 R5, R5
 sc_lp:
     RECV.2 R4, R0
     RECV.2 R5, R1
+    ; 检查 R0 的字符是否是终止符 (\0 或 \n)
+    FELLOWSHIP.2 R4, R4, #0
+    BRANCH.2 @sc_chk_term
+    FELLOWSHIP.2 R4, R4, #10
+    BRANCH.2 @sc_chk_term
+    ; 不是终止符，比较字符
     FELLOWSHIP.1 R4, R5
     BRANCH.3 @sc_df
-    FELLOWSHIP.2 R4, R4, #0
-    BRANCH.2 @sc_eq
     MICRO.1 R0, R0
     MICRO.1 R1, R1
     BRANCH.1 @sc_lp
+sc_chk_term:
+    ; R0 遇到终止符。检查 R1 是否也在 \0
+    FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @sc_eq
+    BRANCH.1 @sc_df
 sc_df:
     CREA.1 R0, R0, #1
     BRANCH.1 @sc_rt

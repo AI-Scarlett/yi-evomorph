@@ -9,7 +9,7 @@ import traceback
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from evomorph.bootstrap.runtime import EvoRuntime
-from evomorph.compiler import EvocCompiler
+from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 from evomorph.evolution.engine import EvolutionEngine, EvolutionConfig, GeneInstruction, Individual
 from evomorph.simulator.niche import PlatformSimNiche
 from evomorph.hexagrams import HexagramInstructionSet
@@ -24,12 +24,12 @@ class SelfCompiler:
         self.compile_history = []
 
     def _safe_compile(self, source, output_format="dict"):
-        """使用 IChing EVB 编译器编译，失败时报错而不降级."""
-        compiler = EvocCompiler()
-        result = compiler.compile(source, output_format=output_format)
+        """使用 Evomorph primitive 编译链编译，失败时报错而不降级."""
+        runtime = EnhancedEvoRuntime()
+        result = runtime.full_compile(source)
         if isinstance(result, dict) and result.get("error"):
             errors = result.get("errors", [])
-            raise RuntimeError(f"IChing compilation error: {errors}")
+            raise RuntimeError(f"Evo compilation error: {errors}")
         return result
 
     def _safe_load_evo_file(self, filepath):

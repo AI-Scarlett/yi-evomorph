@@ -1,0 +1,30 @@
+@evolang "3.0"
+
+@xiangci {
+    "标签与调用返回测试"
+}
+
+@locus call_ret_test {
+    mut_rate   = 0.01
+    cross_pool = "default"
+    fitness    = min_latency
+
+    卦序: {
+        ䷀ CREA R0, @helper
+        ䷌ FELLOWSHIP R0, R1
+        ䷁ RECV R2, R0
+        ䷾ SYNC
+    }
+}
+
+@locus helper {
+    mut_rate   = 0.01
+    cross_pool = "default"
+    fitness    = min_size
+
+    卦序: {
+        ䷁ RECV R0, env::DATA
+        ䷂ ALLOC R1, 0x10
+        ䷝ ILLUMINATE R0
+    }
+}

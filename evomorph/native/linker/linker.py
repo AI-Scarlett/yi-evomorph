@@ -41,9 +41,9 @@ class EvoLinker:
 
     def add_evo_source(self, source: str, name_prefix: str = "") -> int:
         from evomorph.native.bytecode_utils import source_to_segments
-        from evomorph.compiler import EvocCompiler
+        from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 
-        compiler = EvocCompiler()
+        compiler = EnhancedEvoRuntime()
         new_segments = source_to_segments(compiler, source)
         idx = len(self.segments)
         for seg in new_segments:

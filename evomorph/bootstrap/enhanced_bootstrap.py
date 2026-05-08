@@ -24,7 +24,7 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 sys.path.insert(0, PROJECT_ROOT)
 
 from evomorph.bootstrap.runtime import EvoRuntime
-from evomorph.compiler import EvocCompiler
+from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 from evomorph.evolution.engine import (
     EvolutionEngine, EvolutionConfig, GeneInstruction, Individual,
     SelectionMethod, CrossoverMethod
@@ -92,7 +92,7 @@ class EnhancedBootstrap:
     def __init__(self):
         self.runtime = EvoRuntime()
         self.isa = HexagramInstructionSet()
-        self.gen0_compiler = EvocCompiler()
+        self.primitive_runtime = EnhancedEvoRuntime()
         
         self.project_root = PROJECT_ROOT
         self.bootstrap_dir = os.path.join(self.project_root, "evomorph", "bootstrap")
@@ -165,7 +165,7 @@ class EnhancedBootstrap:
     
     def compile_with_gen0(self, source: str, output_format: str = "dict") -> CompilationResult:
         """
-        使用第0代编译器（Python实现）编译代码
+        使用 Evomorph primitive 编译链编译代码
         
         Args:
             source: 源代码字符串或文件路径
@@ -181,7 +181,7 @@ class EnhancedBootstrap:
             else:
                 source_code = source
             
-            result = self.gen0_compiler.compile(source_code, output_format=output_format)
+            result = self.primitive_runtime.full_compile(source_code)
             
             return CompilationResult(
                 success=True,

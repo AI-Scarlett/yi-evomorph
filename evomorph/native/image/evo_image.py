@@ -6,7 +6,7 @@ import tempfile
 from typing import Dict, List, Optional
 from evomorph.native.loader.evb_loader import NativeLoader, LocusSegment
 from evomorph.native.bytecode_utils import source_to_segments
-from evomorph.compiler import EvocCompiler
+from evomorph.bootstrap.runtime.enhanced_runtime import EnhancedEvoRuntime
 
 
 EVO_IMAGE_MAGIC = b"EVOI"
@@ -16,7 +16,7 @@ EVO_IMAGE_VERSION = 1
 class EvoImage:
     def __init__(self):
         self.loader = NativeLoader()
-        self.compiler = EvocCompiler()
+        self.compiler = EnhancedEvoRuntime()
         self.image_data = bytearray()
         self.manifest: Dict = {}
 

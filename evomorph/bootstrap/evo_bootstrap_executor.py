@@ -1070,41 +1070,20 @@ class EvoBootstrapExecutor:
             vm.registers[0] = 0
     
     def load_evo_file(self, evo_path: str) -> Dict:
-        from evomorph.compiler.lexer import Lexer
-        from evomorph.compiler.parser import Parser
-        from evomorph.compiler.codegen import CodeGenerator
+        from evomorph.compiler import EvocCompiler
         
         with open(evo_path, 'r', encoding='utf-8') as f:
             source = f.read()
         
-        lexer = Lexer(source)
-        tokens = lexer.tokenize()
-        
-        parser = Parser(tokens)
-        ast = parser.parse()
-        
-        codegen = CodeGenerator()
-        result = codegen.generate(ast)
-        
-        return result
+        return EvocCompiler().compile(source, output_format='dict')
     
     def compile_and_execute(self, evo_source: str, args: List[str] = None) -> Any:
         self.args = args or []
         self.input_source = evo_source
         self.output_result = None
         
-        from evomorph.compiler.lexer import Lexer
-        from evomorph.compiler.parser import Parser
-        from evomorph.compiler.codegen import CodeGenerator
-        
-        lexer = Lexer(evo_source)
-        tokens = lexer.tokenize()
-        
-        parser = Parser(tokens)
-        ast = parser.parse()
-        
-        codegen = CodeGenerator()
-        result = codegen.generate(ast)
+        from evomorph.compiler import EvocCompiler
+        result = EvocCompiler().compile(evo_source, output_format='dict')
         
         instructions = []
         for locus in result.get('loci', []):
