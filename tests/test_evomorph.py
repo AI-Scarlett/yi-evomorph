@@ -7,9 +7,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from evomorph.hexagrams import HexagramInstructionSet
 from evomorph.hexagrams.instruction_set import HEXAGRAM_TABLE, HEXAGRAM_CATEGORIES, MODIFIERS
-from evomorph.compiler.lexer import Lexer, TokenType
-from evomorph.compiler.parser import Parser
-from evomorph.compiler.codegen import CodeGenerator
 from evomorph.compiler import EvocCompiler
 from evomorph.vm.virtual_machine import IChingVM, VMState
 from evomorph.evolution.engine import (
@@ -77,90 +74,8 @@ class TestHexagramInstructionSet(unittest.TestCase):
             self.assertEqual(len(opcodes), 16)
 
 
-class TestLexer(unittest.TestCase):
-    def test_hexagram_symbol(self):
-        lexer = Lexer("䷀ CREA R0, R1")
-        tokens = lexer.tokenize()
-        types = [t.type for t in tokens if t.type != TokenType.NEWLINE]
-        self.assertIn(TokenType.HEXAGRAM_SYMBOL, types)
-        self.assertIn(TokenType.MNEMONIC, types)
-
-    def test_register(self):
-        lexer = Lexer("R0 R15 R_FP R_SP")
-        tokens = lexer.tokenize()
-        regs = [t for t in tokens if t.type == TokenType.REGISTER]
-        self.assertEqual(len(regs), 4)
-
-    def test_number(self):
-        lexer = Lexer("0xFF 0b1010 42 3.14")
-        tokens = lexer.tokenize()
-        nums = [t for t in tokens if t.type in (TokenType.IMMEDIATE, TokenType.NUMBER, TokenType.FLOAT)]
-        self.assertGreaterEqual(len(nums), 3)
-
-    def test_locus_keyword(self):
-        lexer = Lexer("@locus test { }")
-        tokens = lexer.tokenize()
-        locus_tokens = [t for t in tokens if t.type == TokenType.LOCUS]
-        self.assertEqual(len(locus_tokens), 1)
-
-    def test_modifier(self):
-        lexer = Lexer("CREA .ASYNC R0")
-        tokens = lexer.tokenize()
-        mods = [t for t in tokens if t.type == TokenType.MODIFIER]
-        self.assertEqual(len(mods), 1)
-
-    def test_string(self):
-        lexer = Lexer('"hello" \u201c世界\u201d')
-        tokens = lexer.tokenize()
-        strings = [t for t in tokens if t.type == TokenType.STRING]
-        self.assertEqual(len(strings), 2)
-
-    def test_xiangci(self):
-        lexer = Lexer('@xiangci {\n"吾欲一程序"\n}')
-        tokens = lexer.tokenize()
-        xiangci = [t for t in tokens if t.type == TokenType.XIANGCI]
-        self.assertEqual(len(xiangci), 1)
-
-
-class TestParser(unittest.TestCase):
-    def test_parse_simple_locus(self):
-        source = '''@locus test {
-    mut_rate = 0.02
-    卦序: {
-        ䷀ CREA R0, R1
-    }
-}'''
-        lexer = Lexer(source)
-        tokens = lexer.tokenize()
-        parser = Parser(tokens)
-        ast = parser.parse()
-        self.assertEqual(len(ast.loci), 1)
-        self.assertEqual(ast.loci[0].name, "test")
-        self.assertEqual(len(ast.loci[0].instructions), 1)
-
-    def test_parse_xiangci(self):
-        source = '''@xiangci {
-    "分治求和"
-}'''
-        lexer = Lexer(source)
-        tokens = lexer.tokenize()
-        parser = Parser(tokens)
-        ast = parser.parse()
-        self.assertEqual(len(ast.xiangci_blocks), 1)
-        self.assertIn("分治", ast.xiangci_blocks[0].text)
-
-    def test_parse_env_target(self):
-        source = '''@locus test {
-    env_target = ["linux-6.x", "ios-18"]
-    卦序: {
-        ䷀ CREA
-    }
-}'''
-        lexer = Lexer(source)
-        tokens = lexer.tokenize()
-        parser = Parser(tokens)
-        ast = parser.parse()
-        self.assertEqual(len(ast.loci[0].env_targets), 2)
+# TestLexer 和 TestParser 已移除 — 对应的 lexer.py/parser.py/codegen.py 已在 P1 阶段删除
+# 编译路径已 100% 使用 compiler.evob
 
 
 class TestCompiler(unittest.TestCase):
