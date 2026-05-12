@@ -9,11 +9,16 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from evomorph.native.loader.evb_loader import NativeLoader, EvbHeader, LocusSegment
 from evomorph.native.linker.linker import EvoLinker
 from evomorph.native.image.evo_image import EvoImage
-from evomorph.native.shell.evoshell import EvoShell
 from evomorph.native.bytecode_utils import source_to_segments
 from evomorph.compiler import EvocCompiler
 from evomorph.vm.virtual_machine import IChingVM, VMState
 from evomorph.hexagrams import HexagramInstructionSet
+
+# EvoShell 已移至 cli/, 从这里导入用于测试兼容性
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+from cli.evoshell import EvoShell
 
 
 class TestNativeLoader(unittest.TestCase):

@@ -23,7 +23,7 @@ GOLDEN_DIR = os.path.join(PROJECT_ROOT, "tests", "evo", "golden")
 # 冻结的自举资产 hash (SHA-256)
 FROZEN_HASHES = {
     "compiler.evob": "e9cfa57a887e68e51c13768267b2d2324b5d666a459596b736b5ba7f499750c4",
-    "assembler.evob": "8454e3d35f8c426fc104bb5ec8049ac346be1e31c3299784594dd68aa7cec405",
+    "assembler.evob": "17b899cebbd14bfafce9c91d71738b8bfa4d174d6dcb68d3f9313d25b9b32090",
 }
 
 
@@ -72,20 +72,12 @@ def check_python_tcb():
             # 排除自身和 legacy compiler 内部引用
             if "evo_doctor.py" in path:
                 continue
-            if "evomorph/compiler/lexer.py" in path or \
-               "evomorph/compiler/parser.py" in path or \
-               "evomorph/compiler/codegen.py" in path:
-                continue
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
             except Exception:
                 continue
-            for pattern in [
-                "from evomorph.compiler.lexer import",
-                "from evomorph.compiler.parser import",
-                "from evomorph.compiler.codegen import",
-            ]:
+            for pattern in []:  # P2: legacy compiler files deleted
                 if pattern in content:
                     tcb_count += 1
     return tcb_count

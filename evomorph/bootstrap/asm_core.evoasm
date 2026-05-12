@@ -33,14 +33,14 @@ skl_ret:
 ; === parse_reg: 解析 Rd/Rs 数字 (R0=字符串指针 → R0=寄存器号) ===
 parse_reg:
     PUSH_UP.1 R4, R4
-    MICRO.1 R0, R0        ; 跳过 'R'
+    ; 调用者已经跳过 'R', R0 指向第一个数字
     CREA.1 R4, R4, #0     ; R4 = 累计值
 pr_lp:
     RECV.2 R2, R0
     FELLOWSHIP.2 R2, R2, #48
     BRANCH.4 @pr_done      ; < '0'
     FELLOWSHIP.2 R2, R2, #57
-    BRANCH.5 @pr_done      ; > '9'
+    BRANCH.6 @pr_done      ; > '9' (JG, 不是 JLE)
     CREA.1 R3, R3, #10
     GATHER.2 R4, R3        ; R4 *= 10
     GATHER.1 R2, R2, #48   ; char to digit
@@ -52,17 +52,19 @@ pr_done:
     WELL.1 R4, R4
     RETURN.0 R0, R0
 
-; === strcmp (支持 \n 作为终止符) ===
+; === strcmp (支持 \0 和 \n 作为终止符) ===
 strcmp:
     PUSH_UP.1 R4, R4
     PUSH_UP.1 R5, R5
 sc_lp:
     RECV.2 R4, R0
     RECV.2 R5, R1
-    ; 检查 R0 的字符是否是终止符 (\0 或 \n)
+    ; 检查 R0 的字符是否是终止符 (\0, \n, 或空格)
     FELLOWSHIP.2 R4, R4, #0
     BRANCH.2 @sc_chk_term
     FELLOWSHIP.2 R4, R4, #10
+    BRANCH.2 @sc_chk_term
+    FELLOWSHIP.2 R4, R4, #32
     BRANCH.2 @sc_chk_term
     ; 不是终止符，比较字符
     FELLOWSHIP.1 R4, R5
@@ -71,8 +73,10 @@ sc_lp:
     MICRO.1 R1, R1
     BRANCH.1 @sc_lp
 sc_chk_term:
-    ; R0 遇到终止符。检查 R1 是否也在 \0
+    ; R0 遇到终止符 (\0 或 \n)。检查 R1 是否也是终止符 (\0 或 \n)
     FELLOWSHIP.2 R5, R5, #0
+    BRANCH.2 @sc_eq
+    FELLOWSHIP.2 R5, R5, #10
     BRANCH.2 @sc_eq
     BRANCH.1 @sc_df
 sc_df:
@@ -117,6 +121,7 @@ lko_nf:
     RETURN.0 R0, R0
 
 ; === 查找标签地址 (R0=标签名→R0=地址 或 -1) ===
+; Label table entry: 32 bytes name (padded) + 4 bytes address (word) = 36 bytes
 lookup_label:
     PUSH_UP.1 R4, R4
     PUSH_UP.1 R5, R5
@@ -131,11 +136,11 @@ lkl_lp:
     ABUNDANCE.1 R0, R0, @strcmp
     FELLOWSHIP.2 R0, R0, #0
     BRANCH.2 @lkl_fd
-    CREA.1 R0, R0, #12
+    CREA.1 R0, R0, #36
     GATHER.0 R5, R0
     BRANCH.1 @lkl_lp
 lkl_fd:
-    CREA.1 R0, R0, #12
+    CREA.1 R0, R0, #32
     GATHER.0 R5, R0
     RECV.1 R0, R5
     WELL.1 R5, R5
@@ -148,6 +153,7 @@ lkl_nf:
     RETURN.0 R0, R0
 
 ; === 添加标签 (R0=名称指针, R1=地址) ===
+; Label table entry: 32 bytes name (padded) + 4 bytes address (word) = 36 bytes
 add_label:
     PUSH_UP.1 R4, R4
     PUSH_UP.1 R5, R5
@@ -159,15 +165,19 @@ al_fs:
     RECV.2 R0, R5
     FELLOWSHIP.2 R0, R0, #0
     BRANCH.2 @al_wr
-    CREA.1 R0, R0, #12
+    CREA.1 R0, R0, #36
     GATHER.0 R5, R0
     BRANCH.1 @al_fs
 al_wr:
     FELLOWSHIP.0 R6, R5
     CREA.1 R7, R7, #0
 al_cp:
+    FELLOWSHIP.1 R7, R7, #31
+    BRANCH.7 @al_pd          ; JGE: if R7 >= 31, name field full → truncate
     RECV.2 R2, R4
     FELLOWSHIP.2 R2, R2, #0
+    BRANCH.2 @al_pd
+    FELLOWSHIP.2 R2, R2, #10
     BRANCH.2 @al_pd
     ALLOC.2 R6, R2
     MICRO.1 R6, R6
@@ -175,12 +185,13 @@ al_cp:
     MICRO.1 R7, R7
     BRANCH.1 @al_cp
 al_pd:
+    CREA.1 R2, R2, #0
     ALLOC.2 R6, R2
     MICRO.1 R6, R6
     MICRO.1 R7, R7
 al_pad_lp:
-    FELLOWSHIP.1 R7, R7, #12
-    BRANCH.5 @al_wr_a
+    FELLOWSHIP.1 R7, R7, #32
+    BRANCH.7 @al_wr_a      ; JGE: when R7 >= 32, padding complete → write address
     CREA.1 R0, R0, #0
     ALLOC.2 R6, R0
     MICRO.1 R6, R6

@@ -1,0 +1,137 @@
+@evolang "3.0"
+
+@xiangci {
+    "EVB v3 文件头二进制格式规格 — EVB-native 实现"
+    "EVB Header: 4B magic(EVOB) + 2B version(BE) + 2B header_size(BE) + 2B locus_count(BE) + N*4B offsets(BE)"
+    "所有字段为大端序 (big-endian)"
+}
+
+@locus evb_header_parse_magic {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        // evb_header_parse_magic(*data, len) -> valid_flag
+        // 输入: R0 = heap 中 data 起始偏移, R1 = data 字节数
+        // 输出: R0 = 1 如果 magic 匹配 'EVOB', 0 如果不匹配
+        // magic bytes: E=0x45 V=0x56 O=0x4F B=0x42
+        LOAD.0 R2, R0             // R2 = data[0]
+        AND.1 R3, R2, #255
+        CMPI.0 R3, #69            // 'E' = 0x45 = 69
+        BRANCH.2 @fail
+
+        ADD.1 R0, R0, #1
+        LOAD.0 R2, R0             // R2 = data[1]
+        AND.1 R3, R2, #255
+        CMPI.0 R3, #86            // 'V' = 0x56 = 86
+        BRANCH.2 @fail
+
+        ADD.1 R0, R0, #1
+        LOAD.0 R2, R0             // R2 = data[2]
+        AND.1 R3, R2, #255
+        CMPI.0 R3, #79            // 'O' = 0x4F = 79
+        BRANCH.2 @fail
+
+        ADD.1 R0, R0, #1
+        LOAD.0 R2, R0             // R2 = data[3]
+        AND.1 R3, R2, #255
+        CMPI.0 R3, #66            // 'B' = 0x42 = 66
+        BRANCH.2 @fail
+
+        LOAD.1 R0, #1             // 匹配成功
+        RETURN.1 R0, R0
+        
+    fail:
+        LOAD.1 R0, #0
+        RETURN.1 R0, R0
+    }
+}
+
+@locus evb_header_read_version {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        // evb_header_read_version(*data) -> version
+        // 输入: R0 = heap 中 data 起始偏移 (magic 已跳过)
+        // 输出: R0 = version (big-endian uint16 from bytes 4-5)
+        // version = data[4] << 8 | data[5]
+        ADD.1 R1, R0, #4          // R1 = &data[4]
+        LOAD.0 R2, R1             // R2 = data[4]
+        AND.1 R2, R2, #255
+        SHL.0 R2, R2, #8
+
+        ADD.1 R1, R1, #1
+        LOAD.0 R3, R1             // R3 = data[5]
+        AND.1 R3, R3, #255
+
+        OR.0 R0, R2, R3           // R0 = version
+        RETURN.1 R0, R0
+    }
+}
+
+@locus evb_header_read_field16 {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        // evb_header_read_field16(*data, offset) -> value
+        // 读取 big-endian uint16 从 data[offset]
+        // 输入: R0 = heap 中 data 起始偏移, R1 = 字段偏移
+        // 输出: R0 = uint16 value
+        ADD.0 R2, R0, R1          // R2 = &data[offset]
+        LOAD.0 R3, R2             // R3 = high byte
+        AND.1 R3, R3, #255
+        SHL.0 R3, R3, #8
+
+        ADD.1 R2, R2, #1
+        LOAD.0 R4, R2             // R4 = low byte
+        AND.1 R4, R4, #255
+
+        OR.0 R0, R3, R4
+        RETURN.1 R0, R0
+    }
+}
+
+@locus evb_header_read_field32 {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        // evb_header_read_field32(*data, offset) -> value
+        // 读取 big-endian uint32 从 data[offset]
+        // 输入: R0 = heap 中 data 起始偏移, R1 = 字段偏移
+        // 输出: R0 = uint32 value (低 32 位)
+        ADD.0 R2, R0, R1          // R2 = &data[offset]
+        LOAD.0 R3, R2
+        AND.1 R3, R3, #255
+        SHL.0 R3, R3, #24
+
+        ADD.1 R2, R2, #1
+        LOAD.0 R4, R2
+        AND.1 R4, R4, #255
+        SHL.0 R4, R4, #16
+        OR.0 R3, R3, R4
+
+        ADD.1 R2, R2, #1
+        LOAD.0 R4, R2
+        AND.1 R4, R4, #255
+        SHL.0 R4, R4, #8
+        OR.0 R3, R3, R4
+
+        ADD.1 R2, R2, #1
+        LOAD.0 R4, R2
+        AND.1 R4, R4, #255
+        OR.0 R0, R3, R4
+
+        RETURN.1 R0, R0
+    }
+}

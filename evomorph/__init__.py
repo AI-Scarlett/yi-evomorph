@@ -3,12 +3,12 @@ from evomorph.compiler import EvocCompiler, IChingEvocCompiler
 from evomorph.vm.virtual_machine import IChingVM
 from evomorph.evolution.engine import EvolutionEngine
 from evomorph.simulator.niche import PlatformSimNiche
-from evomorph.debugger.yaojing import YaoJingDebugger
 from evomorph.monitor.evomon import EvoMon
 from evomorph.hub.repository import EvoHub
 from evomorph.sdk.xiangci import XiangciSDK
+# YaoJingDebugger 已移至 tools/yaojing/ (P7 optional, 不再属于核心 TCB)
 
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 __lang__ = "易衍·Evomorph"
 
 # 指令集自省 .evo 文件路径 (AI模型可直接阅读这些文件来理解语言能力)

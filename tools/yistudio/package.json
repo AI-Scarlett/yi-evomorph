@@ -221,7 +221,7 @@
                 "type": "evomorph",
                 "label": "易衍 IChingVM 调试器",
                 "languages": ["evomorph"],
-                "program": "../../evomorph/debug/dap_adapter.py",
+                "program": "../../tools/dap/dap_adapter.py",
                 "runtime": "python3",
                 "configurationAttributes": {
                     "launch": {

@@ -1,7 +1,7 @@
 ; ============================================================
 ; 自举汇编器 - 主模块 (两遍扫描)
 ; 依赖 asm_core.evoasm 已加载到 VM 中
-; 输入: R0 指向堆中源码文本; 输出: R0=字节数, 数据在 0x11000
+; 输入: R0 指向堆中源码文本; 输出: R0=字节数, 数据在 0x20000
 ; ============================================================
 BRANCH.1 @asm_main
 
@@ -39,15 +39,31 @@ p1_label_scan:
     BRANCH.2 @p1_is_instr
     FELLOWSHIP.2 R5, R5, #58
     BRANCH.2 @p1_has_label
-    FELLOWSHIP.2 R5, R5, #32
-    BRANCH.2 @p1_is_instr
-    FELLOWSHIP.2 R5, R5, #9
-    BRANCH.2 @p1_is_instr
     FELLOWSHIP.2 R5, R5, #46
     BRANCH.2 @p1_is_instr
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p1_skip_ws_chk
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.2 @p1_skip_ws_chk
+    FELLOWSHIP.2 R5, R5, #59
+    BRANCH.2 @p1_is_comment
     MICRO.1 R4, R4
     MICRO.1 R7, R7
     BRANCH.1 @p1_label_scan
+p1_skip_ws_chk:
+    MICRO.1 R4, R4
+    RECV.2 R5, R4
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p1_skip_ws_chk
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.2 @p1_skip_ws_chk
+    FELLOWSHIP.2 R5, R5, #59
+    BRANCH.2 @p1_is_comment
+    BRANCH.1 @p1_is_instr
+p1_is_comment:
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    BRANCH.1 @p1_comment
 p1_has_label:
     ; 复制标签名并记录地址
     FELLOWSHIP.2 R7, R7, #0
@@ -80,6 +96,8 @@ p1_scan_imm:
     FELLOWSHIP.2 R0, R0, #0
     BRANCH.2 @p1_size_done
     FELLOWSHIP.2 R0, R0, #10
+    BRANCH.2 @p1_size_done
+    FELLOWSHIP.2 R0, R0, #59     ; ';' → inline comment, no imm
     BRANCH.2 @p1_size_done
     FELLOWSHIP.2 R0, R0, #35
     BRANCH.2 @p1_has_imm
@@ -124,7 +142,7 @@ pass2:
     PUSH_UP.1 R11, R11
     CREA.1 R0, R0, #0x1000
     FELLOWSHIP.0 R8, R0
-    CREA.1 R9, R9, #0x11000
+    CREA.1 R9, R9, #0x20000
     CREA.1 R10, R10, #0
 p2_loop:
     RECV.2 R0, R8
@@ -150,14 +168,30 @@ p2_scan:
     BRANCH.2 @p2_encode
     FELLOWSHIP.2 R5, R5, #58
     BRANCH.2 @p2_is_label
-    FELLOWSHIP.2 R5, R5, #32
-    BRANCH.2 @p2_encode
-    FELLOWSHIP.2 R5, R5, #9
-    BRANCH.2 @p2_encode
     FELLOWSHIP.2 R5, R5, #46
     BRANCH.2 @p2_encode
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p2_skip_ws_chk
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.2 @p2_skip_ws_chk
+    FELLOWSHIP.2 R5, R5, #59
+    BRANCH.2 @p2_is_comment
     MICRO.1 R4, R4
     BRANCH.1 @p2_scan
+p2_skip_ws_chk:
+    MICRO.1 R4, R4
+    RECV.2 R5, R4
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p2_skip_ws_chk
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.2 @p2_skip_ws_chk
+    FELLOWSHIP.2 R5, R5, #59
+    BRANCH.2 @p2_is_comment
+    BRANCH.1 @p2_encode
+p2_is_comment:
+    WELL.1 R5, R5
+    WELL.1 R4, R4
+    BRANCH.1 @p2_comment
 p2_is_label:
     WELL.1 R5, R5
     WELL.1 R4, R4
@@ -234,12 +268,22 @@ p2_ws2:
     BRANCH.1 @p2_skip_ws2
 p2_parse_ops:
     ; 解析操作数 (用 R11/R12/R13 避免函数调用破坏)
-    CREA.1 R11, R11, #0
+    ; R11 哨兵使用 0xFF (避免与 R0=0 冲突)
+    ; R14 标记是否有立即数 (0=无, 1=有, 避免 R13=0 歧义)
+    ; R15 标记第二个寄存器是否已解析 (0=未, 1=已)
+    CREA.1 R11, R11, #0xFF
     CREA.1 R12, R12, #0
     CREA.1 R13, R13, #0
+    CREA.1 R14, R14, #0
+    CREA.1 R15, R15, #0
     FELLOWSHIP.0 R3, R4
 p2_scan_ops:
     RECV.2 R5, R3
+    ; 跳过操作数间的空白
+    FELLOWSHIP.2 R5, R5, #32
+    BRANCH.2 @p2_scan_skip_ws
+    FELLOWSHIP.2 R5, R5, #9
+    BRANCH.2 @p2_scan_skip_ws
     FELLOWSHIP.2 R5, R5, #0
     BRANCH.2 @p2_emit
     FELLOWSHIP.2 R5, R5, #10
@@ -250,27 +294,47 @@ p2_scan_ops:
     MICRO.1 R3, R3
     PUSH_UP.1 R4, R4
     FELLOWSHIP.0 R4, R3
-    FELLOWSHIP.2 R11, R11, #0
-    BRANCH.3 @p2_read_reg2
+    FELLOWSHIP.2 R11, R11, #0xFF
+    BRANCH.3 @p2_chk_third_reg  ; R11 already set? → JNE: check if beyond second
     FELLOWSHIP.0 R0, R4
     ABUNDANCE.1 R0, R0, @parse_reg
     FELLOWSHIP.0 R11, R0
+    FELLOWSHIP.0 R3, R4    ; restore R3 (source pointer) from R4
     WELL.1 R4, R4
-    BRANCH.1 @p2_scan_next
+    BRANCH.1 @p2_skip_reg_num
+p2_chk_third_reg:
+    FELLOWSHIP.2 R15, R15, #0
+    BRANCH.2 @p2_read_reg2  ; R15==0 → second register ok (JE: jump if zero)
+    ; R15==1 → third register detected, skip it
+    FELLOWSHIP.0 R3, R4     ; restore R3 (already advanced past 'R')
+    WELL.1 R4, R4
+    BRANCH.1 @p2_skip_reg_num  ; skip digits and continue
 p2_read_reg2:
     FELLOWSHIP.0 R0, R4
     ABUNDANCE.1 R0, R0, @parse_reg
     FELLOWSHIP.0 R12, R0
+    CREA.1 R15, R15, #1     ; mark: second reg parsed
+    FELLOWSHIP.0 R3, R4    ; restore R3 (source pointer) from R4
     WELL.1 R4, R4
-    BRANCH.1 @p2_scan_next
+    BRANCH.1 @p2_skip_reg_num
 p2_check_hash:
     FELLOWSHIP.2 R5, R5, #35
     BRANCH.3 @p2_check_at
     ; 解析十进制或十六进制立即数
+    CREA.1 R14, R14, #1          ; 标记: 有立即数
     MICRO.1 R3, R3
     RECV.2 R5, R3
     FELLOWSHIP.2 R5, R5, #48
     BRANCH.4 @p2_parse_hex
+    BRANCH.3 @p2_hash_dec        ; JNE → 非'0', 直接十进制
+    ; R5 == '0' — 检查后面是否是 'x' (0x十六进制前缀)
+    MICRO.1 R3, R3               ; 偷看下一个字符
+    RECV.2 R5, R3                ; 读取下一个字符
+    CREA.1 R0, R0, #120          ; R0 = 'x'
+    FELLOWSHIP.1 R5, R0          ; CMP R5, 'x'
+    BRANCH.2 @p2_hex_0x          ; JEQ → 是 '0x' 前缀!
+    ; 不是 '0x', 回退到十进制 (开头的 '0' 已消耗, R13 从 0 开始正确)
+p2_hash_dec:
     CREA.1 R13, R13, #0
 p2_dec_loop:
     RECV.2 R5, R3
@@ -279,6 +343,10 @@ p2_dec_loop:
     FELLOWSHIP.2 R5, R5, #10
     BRANCH.2 @p2_scan_next
     FELLOWSHIP.2 R5, R5, #44
+    BRANCH.2 @p2_scan_next
+    FELLOWSHIP.2 R5, R5, #32     ; space → done
+    BRANCH.2 @p2_scan_next
+    FELLOWSHIP.2 R5, R5, #59     ; ';' → done (inline comment)
     BRANCH.2 @p2_scan_next
     CREA.1 R0, R0, #10
     GATHER.2 R13, R0
@@ -291,13 +359,19 @@ p2_parse_hex:
     CREA.1 R0, R0, #120
     FELLOWSHIP.1 R5, R0
     BRANCH.3 @p2_dec_loop
-    MICRO.1 R3, R3
+p2_hex_0x:
+    MICRO.1 R3, R3               ; 跳过 'x'
     CREA.1 R13, R13, #0
+    BRANCH.1 @p2_hex_loop
 p2_hex_loop:
     RECV.2 R5, R3
     FELLOWSHIP.2 R5, R5, #0
     BRANCH.2 @p2_scan_next
     FELLOWSHIP.2 R5, R5, #10
+    BRANCH.2 @p2_scan_next
+    FELLOWSHIP.2 R5, R5, #32     ; space → done
+    BRANCH.2 @p2_scan_next
+    FELLOWSHIP.2 R5, R5, #59     ; ';' → done (inline comment)
     BRANCH.2 @p2_scan_next
     CREA.1 R0, R0, #16
     GATHER.2 R13, R0
@@ -333,6 +407,7 @@ p2_check_at:
     BRANCH.3 @p2_scan_next
     ; 标签引用
     MICRO.1 R3, R3
+    CREA.1 R14, R14, #1          ; 标记: 有立即数 (标签地址)
     FELLOWSHIP.0 R0, R3
     ABUNDANCE.1 R0, R0, @lookup_label
     FELLOWSHIP.0 R13, R0
@@ -352,11 +427,22 @@ p2_scan_next:
     FELLOWSHIP.2 R5, R5, #10
     BRANCH.2 @p2_emit
     FELLOWSHIP.2 R5, R5, #44
-    BRANCH.3 @p2_skip_comma
+    BRANCH.2 @p2_skip_comma
     BRANCH.1 @p2_emit
+p2_scan_skip_ws:
+    MICRO.1 R3, R3
+    BRANCH.1 @p2_scan_ops
 p2_skip_comma:
     MICRO.1 R3, R3
     BRANCH.1 @p2_scan_ops
+p2_skip_reg_num:
+    RECV.2 R5, R3
+    FELLOWSHIP.2 R5, R5, #48
+    BRANCH.4 @p2_scan_next      ; < '0'
+    FELLOWSHIP.2 R5, R5, #57
+    BRANCH.6 @p2_scan_next      ; > '9'
+    MICRO.1 R3, R3
+    BRANCH.1 @p2_skip_reg_num
     ; === 发射字节码 ===
 p2_emit:
     ; 从 R11/R12/R13 恢复操作数值 (不会被函数调用破坏)
@@ -368,7 +454,7 @@ p2_emit:
     MATE.3 R0, R0, #128
     ABUNDANCE.1 R0, R0, @emit_byte
     ; byte2: mode<<6 | sub_op(R7)
-    FELLOWSHIP.2 R2, R2, #0
+    FELLOWSHIP.2 R14, R14, #0
     BRANCH.3 @p2_by2_imm
     ; no immediate (mode=1)
     FELLOWSHIP.0 R0, R7
@@ -382,12 +468,16 @@ p2_emit_byte2:
     ABUNDANCE.1 R0, R0, @emit_byte
     ; byte3: dst register
     FELLOWSHIP.0 R0, R11
+    FELLOWSHIP.2 R0, R0, #32    ; clamp sentinel >= 32 to R0
+    BRANCH.4 @p2_emit_byte3     ; JLT → valid register (0-31)
+    CREA.1 R0, R0, #0           ; sentinel → emit R0
+p2_emit_byte3:
     ABUNDANCE.1 R0, R0, @emit_byte
     ; byte4: src register
     FELLOWSHIP.0 R0, R12
     ABUNDANCE.1 R0, R0, @emit_byte
     ; 如果有立即数, emit 4 bytes (emit_word 内部通过 emit_byte 递增 R10)
-    FELLOWSHIP.2 R13, R13, #0
+    FELLOWSHIP.2 R14, R14, #0
     BRANCH.2 @p2_line_done
     FELLOWSHIP.0 R0, R13
     ABUNDANCE.1 R0, R0, @emit_word
@@ -426,6 +516,8 @@ asm_main:
     ABUNDANCE.1 R0, R0, @pass1
     ; 重置输入指针
     CREA.1 R0, R0, #0x1000
+    ; 初始化 R11 哨兵 (0xFF 表示"未设置第一个寄存器"，避免与 R0=0 冲突)
+    CREA.1 R11, R11, #0xFF
     ; 第二遍
     ABUNDANCE.1 R0, R0, @pass2
     ; 返回输出大小，然后 HLT (防止 LR 回退导致无限循环)

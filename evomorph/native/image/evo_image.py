@@ -1,3 +1,14 @@
+"""
+EVOI 映像打包器 — Python 桥接层
+==================================
+状态: P4 — EVB-native 格式解析已完成 (packer.evo: magic 校验, manifest 解析)
+      本文件为 Python 运行时桥接，提供 JSON manifest, 二进制打包, runner 生成
+      在 P3 VM 自举完成前无法移除
+
+EVB-native 实现: packer.evo (EVOI magic 校验, manifest 解析, EVB 偏移计算)
+Python 桥接原因: JSON 序列化 (manifest), Python runner 脚本生成, struct 打包
+计划移除: P6 native 后端提供原生 JSON + 文件打包后，可全部 EVB-ify
+"""
 import os
 import sys
 import struct

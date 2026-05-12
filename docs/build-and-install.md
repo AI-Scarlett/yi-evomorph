@@ -42,13 +42,13 @@ python3 -m build
 ```
 
 构建产物在 `dist/` 目录下：
-- `evomorph-0.0.6-py3-none-any.whl` — wheel 包（跨平台）
-- `evomorph-0.0.6.tar.gz` — 源码包
+- `evomorph-0.0.7-py3-none-any.whl` — wheel 包（跨平台）
+- `evomorph-0.0.7.tar.gz` — 源码包
 
 将 `.whl` 文件拷贝到目标机器后安装：
 
 ```bash
-pip install evomorph-0.0.6-py3-none-any.whl
+pip install evomorph-0.0.7-py3-none-any.whl
 ```
 
 ### 方式四：开发模式安装

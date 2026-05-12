@@ -1,0 +1,135 @@
+@evolang "3.0"
+
+@xiangci {
+    "符号表操作 — EVB-native 实现"
+    "符号格式: 每符号 8 字节 — 4B name_hash + 4B offset"
+    "name_hash = simple djb2 hash of locus name string"
+}
+
+@locus symbol_djb2_hash {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        // symbol_djb2_hash(*name_str, len) -> hash
+        // 输入: R0 = heap 中字符串起始偏移, R1 = 字符串长度
+        // 输出: R0 = djb2 hash value
+        // hash = 5381
+        // for each byte: hash = ((hash << 5) + hash) + byte
+        LOAD.1 R2, #5381           // R2 = hash = 5381
+        SHL.0 R3, R2, #5           // R3 = hash << 5
+        MOVE R4, R0                // R4 = 当前指针
+
+    hash_loop:
+        CMPI.0 R1, #0
+        BRANCH.2 @hash_done         // R1 == 0 → 完成
+
+        LOAD.0 R5, R4             // R5 = byte
+        AND.1 R5, R5, #255
+
+        MOVE R6, R2
+        SHL.0 R6, R6, #5          // hash << 5
+        ADD.0 R6, R6, R2          // (hash << 5) + hash
+        ADD.0 R2, R6, R5          // hash = ((hash << 5) + hash) + byte
+
+        ADD.1 R4, R4, #1
+        SUB.1 R1, R1, #1
+        BRANCH.1 @hash_loop
+
+    hash_done:
+        MOVE R0, R2
+        RETURN.1 R0, R0
+    }
+}
+
+@locus symbol_table_lookup {
+    mut_rate = 0.0
+    cross_pool = "stdlib"
+    fitness = correctness
+    env_target = ["evomorph-vm"]
+
+    卦序: {
+        // symbol_table_lookup(*sym_table, count, hash) -> offset
+        // 输入: R0 = heap 中符号表起始偏移, R1 = 符号数量, R2 = 目标 hash
+        // 输出: R0 = 匹配符号的 offset, 如果未找到则 R0 = 0xFFFFFFFF
+        // 符号表布局: [hash:4B][offset:4B] 重复 count 次
+
+        MOVE R3, R0                // R3 = 表指针
+        MOVE R4, R1                // R4 = 剩余计数
+
+    lookup_loop:
+        CMPI.0 R4, #0
+        BRANCH.2 @not_found
+
+        // 读取 hash (big-endian uint32)
+        LOAD.0 R5, R3               // byte3
+        AND.1 R5, R5, #255
+        SHL.0 R5, R5, #24
+
+        ADD.1 R6, R3, #1
+        LOAD.0 R7, R6
+        AND.1 R7, R7, #255
+        SHL.0 R7, R7, #16
+        OR.0 R5, R5, R7
+
+        ADD.1 R6, R3, #2
+        LOAD.0 R7, R6
+        AND.1 R7, R7, #255
+        SHL.0 R7, R7, #8
+        OR.0 R5, R5, R7
+
+        ADD.1 R6, R3, #3
+        LOAD.0 R7, R6
+        AND.1 R7, R7, #255
+        OR.0 R5, R5, R7
+
+        // 比较 hash
+        CMP.0 R5, R2
+        BRANCH.2 @found
+
+        // 移动到下一个符号条目 (8 字节)
+        ADD.1 R3, R3, #8
+        SUB.1 R4, R4, #1
+        BRANCH.1 @lookup_loop
+
+    found:
+        // 读取 offset (+4 偏移)
+        ADD.1 R3, R3, #4
+        LOAD.0 R5, R3
+        AND.1 R5, R5, #255
+        SHL.0 R5, R5, #24
+
+        ADD.1 R6, R3, #1
+        LOAD.0 R7, R6
+        AND.1 R7, R7, #255
+        SHL.0 R7, R7, #16
+        OR.0 R5, R5, R7
+
+        ADD.1 R6, R3, #2
+        LOAD.0 R7, R6
+        AND.1 R7, R7, #255
+        SHL.0 R7, R7, #8
+        OR.0 R5, R5, R7
+
+        ADD.1 R6, R3, #3
+        LOAD.0 R7, R6
+        AND.1 R7, R7, #255
+        OR.0 R0, R5, R7
+        RETURN.1 R0, R0
+
+    not_found:
+        LOAD.1 R0, #255            // 0xFFFFFFFF 未找到标记
+        SHL.0 R0, R0, #24
+        LOAD.1 R1, #255
+        SHL.0 R1, R1, #16
+        OR.0 R0, R0, R1
+        LOAD.1 R1, #255
+        SHL.0 R1, R1, #8
+        OR.0 R0, R0, R1
+        LOAD.1 R1, #255
+        OR.0 R0, R0, R1
+        RETURN.1 R0, R0
+    }
+}

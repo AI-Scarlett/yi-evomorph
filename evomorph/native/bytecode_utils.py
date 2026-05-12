@@ -1,5 +1,14 @@
-# IChing EVB 等价实现: bytecode_utils.evo (operand_to_byte, encode_instruction, locus_to_bytecode)
-# Python 版本保留为桥接层，供 native/linker/image 等基础设施使用
+"""
+字节码工具 — Python 桥接层
+==============================
+状态: P4 — EVB-native 核心函数已完成 (bytecode_utils.evo)
+      operand_to_byte, encode_instruction, locus_to_bytecode 已 EVB-ify
+      source_to_segments 仍需 Python 编译器接口
+
+EVB-native 实现: bytecode_utils.evo (operand_to_byte, encode_instruction, locus_to_bytecode)
+Python 桥接原因: source_to_segments 需要 EnhancedEvoRuntime 编译器接口
+计划移除: P3 VM 自举后，source_to_segments 可在 EVB-native 编译器中实现
+"""
 
 def operand_to_byte(val) -> int:
     if isinstance(val, int):

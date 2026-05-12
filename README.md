@@ -4,7 +4,7 @@
 
 易衍（Evomorph）是一种基于《易经》六十四卦的进化编程语言。每条指令的操作码等于其对应卦象的六爻二进制值，代码通过遗传算法自动进化优化，适应不同目标平台。
 
-**当前版本**: v0.0.6
+**当前版本**: v0.0.7
 
 ## 特性
 
@@ -22,7 +22,7 @@
 
 ### 🎉 IChing EVB 自举编译器已实现！
 
-v0.0.6 实现了用 IChing 汇编直接编写的自举编译器，消除了对 Python 编译器类的依赖。
+v0.0.7 将 VM 执行路径从 Python 切换到 C 原生 VM（libichingvm2.dylib），消除了 ~900 行 Python `_step()` 指令解释器调用。C VM 异常时自动回退 Python VM。
 
 **编译链路**: `compiler.evoasm` (36KB 汇编) → VM 汇编器 → `compiler.evob` (7.9KB 字节码) → 加载到 VM → 编译 .evo 源码
 
@@ -45,10 +45,12 @@ compiler.evoasm  (36KB IChing 汇编)
 
 | 组件 | 实现 | 说明 |
 |------|------|------|
-| ExtendedIChingVM2 | Python | 32寄存器 VM，执行 EVB 字节码 |
+| ExtendedIChingVM2 | Python + C VM | 32寄存器 VM，执行默认走 C 原生 VM |
+| CBridgeVM | Python ctypes | C 原生 VM 桥接（310行替代 2600行） |
 | Assembler | Python | 将 .evoasm 汇编为 EVB 字节码 |
 | compiler.evoasm | IChing 汇编 | 编译器核心（lexer/parser/codegen） |
 | compiler.evob | EVB 字节码 | 编译器可执行体 |
+| libichingvm2.dylib | C | 原生 VM 共享库（38KB, 10/10测试通过） |
 
 ### 编译路径
 
@@ -284,7 +286,7 @@ evo-ai
 ```
 evomorph/
 ├── evomorph/
-│   ├── __init__.py              # 版本定义 (v0.0.6)
+│   ├── __init__.py              # 版本定义 (v0.0.7)
 │   ├── cli/evo_ai.py             # AI 编程 CLI（交互式 Shell）
 │   ├── prompts/system_prompt.md  # LLM 系统提示词
 │   ├── lsp/language_server.py    # LSP 语言服务器

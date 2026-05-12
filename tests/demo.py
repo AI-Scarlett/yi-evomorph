@@ -5,7 +5,7 @@ from evomorph.compiler import EvocCompiler
 from evomorph.evolution.engine import EvolutionEngine, EvolutionConfig, GeneInstruction
 from evomorph.simulator.niche import PlatformSimNiche
 from evomorph.sdk.xiangci import XiangciSDK
-from evomorph.debugger.yaojing import YaoJingDebugger
+from tools.yaojing.yaojing import YaoJingDebugger
 from evomorph.vm.virtual_machine import IChingVM
 
 print("=" * 60)

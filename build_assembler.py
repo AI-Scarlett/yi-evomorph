@@ -15,7 +15,7 @@ from evomorph.vm.extended_vm2 import ExtendedIChingVM2
 # 内存布局
 # ============================================================
 INPUT_BUF     = 0x1000
-OUTPUT_BUF    = 0x11000
+OUTPUT_BUF    = 0x20000
 LABEL_TABLE   = 0x12000
 OPCODE_TABLE  = 0x16000
 TEMP_BUF      = 0x17000

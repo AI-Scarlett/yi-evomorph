@@ -167,7 +167,7 @@ python3 continuous_bootstrap.py --verify-hash
   │
   ├── P0: 依赖审计 + 黄金样例 ✅ 完成
   ├── P1: 主编译链 EVB 化    ✅ 基本完成
-  ├── P2: 汇编器自举         🔲 待完成
+  ├── P2: 汇编器自举         ✅ 完成 (v1==v2==v3==v4)
   ├── P3: VM 自举            🔲 待开始
   ├── P4: Runtime/Stdlib     🔲 待开始
   ├── P5: CLI 替换           🔲 待开始

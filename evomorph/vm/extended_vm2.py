@@ -19,6 +19,14 @@ from typing import Dict, List, Any, Optional, Callable, Tuple
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from evomorph.vm.virtual_machine import IChingVM, VMState
 
+# P9: C 原生 VM 桥接（可选，用于消除 Python 执行路径）
+try:
+    from .cbridge import CBridgeVM, VM_INIT, VM_RUNNING, VM_PAUSED, VM_HALTED, VM_ERROR
+    _C_VM_AVAILABLE = True
+except Exception:
+    _C_VM_AVAILABLE = False
+    CBridgeVM = None
+
 
 class InstrType(IntEnum):
     ICHING = 0
@@ -123,6 +131,7 @@ class ExtendedIChingVM2(IChingVM):
         self.interrupt_table = {}
         self.syscall_table = {}
         self.output_buffer = []
+        self._cvm = None  # P9: C VM bridge (lazy init)
         self._init_special_regs()
         self._setup_default_interrupts()
         self._setup_native_handlers()
@@ -144,6 +153,97 @@ class ExtendedIChingVM2(IChingVM):
         self.program = bytearray()
         self.output_buffer = []
         self._init_special_regs()
+
+    # === P9: C 原生 VM 桥接（消除 Python 执行路径） ===
+
+    def _has_c_vm(self) -> bool:
+        """C VM 共享库是否可用"""
+        return _C_VM_AVAILABLE and CBridgeVM is not None
+
+    def _ensure_cvm(self):
+        """惰性初始化 C VM bridge"""
+        if self._cvm is None and self._has_c_vm():
+            self._cvm = CBridgeVM()
+
+    def _sync_to_c(self):
+        """将 Python VM 状态复制到 C VM"""
+        if self._cvm is None:
+            return
+        c = self._cvm._vm.contents
+        # 寄存器
+        for i in range(self.NUM_REGISTERS):
+            c.regs[i] = self.registers[i]
+        # Heap
+        if len(self.heap) > 0:
+            self._cvm.heap_write(0, bytes(self.heap))
+        # 程序
+        if len(self.program) > 0:
+            self._cvm.load_program(bytes(self.program))
+        # PC & 状态
+        c.pc = self.pc
+        c.state = int(self.state)
+
+    def _sync_from_c(self):
+        """将 C VM 状态复制回 Python VM"""
+        if self._cvm is None:
+            return
+        c = self._cvm._vm.contents
+        # 寄存器
+        self.registers = [c.regs[i] for i in range(self.NUM_REGISTERS)]
+        # Heap（部分回读：C heap 只同步前面 HEAP_SIZE 字节）
+        new_heap = self._cvm.heap_read(0, min(self.HEAP_SIZE, 1048576))
+        if new_heap:
+            self.heap[:len(new_heap)] = new_heap
+        # PC & 状态
+        self.pc = c.pc
+        raw_state = c.state
+        try:
+            self.state = VMState(raw_state)
+        except ValueError:
+            self.state = VMState.ERROR
+        # 标志位
+        self.flag_zero = bool(c.flag_zero)
+        self.flag_carry = bool(c.flag_carry)
+        self.flag_negative = bool(c.flag_negative)
+        self.flag_overflow = bool(c.flag_overflow)
+        # 周期计数
+        self.cycle_count = c.cycle_count
+        # 输出缓冲
+        c_out = self._cvm.get_output()
+        if c_out:
+            self.output_buffer.extend(list(c_out))
+
+    def run(self, max_cycles=None):
+        """P9: 通过 C 原生 VM 加速执行。失败时回退到 Python VM。"""
+        if self._has_c_vm():
+            try:
+                self._ensure_cvm()
+                self.state = VMState.RUNNING
+                self._sync_to_c()
+                max_c = max_cycles if max_cycles else 10000000
+                self._cvm.run(max_c)
+                self._sync_from_c()
+                return self.state
+            except Exception:
+                pass  # 回退到 Python VM
+        return super().run(max_cycles)
+
+    def step(self):
+        """P9: 单步执行（通过 C VM 桥接，支持逐步跟踪）"""
+        if self._has_c_vm():
+            try:
+                self._ensure_cvm()
+                if self.state not in (VMState.RUNNING, VMState.PAUSED):
+                    self.state = VMState.RUNNING
+                self._sync_to_c()
+                self._cvm.step()
+                self._sync_from_c()
+                return
+            except Exception:
+                pass  # 回退到 Python VM
+        return super().step()
+
+    # === P9 END ===
     
     def _init_special_regs(self):
         self.registers[self.SP_REG] = self.STACK_SIZE
@@ -1089,7 +1189,10 @@ class ExtendedIChingVM2(IChingVM):
         parsed_lines = []
         for line in lines:
             line = line.strip()
-            if not line or line.startswith(';') or line.startswith('#'):
+            # Strip inline comments (everything after ';')
+            if ';' in line:
+                line = line.split(';', 1)[0].strip()
+            if not line or line.startswith('#'):
                 continue
             if line.endswith(':'):
                 label = line[:-1].strip()
@@ -1218,7 +1321,7 @@ class ExtendedIChingVM2(IChingVM):
                             except ValueError:
                                 dst_reg = 0
                         elif r.startswith('@'):
-                            label_name = r[1:]
+                            label_name = self._extract_label_name(r[1:])
                             if label_name in labels:
                                 imm_val = labels[label_name]
                                 has_imm_operand = True
@@ -1250,7 +1353,7 @@ class ExtendedIChingVM2(IChingVM):
                             except ValueError:
                                 imm_val = 0
                         elif r.startswith('@'):
-                            label_name = r[1:]
+                            label_name = self._extract_label_name(r[1:])
                             if label_name in labels:
                                 imm_val = labels[label_name]
                                 has_imm_operand = True
@@ -1273,7 +1376,7 @@ class ExtendedIChingVM2(IChingVM):
                             except ValueError:
                                 imm_val = 0
                         elif r.startswith('@'):
-                            label_name = r[1:]
+                            label_name = self._extract_label_name(r[1:])
                             if label_name in labels:
                                 imm_val = labels[label_name]
                                 has_imm_operand = True
@@ -1414,6 +1517,16 @@ class ExtendedIChingVM2(IChingVM):
             return self.LR_REG
         return None
     
+    def _extract_label_name(self, s: str) -> str:
+        """从 @label 之后的字符串中提取纯净的标签名，跳过尾随空格和注释"""
+        # Truncate at first whitespace or semicolon (comment start)
+        end = len(s)
+        for i, ch in enumerate(s):
+            if ch in (' ', '\t', ';', '\n', '\r', ','):
+                end = i
+                break
+        return s[:end].strip()
+    
     def _parse_imm_or_label(self, s: str, labels: Dict[str, int]) -> Optional[int]:
         s = s.strip()
         if s.startswith('#'):
@@ -1435,7 +1548,7 @@ class ExtendedIChingVM2(IChingVM):
             return int(s, 10)
         except ValueError:
             pass
-        label = s.lstrip('@')
+        label = self._extract_label_name(s.lstrip('@'))
         if label in labels:
             return labels[label]
         return None

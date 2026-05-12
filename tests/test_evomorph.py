@@ -17,7 +17,7 @@ from evomorph.evolution.engine import (
     SelectionMethod, CrossoverMethod,
 )
 from evomorph.simulator.niche import PlatformSimNiche, PLATFORM_PROFILES
-from evomorph.debugger.yaojing import YaoJingDebugger
+from tools.yaojing.yaojing import YaoJingDebugger
 from evomorph.monitor.evomon import EvoMon, PerformanceSample
 from evomorph.hub.repository import EvoHub, LocusPackage
 from evomorph.sdk.xiangci import XiangciSDK

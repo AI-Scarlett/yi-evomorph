@@ -1,3 +1,14 @@
+"""
+EVB v3 二进制加载器 — Python 桥接层
+========================================
+状态: P4 — EVB-native 格式定义已完成 (evb_header.evo)
+      本文件为 Python 运行时桥接，提供 struct 二进制 I/O
+      在 P3 VM 自举完成前无法移除
+
+EVB-native 实现: evb_header.evo (magic 校验, 字段解析)
+Python 桥接原因: struct.pack/unpack (大端序), 文件 I/O, Python 类型系统
+计划移除: P3 VM 自举 + P6 native 后端提供原生的 binary I/O 后
+"""
 import struct
 import os
 from typing import Dict, List, Optional, Tuple

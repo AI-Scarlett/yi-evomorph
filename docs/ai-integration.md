@@ -207,7 +207,7 @@ Cursor 自动读取 `.cursorrules` 文件。
 **hermes.json 结构**：
 ```json
 {
-    "project": { "name": "易衍·Evomorph", "language": "evomorph", "version": "0.0.6" },
+    "project": { "name": "易衍·Evomorph", "language": "evomorph", "version": "0.0.7" },
     "hermes": {
         "system_prompt_source": "ai/prompts/system_prompt.md",
         "rules_files": [".trae/rules/project_rules.md", ".cursorrules"],
@@ -237,7 +237,7 @@ Cursor 自动读取 `.cursorrules` 文件。
 {
     "context": {
         "language": "易衍·Evomorph",
-        "version": "0.0.6",
+        "version": "0.0.7",
         "file_extensions": [".evo"],
         "key_concepts": {
             "opcode_equals_yao_binary": "操作码等于卦象爻位二进制值",
@@ -550,6 +550,6 @@ evo-ai config
 
 ## 版本信息
 
-- 当前版本：**v0.0.6**
+- 当前版本：**v0.0.7**
 - 语言版本：**@evolang "3.0"**
 - 发布日期：2026-05-06

@@ -1,0 +1,463 @@
+; ============================================================
+; P3: EVB VM 自举 — 核心解释器 (Phase 1)
+;
+; 元循环解释器: 运行在宿主 Python VM 中，解释执行 guest EVB 程序
+;
+; 输入: R0 指向 guest program (已加载到堆中)
+;       程序以 HALT/BRANCH.1 终止
+; 输出: guest R0 寄存器值 → R0
+;
+; Guest 状态存储于:
+;   g_program:  0x30000 + R0 (由调用者指定偏移)
+;   g_regs:     0x40000 (32 × 4 = 128 bytes)
+;   g_stack:    0x40400 (16KB)
+;   g_flags:    0x44400 (4 bytes: byte0=zero, byte1=carry)
+; ============================================================
+
+BRANCH.1 @vm_main
+
+; === 寄存器偏移常量 ===
+; g_regs_base = 0x40000, 使用绝对地址
+
+; === 微操作: 用 FELLOWSHIP 实现的小常量 ===
+; 注: 小立即数需要 CREA.1 加载，这里用更紧凑的方式
+
+; === 主入口 ===
+vm_main:
+    PUSH_UP.1 R4, R4
+    PUSH_UP.1 R5, R5
+    PUSH_UP.1 R6, R6
+    PUSH_UP.1 R7, R7
+
+    CREA.1 R4, R4, #0x30000    ; R4 = g_program_base
+    GATHER.0 R4, R0             ; R4 = g_program_base + guest_offset
+    CREA.1 R5, R5, #0x40000    ; R5 = g_regs_base
+    CREA.1 R6, R6, #0x40400    ; R6 = g_stack_base (g_stack_ptr)
+    CREA.1 R7, R7, #0x44400    ; R7 = g_flags_base
+
+    ; 清零 guest 标志位 (一次 ALLOC.1 写入 4 字节 word)
+    CREA.1 R0, R0, #0
+    ALLOC.1 R7, R0              ; flags[0..3] = 0
+
+    ; 初始化 guest PC
+    CREA.1 R9, R9, #0           ; g_pc = 0
+
+; === 主解释循环 ===
+vm_loop:
+    ; 计算指令地址: R10 = g_program_base(R4) + g_pc(R9)
+    FELLOWSHIP.0 R10, R4
+    GATHER.0 R10, R9
+
+    ; 取指: byte1 = g_program[g_pc]
+    RECV.2 R0, R10
+    ; 指令类型检查: (byte1 >> 6) & 3
+    ; 简化: 先检查 bit7 (IChing 指令标志)
+    CREA.1 R1, R1, #128
+    APPROACH.0 R1, R0           ; R1 = byte1 & 0x80
+    FELLOWSHIP.2 R1, R1, #0
+    BRANCH.2 @vm_not_iching     ; 如果 bit7 未设置
+
+    ; === IChing 指令解码 ===
+    MATE.1 R0, R0, #0x7F        ; R0 = opcode (清除 bit7)
+    FELLOWSHIP.0 R11, R0         ; R11 = opcode
+
+    ; 解码 byte2: 先取 sub_op, 再取 mode
+    MICRO.1 R10, R10             ; R10 → g_pc+1 (推进过 byte1)
+    RECV.2 R0, R10               ; R0 = byte2
+    MICRO.1 R10, R10             ; R10 → g_pc+2
+    ; 保存 sub_op (低6位)
+    CREA.1 R1, R1, #0x3F
+    APPROACH.0 R1, R0            ; R1 = byte2 & 0x3F = sub_op
+    FELLOWSHIP.0 R12, R1         ; R12 = sub_op
+    ; 提取 mode (高2位)
+    MUT.2 R0, R0, #6             ; R0 = byte2 >> 6 (SHR by 6)
+    MATE.1 R0, R0, #0x03         ; R0 = mode & 0x03
+    FELLOWSHIP.0 R1, R0          ; R1 = mode
+
+    ; 解码 byte3: dst_reg
+    RECV.2 R0, R10               ; R0 = byte3
+    MICRO.1 R10, R10             ; R10 → g_pc+3
+    FELLOWSHIP.0 R13, R0         ; R13 = dst_reg
+
+    ; 解码 byte4: src_reg
+    RECV.2 R0, R10               ; R0 = byte4
+    MICRO.1 R10, R10             ; R10 → g_pc+4
+    FELLOWSHIP.0 R14, R0         ; R14 = src_reg
+
+    ; 默认 instr_size = 4
+    CREA.1 R15, R15, #4
+
+    ; mode == 2 ? 读取 4 字节 LE imm
+    CREA.1 R0, R0, #2            ; R0 = 2
+    FELLOWSHIP.1 R1, R0          ; CMP R1(mode), R0(2) → host flags
+    BRANCH.3 @vm_dispatch        ; mode != 2 (JNE) → 跳过
+
+    ; 读取 imm (R10 = header+4, 即 byte5)
+    RECV.1 R0, R10               ; R0 = 4-byte LE word
+    FELLOWSHIP.0 R16, R0         ; R16 = imm
+    CREA.1 R15, R15, #8          ; instr_size = 8
+
+vm_dispatch:
+    ; === 指令分发 ===
+    ; 按操作码分发到对应的 handler
+    ; R11 = opcode (0-63), R0 用作比较临时寄存器
+    ; 注: FELLOWSHIP.2 (CMPI) 会修改目标寄存器,
+    ;     因此用 CREA.1 每次重建临时值 R0 来保护 R11
+
+    ; opcode 63: CREA
+    CREA.1 R0, R0, #63
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_crea
+
+    ; opcode 61: FELLOWSHIP
+    CREA.1 R0, R0, #61
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_fellowship
+
+    ; opcode 49: INCREASE
+    CREA.1 R0, R0, #49
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_increase
+
+    ; opcode 35: REDUCE
+    CREA.1 R0, R0, #35
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_reduce
+
+    ; opcode 24: GATHER
+    CREA.1 R0, R0, #24
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_gather
+
+    ; opcode 12: MICRO
+    CREA.1 R0, R0, #12
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_micro
+
+    ; opcode 2: BRANCH
+    CREA.1 R0, R0, #2
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_branch
+
+    ; opcode 56: HALT
+    CREA.1 R0, R0, #56
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_halt
+
+    ; opcode 47: ABUNDANCE
+    CREA.1 R0, R0, #47
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_abundance
+
+    ; opcode 1: RETURN
+    CREA.1 R0, R0, #1
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_return
+
+    ; opcode 17: ALLOC
+    CREA.1 R0, R0, #17
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_alloc
+
+    ; opcode 6: PUSH_UP
+    CREA.1 R0, R0, #6
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_push_up
+
+    ; opcode 22: WELL
+    CREA.1 R0, R0, #22
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_well
+
+    ; opcode 40: ADVANCE (Micro+)
+    CREA.1 R0, R0, #40
+    FELLOWSHIP.1 R0, R11
+    BRANCH.2 @vm_advance
+
+    ; 未知操作码 → HALT (安全退出)
+    BRANCH.1 @vm_halt
+
+; ============================================================
+; 指令 handlers
+; ============================================================
+
+; === 辅助宏: 计算 guest 寄存器地址 ===
+; calc_gaddr(dst_reg→R2): R2 = g_regs_base + dst_reg*4
+; calc_gaddr_src(src_reg→R3): R3 = g_regs_base + src_reg*4
+
+; === CREA (63): g_regs[dst] = imm ===
+vm_crea:
+    FELLOWSHIP.0 R2, R13         ; R2 = dst_reg
+    MUT.1 R2, R2, #2             ; R2 = dst_reg * 4 (SHL)
+    GATHER.0 R2, R5              ; R2 = g_regs_base + dst_reg*4
+    ALLOC.1 R2, R16              ; g_regs[dst] = imm (4-byte word)
+    BRANCH.1 @vm_advance_pc
+
+; === FELLOWSHIP (61): g_regs[dst] = g_regs[src] ===
+vm_fellowship:
+    FELLOWSHIP.0 R2, R14         ; R2 = src_reg
+    MUT.1 R2, R2, #2             ; R2 = src_reg * 4
+    GATHER.0 R2, R5              ; R2 = g_regs_base + src_reg*4
+    RECV.1 R2, R2                ; R2 = g_regs[src_reg]
+
+    FELLOWSHIP.0 R3, R13         ; R3 = dst_reg
+    MUT.1 R3, R3, #2             ; R3 = dst_reg * 4
+    GATHER.0 R3, R5              ; R3 = g_regs_base + dst_reg*4
+    ALLOC.1 R3, R2               ; g_regs[dst] = R2
+    BRANCH.1 @vm_advance_pc
+
+; === INCREASE (49): g_regs[dst] += g_regs[src] ===
+vm_increase:
+    FELLOWSHIP.0 R2, R13
+    MUT.1 R2, R2, #2
+    GATHER.0 R2, R5
+    RECV.1 R2, R2                ; R2 = g_regs[dst]
+
+    FELLOWSHIP.0 R3, R14
+    MUT.1 R3, R3, #2
+    GATHER.0 R3, R5
+    RECV.1 R3, R3                ; R3 = g_regs[src]
+
+    GATHER.0 R2, R3              ; R2 = dst + src
+
+    FELLOWSHIP.0 R3, R13
+    MUT.1 R3, R3, #2
+    GATHER.0 R3, R5
+    ALLOC.1 R3, R2
+    BRANCH.1 @vm_advance_pc
+
+; === REDUCE (35): g_regs[dst] -= g_regs[src], 直接计算 guest flags ===
+; 注: REDUCE.0 在 EVB VM 中不设 host flags, 需手动用 CMP/CMPI 计算 guest flags
+vm_reduce:
+    FELLOWSHIP.0 R2, R13
+    MUT.1 R2, R2, #2
+    GATHER.0 R2, R5
+    RECV.1 R2, R2                ; R2 = g_regs[dst]
+
+    FELLOWSHIP.0 R3, R14
+    MUT.1 R3, R3, #2
+    GATHER.0 R3, R5
+    RECV.1 R3, R3                ; R3 = g_regs[src]
+
+    ; 保存原始值用于标志位计算 (R1=orig_dst, R0=orig_src)
+    FELLOWSHIP.0 R1, R2          ; R1 = original_dst
+    FELLOWSHIP.0 R0, R3          ; R0 = original_src
+
+    ; 减法: R2 = dst - src
+    REDUCE.0 R2, R3
+
+    ; === guest zero flag: R2 == 0 ===
+    FELLOWSHIP.2 R2, R2, #0      ; CMPI R2, 0 → host_zero = (R2==0)
+    FELLOWSHIP.0 R3, R7          ; R3 = g_flags_base (MOV 不改 flags)
+    CREA.1 R8, R8, #0
+    ALLOC.2 R3, R8               ; guest_flags[0] = 0 (默认)
+    BRANCH.3 @vm_r_chk_carry     ; JNE: if R2 != 0 → skip
+    CREA.1 R8, R8, #1
+    ALLOC.2 R3, R8               ; guest_flags[0] = 1 (zero)
+
+vm_r_chk_carry:
+    ; === guest carry flag: original_dst < original_src (unsigned borrow) ===
+    FELLOWSHIP.1 R1, R0          ; CMP R1(orig_dst), R0(orig_src) → host_carry = (dst < src)
+    MICRO.1 R3, R3               ; R3 → g_flags_base+1 (不改 flags)
+    CREA.1 R8, R8, #0
+    ALLOC.2 R3, R8               ; guest_flags[1] = 0 (默认)
+    BRANCH.7 @vm_r_wb            ; JGE → if dst >= src → skip
+    CREA.1 R8, R8, #1
+    ALLOC.2 R3, R8               ; guest_flags[1] = 1 (carry)
+
+vm_r_wb:
+    ; 写回结果
+    FELLOWSHIP.0 R3, R13
+    MUT.1 R3, R3, #2
+    GATHER.0 R3, R5
+    ALLOC.1 R3, R2
+    BRANCH.1 @vm_advance_pc
+
+; === GATHER (24): g_regs[dst] += imm ===
+vm_gather:
+    FELLOWSHIP.0 R2, R13
+    MUT.1 R2, R2, #2
+    GATHER.0 R2, R5
+    RECV.1 R2, R2                ; R2 = g_regs[dst]
+
+    GATHER.0 R2, R16             ; R2 += imm
+
+    FELLOWSHIP.0 R3, R13
+    MUT.1 R3, R3, #2
+    GATHER.0 R3, R5
+    ALLOC.1 R3, R2
+    BRANCH.1 @vm_advance_pc
+
+; === MICRO (12): g_regs[dst] += 1 ===
+vm_micro:
+    FELLOWSHIP.0 R2, R13
+    MUT.1 R2, R2, #2
+    GATHER.0 R2, R5
+    RECV.1 R2, R2                ; R2 = g_regs[dst]
+
+    MICRO.1 R2, R2               ; R2 += 1
+
+    FELLOWSHIP.0 R3, R13
+    MUT.1 R3, R3, #2
+    GATHER.0 R3, R5
+    ALLOC.1 R3, R2
+    BRANCH.1 @vm_advance_pc
+
+; === BRANCH (2): 条件跳转 ===
+; R12 = sub_op (2=JE, 3=JNE, 4=JL, 7=JGE)
+; R16 = 目标地址 (imm)
+; 使用宿主 BRANCH 指令基于 guest flags 做条件分派
+vm_branch:
+    ; 读取 guest zero flag → R3
+    FELLOWSHIP.0 R0, R7          ; R0 = g_flags_base
+    RECV.2 R3, R0               ; R3 = guest_flags[0] (zero)
+    MICRO.1 R0, R0
+    RECV.2 R2, R0               ; R2 = guest_flags[1] (carry)
+
+    ; 分发 sub_op: R12 = sub_op
+    ; sub_op=2: JE  → if zero==1 → jump
+    ; sub_op=3: JNE → if zero==0 → jump
+    ; sub_op=4: JL  → if carry==1 → jump
+    ; sub_op=7: JGE → if carry==0 → jump
+    ; sub_op=0/1: BRANCH.0/BRANCH.1 → 无条件跳转
+
+    ; --- sub_op == 2 (JE) ---
+    ; JE: jump if guest_zero == 1
+    CREA.1 R0, R0, #2
+    FELLOWSHIP.1 R0, R12        ; CMP R0(2), R12(sub_op) → host flags
+    BRANCH.3 @vm_br_chk_jne     ; sub_op != 2 → next
+    CREA.1 R0, R0, #1
+    FELLOWSHIP.1 R0, R3         ; host_zero = (R0==R3) = (R3==1)
+    BRANCH.2 @vm_branch_take    ; guest_zero==1 → take (JE)
+    BRANCH.1 @vm_advance_pc     ; guest_zero!=1 → skip
+
+vm_br_chk_jne:
+    ; --- sub_op == 3 (JNE) ---
+    ; JNE: jump if guest_zero == 0
+    CREA.1 R0, R0, #3
+    FELLOWSHIP.1 R0, R12
+    BRANCH.3 @vm_br_chk_jl      ; sub_op != 3 → next
+    FELLOWSHIP.2 R3, R3, #0     ; host_zero = (R3==0)
+    BRANCH.2 @vm_branch_take    ; guest_zero==0 → take (JNE)
+    BRANCH.1 @vm_advance_pc     ; guest_zero!=0 → skip
+
+vm_br_chk_jl:
+    ; --- sub_op == 4 (JL) ---
+    ; JL: jump if guest_carry == 1
+    CREA.1 R0, R0, #4
+    FELLOWSHIP.1 R0, R12
+    BRANCH.3 @vm_br_chk_jge     ; sub_op != 4 → next
+    CREA.1 R0, R0, #1
+    FELLOWSHIP.1 R0, R2         ; host_zero = (R0==R2) = (R2==1)
+    BRANCH.2 @vm_branch_take    ; guest_carry==1 → take (JL)
+    BRANCH.1 @vm_advance_pc
+
+vm_br_chk_jge:
+    ; --- sub_op == 7 (JGE) ---
+    CREA.1 R0, R0, #7
+    FELLOWSHIP.1 R0, R12
+    BRANCH.3 @vm_branch_take    ; sub_op != 7 → 默认无条件跳转
+    FELLOWSHIP.2 R2, R2, #0
+    BRANCH.2 @vm_branch_take    ; carry==0 → take (JGE)
+    BRANCH.1 @vm_advance_pc
+
+vm_branch_take:
+    FELLOWSHIP.0 R9, R16         ; g_pc = imm (目标地址)
+    BRANCH.1 @vm_loop
+
+; === HALT (56): 退出解释循环，返回 guest R0 ===
+vm_halt:
+    ; 读取 guest R0 = g_regs[0]
+    FELLOWSHIP.0 R0, R5          ; R0 = g_regs_base
+    RECV.1 R0, R0                ; R0 = g_regs[0] (返回值)
+
+    ; 恢复保存的宿主寄存器 (PUSH_UP 保存的逆序恢复)
+    ; 注意: vm_main 中 PUSH_UP.1 保存的是 R4-R7 (宿主模式，保存到宿主栈)
+    ; 宿主栈由 Python VM 管理，PUSH_UP.1/WELL.0 操作宿主栈
+    WELL.0 R7, R7                ; pop R7
+    WELL.0 R6, R6                ; pop R6
+    WELL.0 R5, R5                ; pop R5
+    WELL.0 R4, R4                ; pop R4
+    RETURN.0 R0, R0              ; 返回 R0
+
+; === ABUNDANCE (47): 函数调用 (call) ===
+vm_abundance:
+    FELLOWSHIP.0 R2, R9
+    GATHER.0 R2, R15             ; R2 = g_pc + instr_size (return addr)
+    ALLOC.1 R6, R2               ; push 4-byte return addr to g_stack
+    ; g_stack_ptr += 4
+    MICRO.1 R6, R6
+    MICRO.1 R6, R6
+    MICRO.1 R6, R6
+    MICRO.1 R6, R6
+
+    FELLOWSHIP.0 R9, R16         ; g_pc = imm (调用目标)
+    BRANCH.1 @vm_loop
+
+; === RETURN (1): 函数返回 ===
+vm_return:
+    ; pop return addr: g_stack_ptr -= 4
+    CREA.1 R0, R0, #4
+    REDUCE.0 R6, R0              ; g_stack_ptr -= 4
+    RECV.1 R0, R6                ; R0 = return address
+    FELLOWSHIP.0 R9, R0          ; g_pc = return address
+    BRANCH.1 @vm_loop
+
+; === ALLOC (17): 内存字节写入 ===
+; g_regs[dst] = 目标地址, g_regs[src] = 字节值
+vm_alloc:
+    FELLOWSHIP.0 R2, R13
+    MUT.1 R2, R2, #2
+    GATHER.0 R2, R5
+    RECV.1 R2, R2                ; R2 = g_regs[dst] (目标地址)
+
+    FELLOWSHIP.0 R3, R14
+    MUT.1 R3, R3, #2
+    GATHER.0 R3, R5
+    RECV.1 R3, R3                ; R3 = g_regs[src]
+    MATE.1 R3, R3, #0xFF         ; 取低字节
+
+    ALLOC.2 R2, R3               ; heap[R2] = byte
+    BRANCH.1 @vm_advance_pc
+
+; === PUSH_UP (6): 字节压栈 ===
+; g_regs[dst] = 要压入的字节值
+vm_push_up:
+    FELLOWSHIP.0 R2, R13
+    MUT.1 R2, R2, #2
+    GATHER.0 R2, R5
+    RECV.1 R2, R2                ; R2 = g_regs[dst]
+    MATE.1 R2, R2, #0xFF         ; 取低字节
+
+    ALLOC.2 R6, R2               ; g_stack[R6] = byte
+    MICRO.1 R6, R6               ; g_stack_ptr++
+    BRANCH.1 @vm_advance_pc
+
+; === WELL (22): 字节弹栈 ===
+; g_regs[dst] = *(--g_stack_ptr)
+vm_well:
+    ; g_stack_ptr 当前指向下一个空闲位置, 先回退
+    CREA.1 R0, R0, #1
+    REDUCE.0 R6, R0              ; g_stack_ptr -= 1
+    RECV.2 R0, R6                ; R0 = heap[R6] (弹出字节)
+
+    ; 写入 g_regs[dst]
+    FELLOWSHIP.0 R2, R13
+    MUT.1 R2, R2, #2
+    GATHER.0 R2, R5              ; R2 = g_regs_base + dst_reg*4
+    ALLOC.1 R2, R0               ; g_regs[dst] = 弹出值
+    BRANCH.1 @vm_advance_pc
+
+; === ADVANCE (40): 同 MICRO (自增) ===
+vm_advance:
+    BRANCH.1 @vm_micro
+
+; === 未识别的 IChing 指令 ===
+vm_not_iching:
+    ; 非 IChing 指令 → 简单跳过或 HALT
+    BRANCH.1 @vm_halt
+
+; === 推进 PC ===
+vm_advance_pc:
+    GATHER.0 R9, R15            ; g_pc += instr_size
+    BRANCH.1 @vm_loop

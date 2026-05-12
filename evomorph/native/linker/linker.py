@@ -1,3 +1,14 @@
+"""
+EVB 链接器 — Python 桥接层
+=============================
+状态: P4 — EVB-native 符号表实现已完成 (symbol.evo: djb2 hash + 符号查找)
+      本文件为 Python 运行时桥接，提供跨模块符号解析和 struct 偏移写入
+      在 P3 VM 自举完成前无法移除
+
+EVB-native 实现: symbol.evo (djb2 哈希, 符号表查找)
+Python 桥接原因: struct.pack_into (偏移写入), Python dict 符号表, 编译器接口
+计划移除: P3 VM 自举后，链接器可在 EVB-native runtime 中运行
+"""
 import os
 import struct
 from typing import Dict, List, Optional
