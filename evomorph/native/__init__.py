@@ -1,11 +1,1 @@
-from .loader import NativeLoader, EvbHeader, LocusSegment
-from .linker import EvoLinker
-from .image import EvoImage
-
-# EvoShell / EvoREPL 已移至 cli/ 目录 (P5 CLI 分离)
-# 不再属于核心 TCB
-
-__all__ = [
-    "NativeLoader", "EvbHeader", "LocusSegment",
-    "EvoLinker", "EvoImage",
-]
+# P12: 所有 re-export 已移除 (0 外部消费者, 全部通过完整子模块路径导入)

@@ -1,3 +1,1 @@
-from .repository import EvoHub, LocusPackage
-
-__all__ = ["EvoHub", "LocusPackage"]
+# Python 包标记 — 所有导入者直接引用 .repository 子模块

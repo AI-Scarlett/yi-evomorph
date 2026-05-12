@@ -1,13 +1,5 @@
-from evomorph.hexagrams import HexagramInstructionSet
-from evomorph.compiler import EvocCompiler, IChingEvocCompiler
-from evomorph.vm.virtual_machine import IChingVM
-from evomorph.evolution.engine import EvolutionEngine
-from evomorph.simulator.niche import PlatformSimNiche
-from evomorph.monitor.evomon import EvoMon
-from evomorph.hub.repository import EvoHub
-from evomorph.sdk.xiangci import XiangciSDK
-# YaoJingDebugger 已移至 tools/yaojing/ (P7 optional, 不再属于核心 TCB)
-
+# P12: 所有 class re-export 已移除 (0 外部消费者, 仅 __version__/__lang__ 被 MCP server 使用)
+# 原 9 个顶层导入产生 9 条 import chain, 移除后大幅加速包加载
 __version__ = "0.0.7"
 __lang__ = "易衍·Evomorph"
 

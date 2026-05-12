@@ -919,7 +919,7 @@ class EnhancedEvoRuntime:
         
         if ps.current_token and ps.current_token.type_code == TokenTypeEvo.MODIFIER.value:
             mod_str = ps.current_token.value
-            from evomorph.hexagrams.instruction_set import MODIFIERS
+            from evomorph.hexagrams import MODIFIERS
             instr["modifier"] = MODIFIERS.get(mod_str, 0)
             self._prim_parser_advance()
         

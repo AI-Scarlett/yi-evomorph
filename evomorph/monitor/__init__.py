@@ -1,4 +1,2 @@
-# IChing EVB 自举等价文件: evomon.evo (性能监控/热点分析/进化建议)
-from .evomon import EvoMon, PerformanceSample, HotPath, MonitorState
-
-__all__ = ["EvoMon", "PerformanceSample", "HotPath", "MonitorState"]
+# .evo 自举等价: evomon.evo (性能监控/热点分析/进化建议)
+# Python 包标记 — 所有导入者直接引用 .evomon 子模块

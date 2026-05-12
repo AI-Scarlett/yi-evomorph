@@ -6,7 +6,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from evomorph.hexagrams import HexagramInstructionSet
-from evomorph.hexagrams.instruction_set import HEXAGRAM_TABLE, HEXAGRAM_CATEGORIES, MODIFIERS
+from evomorph.hexagrams import HEXAGRAM_TABLE, HEXAGRAM_CATEGORIES, MODIFIERS
 from evomorph.compiler import EvocCompiler
 from evomorph.vm.virtual_machine import IChingVM, VMState
 from evomorph.evolution.engine import (
