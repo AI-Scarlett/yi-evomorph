@@ -18,6 +18,32 @@
         "适应度关键词：min_latency, max_throughput, min_energy, min_size",
         "目标平台：linux-6.x, android-14, ios-18, win-11, harmony-5"
     ],
+    "mcp_tools": [
+        {
+            "name": "evomorph_compile",
+            "description": "编译 .evo 源码为 .evob 格式"
+        },
+        {
+            "name": "evomorph_xiangci",
+            "description": "象辞翻译：将自然语言描述翻译为卦象指令模板"
+        },
+        {
+            "name": "evomorph_evolve",
+            "description": "进化编译：使用遗传算法优化 .evo 代码"
+        },
+        {
+            "name": "evomorph_run",
+            "description": "在 IChingVM 上运行 .evo 代码"
+        },
+        {
+            "name": "evomorph_lookup_hexagram",
+            "description": "查询卦象指令信息"
+        },
+        {
+            "name": "evomorph_list_platforms",
+            "description": "列出所有可用的目标平台及性能特征"
+        }
+    ],
     "commands": {
         "compile": "python3 tools/evoc compile input.evo -f evb",
         "run": "python3 tools/evoc run input.evo",

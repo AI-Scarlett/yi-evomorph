@@ -35,6 +35,11 @@
             "name": "evomorph_lookup_hexagram",
             "description": "查询卦象指令",
             "endpoint": "mcp://evomorph/evomorph_lookup_hexagram"
+        },
+        {
+            "name": "evomorph_list_platforms",
+            "description": "列出所有可用的目标平台",
+            "endpoint": "mcp://evomorph/evomorph_list_platforms"
         }
     ],
     "mcp_config": {

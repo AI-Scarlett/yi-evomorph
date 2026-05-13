@@ -292,79 +292,76 @@ evo-ai
 | ䷾ | SYNC | 21 | 屏障同步 |
 | ䷿ | FUTU | 42 | 异步占位符/未来值 |
 
-> 完整 64 卦指令集详见 `evomorph/hexagrams/instruction_set.py`
+> 完整 64 卦指令集详见 `evomorph/hexagrams/hexagram_table.evo`（自省格式）
 
 ## 项目结构
 
 ```
 evomorph/
-├── evomorph/
-│   ├── __init__.py              # 版本定义 (v0.1.0)
-│   ├── cli/evo_ai.py             # AI 编程 CLI（交互式 Shell）
-│   ├── prompts/system_prompt.md  # LLM 系统提示词
-│   ├── lsp/language_server.py    # LSP 语言服务器
-│   ├── compiler/                 # EvocCompiler 编译器
-│   │   ├── __init__.py           # IChingEvocCompiler 主编译路径
-│   │   ├── codegen.py            # 代码生成器 (legacy)
-│   │   ├── lexer.py              # 词法分析器 (legacy)
-│   │   └── parser.py             # 语法分析器 (legacy)
+├── evomorph/                      # 核心库（.evo/.evob 格式）
+│   ├── bootstrap/                 # 自举编译器
+│   │   ├── compiler.evoasm        # IChing 汇编编译器 (36KB)
+│   │   ├── compiler.evob          # 编译器可执行体 (7.9KB)
+│   │   ├── assembler.evoasm       # 汇编器源码
+│   │   ├── preprocess.py          # 预处理桥接层
+│   │   └── iching/evoc_compiler.py # 编译器桥接
+│   ├── native/                    # C 原生 VM
+│   │   ├── runtime/
+│   │   │   ├── ichingvm.c         # C语言虚拟机
+│   │   │   ├── ichingvm_bootstrap.c
+│   │   │   └── libichingvm2.dylib # 编译后的共享库
+│   │   ├── runtime.py             # C VM 桥接 (CBridgeVM)
+│   │   ├── bytecode_utils.evo     # 字节码编解码 (132行)
+│   │   └── bytecode_utils.evob
 │   ├── vm/
-│   │   ├── extended_vm2.py       # ExtendedIChingVM2 (32寄存器)
-│   │   └── virtual_machine.py    # IChingVM 基础虚拟机
-│   ├── evolution/                # 进化引擎
-│   │   ├── engine.py             # Python版进化引擎
-│   │   ├── evolution_core.evo    # Evomorph版进化引擎核心
-│   │   └── evolution_meta.evo    # Evomorph版元基因座
-│   ├── hexagrams/
-│   │   ├── instruction_set.py      # 六十四卦指令集
-│   │   ├── hexagram_table.evo      # 指令集自省表 (273行)
-│   │   ├── categories.evo          # 卦象四类分组 (170行)
-│   │   └── modifiers.evo           # 修饰符标志定义 (130行)
-│   ├── simulator/
-│   │   ├── niche.py                # 平台模拟生态位
-│   │   ├── niche_data.evo          # 平台性能数据 (100+行)
-│   │   └── opcode_cost.evo         # 操作码成本映射 (60+行)
-│   ├── sdk/
-│   │   ├── xiangci.py              # 象辞翻译 SDK
-│   │   ├── xiangci_data.evo        # 象辞模板数据 (69行)
-│   │   └── xiangci_templates.evo   # 24个象辞编程模板 (200+行)
-│   ├── stdlib/                   # 标准库（.evo 格式）
-│   ├── debugger/                 # 爻镜调试器
+│   │   ├── vm_runtime.evo         # IChingVM 运行时
+│   │   └── vm_runtime.evob
+│   ├── evolution/                 # 进化引擎
+│   │   ├── evolution_core.evo     # 进化引擎核心 (500+行)
+│   │   └── evolution_meta.evo     # 元基因座
+│   ├── hexagrams/                 # 指令集自省
+│   │   ├── hexagram_table.evo     # 64卦指令表 (273行)
+│   │   ├── categories.evo         # 卦象四类分组 (170行)
+│   │   └── modifiers.evo          # 修饰符标志 (130行)
+│   ├── simulator/                 # 平台模拟
+│   │   ├── niche_data.evo         # 5平台性能数据 (100+行)
+│   │   └── opcode_cost.evo        # 操作码成本映射 (60+行)
+│   ├── sdk/                       # 象辞 SDK
+│   │   ├── xiangci_data.evo       # 象辞模板数据 (69行)
+│   │   └── xiangci_templates.evo  # 24个编程模板 (200+行)
 │   ├── monitor/
-│   │   └── evomon.evo            # 性能监控基因座 (90+行)
-│   ├── native/                   # 原生模块
-│   │   ├── bytecode_utils.py     # 字节码工具 (桥接层)
-│   │   └── bytecode_utils.evo    # 字节码工具 (.evo)
-│   └── bootstrap/                # 自举编译器
-│       ├── compiler.evoasm       # IChing 汇编编译器 (36KB)
-│       ├── compiler.evob         # 编译器可执行体 (7.9KB)
-│       ├── assembler.evoasm      # 汇编器源码
-│       ├── self_compile.py       # 自举过程实现 (legacy)
-│       ├── enhanced_bootstrap.py # 增强自举接口 (legacy)
-│       ├── true_self_hosting.py  # 真正自举实现 (legacy)
-│       └── iching/               # IChing 编译器桥接
-│           └── iching_compiler.py # 主编译器桥接 (已清理传统编译路径)
-├── ai/
+│   │   └── evomon.evo             # 性能监控基因座 (90+行)
+│   ├── hub/
+│   │   ├── repository.evo         # 基因座仓库
+│   │   └── repository.evob
+│   └── stdlib/                    # 标准库 (.evo)
+├── ai/                            # AI 工具集成
 │   ├── mcp/
-│   │   ├── evomorph_mcp_server.py   # Python版MCP Server
-│   │   └── evomorph_mcp_server.evo  # Evomorph版MCP Server（基因座模块化）
-│   ├── configs/                  # AI工具配置
-│   │   ├── hermes.json           # Hermes配置
-│   │   └── codebuddy.json        # CodeBuddy配置
-│   └── prompts/system_prompt.md  # 系统提示词
-├── bootstrap/                     # 运行时和自举
-│   └── runtime/                   # 运行时
-│       ├── ichingvm.c             # C语言虚拟机（高性能）
-│       ├── ichingvm_bootstrap.c   # C语言虚拟机（自举版本）
-│       └── ichingvm_bootstrap     # 编译后的C虚拟机可执行文件
-├── tools/yistudio/              # TRAE/VS Code 扩展
-├── docs/                        # 文档
-├── examples/                    # 示例 .evo 文件
-├── tests/                       # 测试
-├── build_evo_cli.py             # CLI构建脚本
-├── evolve_gen3.py               # 第3代编译器进化脚本
-├── pyproject.toml               # 项目配置
-└── setup.py                     # 安装配置
+│   │   ├── evomorph_mcp_server.py # Python版MCP Server
+│   │   ├── evomorph_mcp_server.evo # Evomorph版MCP Server (17基因座)
+│   │   ├── evomorph_mcp_server.evob
+│   │   └── mcp_config.json        # MCP 配置
+│   ├── configs/                   # AI工具配置
+│   │   ├── codebuddy.json
+│   │   ├── codex.json
+│   │   └── hermes.json
+│   └── prompts/
+│       └── system_prompt.md       # AI 系统提示词
+├── cli/                           # CLI 工具 (.evo 格式)
+│   ├── evo_ai.evo
+│   └── evo_ai.evob
+├── tools/                         # 开发和构建工具
+│   ├── evoc                       # evomorph CLI 工具 (Python)
+│   ├── yaojing/                   # 爻镜调试器 (.evo)
+│   ├── yistudio/                  # VS Code 扩展
+│   └── lsp/                       # LSP 语言服务器 (.evo)
+├── bootstrap/                     # C 原生运行时
+├── docs/                          # 文档 (10篇)
+├── examples/                      # 示例 .evo 文件
+├── tests/                         # 测试 (.evo/.sha256)
+├── meta/                          # 项目元数据
+├── pyproject.toml                 # Python 项目配置
+└── README.md
 ```
 
 ## 文档索引
