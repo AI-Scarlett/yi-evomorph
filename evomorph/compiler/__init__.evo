@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "编译器入口 — IChingEvocCompiler, 将 .evo 源码编译为 EVB 字节码"
+}
+
+@locus compiler.init {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "自举校验 — 验证 compiler.evoasm 通过 assembler.evob 正确汇编"
+}
+
+@locus verify.assemble_check {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷂ ALLOC R0, 0x2000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

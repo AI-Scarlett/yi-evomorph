@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@xiangci {
+    "运行之时：增强运行时 — 编译、执行、进化一体化。full_compile() 入口。"
+}
+
+@locus enhanced_runtime.compile {
+    mut_rate   = 0.01
+    cross_pool = "runtime"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus enhanced_runtime.evolve {
+    mut_rate   = 0.02
+    cross_pool = "runtime"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷑ MUT R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@xiangci {
+    "自举验证器 — 验证 boot 阶段各组件一致性, 对比 hash 和字节码输出"
+}
+
+@locus verifier.check_hash {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus verifier.compare_output {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "自举执行测试 — 验证编译器编译并执行自举代码"
+}
+
+@locus test_bootstrap_exec.run {
+    mut_rate   = 0.005
+    cross_pool = "test"
+    fitness    = max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷀ CREA R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "DAP 调试适配器协议 — 连接 IChingVM 虚拟机, 支持断点/单步/变量查看"
+}
+
+@locus dap.entry {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

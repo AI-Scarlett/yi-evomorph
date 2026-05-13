@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@xiangci {
+    "平台之拟：多平台性能模拟 — 内存延迟、线程创建成本、ISA 兼容性评估。"
+}
+
+@locus simulator.get_profile {
+    mut_rate   = 0.01
+    cross_pool = "simulator"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus simulator.evaluate_fitness {
+    mut_rate   = 0.02
+    cross_pool = "simulator"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷓ CONTEMPLATE R0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

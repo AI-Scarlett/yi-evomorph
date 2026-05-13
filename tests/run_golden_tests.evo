@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@xiangci {
+    "黄金测试用例运行器 — 批量执行标准测试集, 验证编译器正确性"
+}
+
+@locus golden.run_all {
+    mut_rate   = 0.005
+    cross_pool = "test"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus golden.verify_output {
+    mut_rate   = 0.005
+    cross_pool = "test"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

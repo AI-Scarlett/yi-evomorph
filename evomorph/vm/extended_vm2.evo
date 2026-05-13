@@ -1,0 +1,33 @@
+@evolang "3.0"
+
+@xiangci {
+    "VM 之展：ExtendedIChingVM2 — 汇编器、字节码加载、run()/step() 已委托 C VM。"
+}
+
+@locus vm.extended.assemble {
+    mut_rate   = 0.005
+    cross_pool = "vm_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x10000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus vm.extended.run {
+    mut_rate   = 0.005
+    cross_pool = "vm_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷀ CREA R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,46 @@
+@evolang "3.0"
+
+@xiangci {
+    "象辞之译：自然语言为卦象，意图为基因座。适诸平台，敏捷为本。"
+}
+
+@locus sdk.xiangci.translate {
+    mut_rate   = 0.03
+    cross_pool = "sdk"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 100
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus sdk.xiangci.match_template {
+    mut_rate   = 0.01
+    cross_pool = "sdk"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus sdk.xiangci.export_source {
+    mut_rate   = 0.01
+    cross_pool = "sdk"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 80
+        ䷍ ABUNDANCE R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@xiangci {
+    "汇编器辅助工具 — IChing 指令编码、操作数解析、字节码拼接"
+}
+
+@locus helper.encode_instruction {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 8
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus helper.parse_operand {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

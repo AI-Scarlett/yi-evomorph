@@ -4,7 +4,7 @@
 
 易衍（Evomorph）是一种基于《易经》六十四卦的进化编程语言。每条指令的操作码等于其对应卦象的六爻二进制值，代码通过遗传算法自动进化优化，适应不同目标平台。
 
-**当前版本**: v0.0.7
+**当前版本**: v0.1.0
 
 ## 特性
 
@@ -20,11 +20,24 @@
 
 ## 自举状态
 
-### 🎉 IChing EVB 自举编译器已实现！
+### 🎉 全面 .evo 化完成！v0.1.0
 
-v0.0.7 将 VM 执行路径从 Python 切换到 C 原生 VM（libichingvm2.dylib），消除了 ~900 行 Python `_step()` 指令解释器调用。C VM 异常时自动回退 Python VM。
+v0.1.0 标志着易衍·Evomorph 全面进入自举时代：编译器核心、VM 运行时、进化引擎、MCP Server、象辞 SDK、模拟器、监控器 — **所有核心模块均已完成 .evo 格式实现**。Python 模块仅保留桥接层和 CLI 入口，约 5000+ 行 Python 已被 .evo 替代。VM 执行路径默认走 C 原生 VM（libichingvm2.dylib），异常时自动回退 Python VM。
 
 **编译链路**: `compiler.evoasm` (36KB 汇编) → VM 汇编器 → `compiler.evob` (7.9KB 字节码) → 加载到 VM → 编译 .evo 源码
+
+### 核心模块 .evo 化一览
+
+| 模块 | .evo 文件 | 行数 | 说明 |
+|------|-----------|------|------|
+| 编译器 | `compiler.evoasm` + `compiler.evob` | 36KB/7.9KB | 词法/语法/代码生成全链路 |
+| 进化引擎 | `evolution_core.evo` + `evolution_meta.evo` | 500+ | 遗传算法完整实现 |
+| MCP Server | `evomorph_mcp_server.evo` | 17 基因座 | 双版本之一 |
+| 象辞 SDK | `xiangci_data.evo` + `xiangci_templates.evo` | 270+ | 24 个编程模板 |
+| 指令集自省 | `hexagram_table.evo` + `categories.evo` + `modifiers.evo` | 573 | 64 卦完整自省 |
+| 模拟器 | `niche_data.evo` + `opcode_cost.evo` | 160+ | 5 平台性能数据 |
+| 监控 | `evomon.evo` | 90+ | 性能监控基因座 |
+| 字节码工具 | `bytecode_utils.evo` | 132 | 编解码 |
 
 ### 编译器架构
 
@@ -97,13 +110,13 @@ compiler.evoasm  (36KB IChing 汇编)
 ### 安装
 
 ```bash
-pip install git+https://github.com/<your-org>/evomorph.git
+pip install git+https://github.com/AI-Scarlett/yi-evomorph.git
 ```
 
 或从源码：
 
 ```bash
-git clone https://github.com/<your-org>/evomorph.git
+git clone https://github.com/AI-Scarlett/yi-evomorph.git
 cd evomorph
 pip install -e .
 ```
@@ -286,7 +299,7 @@ evo-ai
 ```
 evomorph/
 ├── evomorph/
-│   ├── __init__.py              # 版本定义 (v0.0.7)
+│   ├── __init__.py              # 版本定义 (v0.1.0)
 │   ├── cli/evo_ai.py             # AI 编程 CLI（交互式 Shell）
 │   ├── prompts/system_prompt.md  # LLM 系统提示词
 │   ├── lsp/language_server.py    # LSP 语言服务器
@@ -381,7 +394,7 @@ evomorph/
 ## 开发
 
 ```bash
-git clone https://github.com/<your-org>/evomorph.git
+git clone https://github.com/AI-Scarlett/yi-evomorph.git
 cd evomorph
 pip install -e .
 ```
@@ -394,128 +407,35 @@ python3 -m pytest tests/ -v
 
 ## 更新日志
 
+### v0.1.0 (2026-05-13)
+
+#### 🎉 全面 .evo 化完成
+
+- **所有核心模块完成 .evo 格式实现**：编译器、进化引擎、MCP Server、象辞 SDK、指令集自省、模拟器、监控器全部 .evo 化
+- **累计消除约 5000+ 行 Python**：lexer.py / parser.py / codegen.py / ir.py / bootstrap_compiler.py / native_lib.py 等全部删除或标记 legacy
+- **VM 执行默认走 C 原生 VM**（libichingvm2.dylib），异常时自动回退 Python VM
+- **编译器全链路自举**：compiler.evoasm → compiler.evob → 加载到 VM → 编译 .evo 源码
+- **进化引擎完全 .evo 化**：evolution_core.evo + evolution_meta.evo，30+ 基因座覆盖完整进化流程
+- **MCP Server 双版本**：Python 稳定版 + Evomorph 基因座模块化版（17 基因座）
+- **9 个自省 .evo 文件**：AI 模型无需阅读 Python 源码即可理解完整指令集
+- **文档全面更新**：版本号统一至 v0.1.0，GitHub 地址更新至 AI-Scarlett/yi-evomorph
+
+### v0.0.7 (2026-05-07)
+- C 原生 VM 桥接（CBridgeVM），消除 ~900 行 Python `_step()`
+- libichingvm2.dylib 原生 VM 共享库（10/10 测试通过）
+- compiler.evoasm 编译器核心完全用 IChing 汇编实现
+- 删除 ir.py、PythonEvocCompiler、ASTToIRConverter 等
+
 ### v0.0.6 (2026-05-06)
+- IChing EVB 自举编译器成为唯一编译路径
+- 指令集自省（hexagram_table / categories / modifiers .evo）
+- 象辞模板库扩展至 24 个编程模板
+- 数据模块 .evo 化（niche_data / opcode_cost / evomon）
 
-#### 🔥 重大变更：IChing EVB 自举编译器成为唯一编译路径
-
-- **移除 PythonEvocCompiler** — Python 编译器类已完全移除，不再作为回退路径
-- **删除 ir.py** (546行) — 中间表示层，仅被已废弃的 Python 编译器引用
-- **标记 legacy** — lexer.py / parser.py / codegen.py 保留供 bootstrap 脚本使用
-- **新增 .evo 替代** — bytecode_utils.evo (132行) / xiangci_data.evo (69行)
-
-#### 🐛 VM Bug 修复 (ExtendedIChingVM2)
-- PC 推进: ext_mode=2 缺少立即数时正确报错 (不再静默继续)
-- 寄存器掩码: ext_mode=0 支持全部 32 个寄存器 R0-R31 (之前只有 R0-R15)
-- 编码注释修正与实际派发逻辑一致
-
-#### 🧬 指令集自省（Phase 1）
-- **hexagram_table.evo** (273行) — 完整64卦指令表，支持运行时自省查询（lookup_by_opcode / lookup_by_mnemonic / encode_instruction / decode_instruction）
-- **categories.evo** (170行) — 四类卦象分组（元/亨/利/贞），每类16个操作码
-- **modifiers.evo** (130行) — 6种修饰符标志定义（ASYNC/ATOMIC/PRIV/WEAK/STRONG/VOLATILE）
-- **export_evo_heap_data()** — 导出二进制指令表（3202字节）供 VM 堆加载
-
-#### 📚 象辞模板库扩展（Phase 2）
-- **xiangci_templates.evo** — 24个预定义编程模板（原仅3个 parallel/IO/compute）
-- 覆盖：并发原语(5)、数据处理(5)、IO操作(4)、容错恢复(3)、安全(3)、内存管理(2)、生命周期(2)
-- 每个模板包含 template_instructions 和 fitness_hint
-
-#### 🧹 Bootstrap 清理（Phase 3）
-- **删除 bootstrap_compiler.py** (~1250行) — 传统CPU汇编编译器，被 compiler.evoasm 完全替代
-- **删除 native_lib.py** (~320行) — 原生标准库，仅服务于已删除的编译器
-- **删除 compile_evo_for_vm.py** (~120行) — .evo→C VM 格式编译包装器
-- **标记 legacy** — enhanced_bootstrap.py / complete_bootstrap_runtime.py / self_compile.py / true_self_hosting.py / iching_compiler.py
-
-#### 📊 数据模块 .evo 化（Phase 4）
-- **niche_data.evo** (100+行) — 5个平台性能数据（Linux/Android/iOS/Windows/Harmony）
-- **opcode_cost.evo** (60+行) — 操作码成本分类映射（thread_create/io/memory/sync/lock/branch/compute）
-- **evomon.evo** (90+行) — 性能监控基因座（采样/热点路径/进化建议/报告生成）
-
-#### 🧹 清理
-- 删除根目录 92 个临时 test/debug 脚本
-- README 和文档更新至 v0.0.6
-
-### v0.0.5
-- IChing EVB 编译器集成
-- ExtendedIChingVM2 (32寄存器, 双指令集)
-- self_compile.py 自举引导
-- continuous_bootstrap.py 持续自举循环
-- 元数据提取 (_extract_evo_metadata)
-
-### v0.0.4 (2026-05-04)
-
-#### 新增功能
-- **🚀 原生Evomorph运行时** (`evomorph/native/runtime/`)
-  - 完整的C语言虚拟机实现，包含64卦指令集处理器
-  - 集成式进化引擎：与虚拟机共享状态，提供原生性能
-  - 支持多种选择算法：轮盘赌、锦标赛、排名选择
-  - 支持多种交叉算子：单点、两点、均匀交叉
-  - 支持多种变异算子：爻位翻转、修饰符变异
-  - 完整的进化循环：精英保留、种群更新、收敛检测
-
-- **🧬 Evomorph版进化引擎重构** (`evomorph/evolution/evolution_core.evo`)
-  - 完全重构自Python EvolutionEngine
-  - 30+个基因座，覆盖完整进化流程
-  - 5个元基因座，支持自适应进化策略
-  - 基因座分类：配置、种群、选择、交叉、变异、适应度、进化循环、收敛、多样性、历史记录
-
-- **🛠️ 新增测试程序** (`evomorph/native/runtime/test_runtime.c`)
-  - 虚拟机基本功能测试
-  - 进化配置测试
-  - 种群管理测试
-  - 进化算子测试
-  - 完整进化流程测试
-
-#### 原生运行时数据结构
-```c
-/* 基因指令：操作码=爻位二进制 */
-typedef struct {
-    uint8_t opcode;      /* 0-63 (六爻二进制) */
-    uint8_t modifier;    /* 修饰符 */
-    uint8_t operands[2]; /* 操作数 */
-} EvoGeneInstruction;
-
-/* 虚拟机：集成进化引擎 */
-typedef struct {
-    uint32_t registers[16];  /* 16个通用寄存器 */
-    uint8_t* stack;          /* 栈 (64KB) */
-    uint8_t* heap;           /* 堆 (16MB) */
-    /* 进化引擎状态 */
-    EvoPopulation* population;
-    EvoEvolutionConfig* evo_config;
-    uint32_t current_generation;
-    EvoIndividual* best_ever;
-} EvoVM;
-```
-
-#### 版本号更新
-- 所有版本号从 "0.0.3" 更新为 "0.0.4"
-
-### v0.0.3 (2026-05-04)
-
-#### 新增功能
-- **🧬 Evomorph版MCP Server** (`ai/mcp/evomorph_mcp_server.evo`)
-  - 用易衍·Evomorph语言重写的MCP Server
-  - 基因座模块化架构，支持进化优化
-  - 与Python版功能完全对齐：编译、象辞翻译、进化编译、运行、查询卦象、列出平台
-  - 使用64卦指令集实现：CREA, RECV, ALLOC, FELLOWSHIP, SYNC等
-
-- **🧬 Evomorph版进化引擎** (`evomorph/evolution/`)
-  - `evolution_core.evo`: 进化引擎核心（种群初始化、选择、交叉、变异、适应度评估）
-  - `evolution_meta.evo`: 元基因座（进化之进化，变异算子、交叉策略、选择策略可进化）
-
-- **🛠️ 新增工具脚本**
-  - `build_evo_cli.py`: CLI构建脚本
-  - `evolve_gen3.py`: 第3代编译器进化脚本
-  - `compile_evo_for_vm.py`: 编译为C虚拟机格式
-
-#### 版本号更新
-- `evomorph/__init__.py`: `__version__` 从 "3.0.0" 改为 "0.0.3"
-- `setup.py`: `version` 从 "3.0.0" 改为 "0.0.3"
-- `tools/yistudio/package.json`: `version` 从 "3.0.0" 改为 "0.0.3"
-- `ai/mcp/evomorph_mcp_server.py`: `SERVER_VERSION` 从 "3.0.0" 改为 "0.0.3"
-- `ai/configs/hermes.json`: `version` 从 "3.0.0" 改为 "0.0.3"
-- `ai/configs/codebuddy.json`: `version` 从 "3.0.0" 改为 "0.0.3"
-- `evomorph/cli/evo_ai.py`: 横幅版本从 "v0.0.1" 改为 "v0.0.3"
+### v0.0.3 ~ v0.0.5 (2026-05-04)
+- Evomorph 版 MCP Server、进化引擎、原生 C VM 运行时
+- ExtendedIChingVM2 (32 寄存器, 双指令集)
+- 自举编译器引导（self_compile / continuous_bootstrap）
 
 ## License
 

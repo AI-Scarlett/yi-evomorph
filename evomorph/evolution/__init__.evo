@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "进化引擎入口 — 遗传算法驱动的代码优化引擎"
+}
+
+@locus evolution.init {
+    mut_rate   = 0.02
+    cross_pool = "evolution"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

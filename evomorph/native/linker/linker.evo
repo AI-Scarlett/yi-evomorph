@@ -1,0 +1,33 @@
+@evolang "3.0"
+
+@xiangci {
+    "符号之链：跨模块符号解析，djb2 哈希查表，偏移修正。EVB-native: symbol.evo"
+}
+
+@locus linker.resolve_symbol {
+    mut_rate   = 0.005
+    cross_pool = "linker"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus linker.relocate {
+    mut_rate   = 0.01
+    cross_pool = "linker"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷍ ABUNDANCE R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "Evoasm 汇编器 v2 修正版 — 修复 label 偏移计算和 OPERAND 编码问题"
+}
+
+@locus evoasm.assemble_v2_fixed {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x10000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "基因座仓库入口 — 包发布、拉取、搜索、适应度数据管理"
+}
+
+@locus hub.init {
+    mut_rate   = 0.01
+    cross_pool = "hub"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

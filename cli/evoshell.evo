@@ -1,0 +1,89 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍原生运行时外壳 — 编译/运行/进化/象辞/映像/链接六合一命令行工具"
+}
+
+@locus evoshell.compile {
+    mut_rate   = 0.01
+    cross_pool = "cli"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x4000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evoshell.run {
+    mut_rate   = 0.01
+    cross_pool = "cli"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷀ CREA R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evoshell.evolve {
+    mut_rate   = 0.02
+    cross_pool = "cli"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷑ MUT R0, R1
+        ䷓ CONTEMPLATE R0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evoshell.xiangci {
+    mut_rate   = 0.005
+    cross_pool = "cli"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evoshell.image {
+    mut_rate   = 0.01
+    cross_pool = "cli"
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x800
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evoshell.link {
+    mut_rate   = 0.01
+    cross_pool = "cli"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

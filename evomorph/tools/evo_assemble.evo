@@ -1,0 +1,33 @@
+@evolang "3.0"
+
+@xiangci {
+    "汇编之器：以 assembler.evob 自举汇编 .evoasm 源码，遇错回退至 Python 汇编器。"
+}
+
+@locus evo.assemble.evob {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷂ ALLOC R0, 0x1000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evo.assemble.verify {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

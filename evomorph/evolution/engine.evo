@@ -1,0 +1,47 @@
+@evolang "3.0"
+
+@xiangci {
+    "进化之擎：遗传算法驱动的代码优化引擎 — 初始化种群、选择、交叉、变异、评估。"
+}
+
+@locus evolution.init_population {
+    mut_rate   = 0.02
+    cross_pool = "evolution"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷀ CREA R0, R1
+        ䷑ MUT R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evolution.evaluate {
+    mut_rate   = 0.01
+    cross_pool = "evolution"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷓ CONTEMPLATE R0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evolution.select {
+    mut_rate   = 0.01
+    cross_pool = "evolution"
+    fitness    = max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

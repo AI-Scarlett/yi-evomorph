@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "缺失 .evo 文件批量创建工具 — 为 Python 模块生成 Evomorph 语言存根"
+}
+
+@locus create_missing.write_stub {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

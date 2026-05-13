@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "EVOI 映像打包入口 — 将 EVB 字节码打包为可分发映像"
+}
+
+@locus image.init {
+    mut_rate   = 0.005
+    cross_pool = "packer"
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

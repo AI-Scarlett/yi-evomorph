@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "Evoasm 汇编器 v1 — 将 .evoasm 源码汇编为 .evob 字节码 (Python 实现)"
+}
+
+@locus evoasm.assemble_v1 {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x10000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,7 +1,7 @@
 {
     "context": {
         "language": "易衍·Evomorph",
-        "version": "0.0.6",
+        "version": "0.1.0",
         "file_extensions": [".evo"],
         "key_concepts": {
             "opcode_equals_yao_binary": "操作码等于卦象爻位二进制值",

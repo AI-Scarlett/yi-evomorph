@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "自举编译测试 — 验证 boot 阶段编译器/汇编器正确性"
+}
+
+@locus test_bootstrap.assemble {
+    mut_rate   = 0.005
+    cross_pool = "test"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

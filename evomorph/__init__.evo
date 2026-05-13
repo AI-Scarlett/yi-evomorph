@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 核心包入口 — 基于六十四卦指令集的进化编程语言运行时"
+}
+
+@locus evomorph.main {
+    mut_rate   = 0.01
+    cross_pool = "core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

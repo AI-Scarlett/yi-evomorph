@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "性能监控入口 — 运行时采样、热点分析、适应度追踪"
+}
+
+@locus monitor.init {
+    mut_rate   = 0.005
+    cross_pool = "monitor"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

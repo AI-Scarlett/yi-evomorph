@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "六十四卦指令集定义 — 卦象、助记符、操作码映射表"
+}
+
+@locus hexagrams.init {
+    mut_rate   = 0.001
+    cross_pool = "core"
+    fitness    = min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@xiangci {
+    "诊断之医：查自举资产之完整，验编译路径之纯粹，诊环境之健康。"
+}
+
+@locus evo.doctor.check_assets {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evo.doctor.check_hash {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

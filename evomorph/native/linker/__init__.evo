@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "EVB 链接器入口 — 跨模块符号解析、djb2 哈希、偏移修正"
+}
+
+@locus linker.init {
+    mut_rate   = 0.005
+    cross_pool = "linker"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

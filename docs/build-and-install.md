@@ -14,7 +14,7 @@
 在任意机器上，无需预先下载源码：
 
 ```bash
-pip install git+https://github.com/<your-org>/evomorph.git
+pip install git+https://github.com/AI-Scarlett/yi-evomorph.git
 ```
 
 安装完成后，`evo-ai` 命令即可直接使用：
@@ -26,7 +26,7 @@ evo-ai
 ### 方式二：从源码安装
 
 ```bash
-git clone https://github.com/<your-org>/evomorph.git
+git clone https://github.com/AI-Scarlett/yi-evomorph.git
 cd evomorph
 pip install .
 ```
@@ -42,13 +42,13 @@ python3 -m build
 ```
 
 构建产物在 `dist/` 目录下：
-- `evomorph-0.0.7-py3-none-any.whl` — wheel 包（跨平台）
-- `evomorph-0.0.7.tar.gz` — 源码包
+- `evomorph-0.1.0-py3-none-any.whl` — wheel 包（跨平台）
+- `evomorph-0.1.0.tar.gz` — 源码包
 
 将 `.whl` 文件拷贝到目标机器后安装：
 
 ```bash
-pip install evomorph-0.0.7-py3-none-any.whl
+pip install evomorph-0.1.0-py3-none-any.whl
 ```
 
 ### 方式四：开发模式安装

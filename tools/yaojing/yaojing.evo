@@ -1,0 +1,59 @@
+@evolang "3.0"
+
+@xiangci {
+    "妖精调试器 — IChingVM 深度调试工具, 寄存器转储、内存查看、指令反汇编、断点管理"
+}
+
+@locus yaojing.set_breakpoint {
+    mut_rate   = 0.01
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus yaojing.step_instruction {
+    mut_rate   = 0.01
+    cross_pool = "tools"
+    fitness    = max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 8
+        ䷀ CREA R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus yaojing.dump_registers {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷓ CONTEMPLATE R0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus yaojing.peek_memory {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,33 @@
+@evolang "3.0"
+
+@xiangci {
+    "自举汇编器生成器 — 生成 boot 阶段所需的 assembler 和 compiler 字节码"
+}
+
+@locus bootstrap_gen.generate_assembler {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x20000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus bootstrap_gen.generate_compiler {
+    mut_rate   = 0.01
+    cross_pool = "bootstrap"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x20000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

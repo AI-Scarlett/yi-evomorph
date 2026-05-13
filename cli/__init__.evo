@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍 CLI 命令行入口 — evoshell, evo-ai, evo-repl 交互式编程环境"
+}
+
+@locus cli.entry {
+    mut_rate   = 0.005
+    cross_pool = "cli"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

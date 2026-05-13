@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍工具集入口 — DAP 调试适配器、LSP 语言服务器、妖精调试器"
+}
+
+@locus tools.entry {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

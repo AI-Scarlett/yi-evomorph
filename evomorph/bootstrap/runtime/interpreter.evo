@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "解释之器：逐条解释卦象指令，寄存器操作、内存访问、控制流。"
+}
+
+@locus interpreter.step {
+    mut_rate   = 0.005
+    cross_pool = "runtime"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 8
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

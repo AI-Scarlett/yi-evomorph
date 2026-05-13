@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍·Evomorph 包管理 — setup.py 构建配置, pyproject.toml 元数据入口"
+}
+
+@locus setup.configure {
+    mut_rate   = 0.001
+    cross_pool = "core"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "编译之枢：IChing 自举编译器桥接 — 加载 compiler.evob 在 VM 中编译 .evo 源码。"
+}
+
+@locus iching_compiler.compile_source {
+    mut_rate   = 0.005
+    cross_pool = "evoc_core"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x10000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

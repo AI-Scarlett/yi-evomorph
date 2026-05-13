@@ -1,0 +1,61 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍 AI 编程助手 — 连接大模型 API, 自然语言生成 .evo 代码, 支持 11 家厂商"
+}
+
+@locus evo_ai.init_config {
+    mut_rate   = 0.005
+    cross_pool = "cli"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evo_ai.query_model {
+    mut_rate   = 0.01
+    cross_pool = "cli"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x1000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evo_ai.generate_code {
+    mut_rate   = 0.02
+    cross_pool = "cli"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷀ CREA R0, R1
+        ䷑ MUT R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evo_ai.parse_response {
+    mut_rate   = 0.005
+    cross_pool = "cli"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

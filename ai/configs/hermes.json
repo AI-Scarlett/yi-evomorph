@@ -2,7 +2,7 @@
     "project": {
         "name": "易衍·Evomorph",
         "language": "evomorph",
-        "version": "0.0.6"
+        "version": "0.1.0"
     },
     "hermes": {
         "system_prompt_source": "ai/prompts/system_prompt.md",

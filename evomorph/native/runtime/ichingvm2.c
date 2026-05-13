@@ -7,8 +7,35 @@
 
 #define MASK32(x) ((x) & 0xFFFFFFFFU)
 #define MAX_SYSCALLS 256
+#define MAX_OPEN_FILES 64
 
 static IChingVM2_SyscallHandler g_syscalls[MAX_SYSCALLS];
+
+/* === P13: 文件 I/O 句柄表 === */
+static FILE *g_open_files[MAX_OPEN_FILES];
+static int g_file_count = 0;
+
+static int alloc_fd(FILE *fp) {
+    for (int i = 0; i < MAX_OPEN_FILES; i++) {
+        if (g_open_files[i] == NULL) {
+            g_open_files[i] = fp;
+            return i;
+        }
+    }
+    return -1;
+}
+
+static void free_fd(int fd) {
+    if (fd >= 0 && fd < MAX_OPEN_FILES) {
+        g_open_files[fd] = NULL;
+    }
+}
+
+static FILE *fd_to_file(int fd) {
+    if (fd >= 0 && fd < MAX_OPEN_FILES)
+        return g_open_files[fd];
+    return NULL;
+}
 
 static void sys_print_char(IChingVM2 *vm) {
     char ch = (char)(vm->regs[1] & 0xFF);
@@ -47,11 +74,174 @@ static void sys_heap_alloc(IChingVM2 *vm) {
     }
 }
 
-static void sys_read_file(IChingVM2 *vm) { vm->regs[1] = 0; }
-static void sys_write_file(IChingVM2 *vm) { vm->regs[1] = 0; }
-static void sys_open_file(IChingVM2 *vm) { vm->regs[1] = 0xFFFFFFFF; }
-static void sys_close_file(IChingVM2 *vm) { vm->regs[1] = 0; }
-static void sys_read_char(IChingVM2 *vm) { vm->regs[1] = 0; }
+/* === P13: 文件 I/O syscall (真实现, 替代空壳) === */
+
+static void sys_open_file(IChingVM2 *vm) {
+    uint32_t addr = vm->regs[1];  /* heap addr of filename string */
+    uint32_t mode = vm->regs[2];   /* 0=read, 1=write, 2=append */
+    if (addr >= ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0xFFFFFFFF; return; }
+    const char *filename = (const char *)(vm->heap + addr);
+    const char *mode_str;
+    if (mode == 1) mode_str = "wb";
+    else if (mode == 2) mode_str = "ab";
+    else mode_str = "rb";
+    FILE *fp = fopen(filename, mode_str);
+    if (!fp) { vm->regs[1] = 0xFFFFFFFF; return; }
+    int fd = alloc_fd(fp);
+    if (fd < 0) { fclose(fp); vm->regs[1] = 0xFFFFFFFF; return; }
+    vm->regs[1] = (uint32_t)fd;
+}
+
+static void sys_read_file(IChingVM2 *vm) {
+    int fd = (int)vm->regs[1];
+    uint32_t buf_addr = vm->regs[2];
+    uint32_t max_size = vm->regs[3];
+    FILE *fp = fd_to_file(fd);
+    if (!fp || buf_addr + max_size > ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0xFFFFFFFF; return; }
+    size_t n = fread(vm->heap + buf_addr, 1, max_size, fp);
+    vm->regs[1] = (uint32_t)n;
+    vm->regs[2] = (uint32_t)n;  /* also return in R2 for convenience */
+}
+
+static void sys_write_file(IChingVM2 *vm) {
+    int fd = (int)vm->regs[1];
+    uint32_t buf_addr = vm->regs[2];
+    uint32_t size = vm->regs[3];
+    FILE *fp = fd_to_file(fd);
+    if (!fp || buf_addr + size > ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0xFFFFFFFF; return; }
+    size_t n = fwrite(vm->heap + buf_addr, 1, size, fp);
+    vm->regs[1] = (uint32_t)n;
+}
+
+static void sys_close_file(IChingVM2 *vm) {
+    int fd = (int)vm->regs[1];
+    FILE *fp = fd_to_file(fd);
+    if (fp) fclose(fp);
+    free_fd(fd);
+    vm->regs[1] = 0;
+}
+
+static void sys_seek_file(IChingVM2 *vm) {
+    int fd = (int)vm->regs[1];
+    int32_t offset = (int32_t)vm->regs[2];
+    int whence = (int)vm->regs[3];  /* 0=SEEK_SET, 1=SEEK_CUR, 2=SEEK_END */
+    FILE *fp = fd_to_file(fd);
+    if (!fp) { vm->regs[1] = 0xFFFFFFFF; return; }
+    vm->regs[1] = (uint32_t)fseek(fp, (long)offset, whence);
+}
+
+static void sys_file_size(IChingVM2 *vm) {
+    int fd = (int)vm->regs[1];
+    FILE *fp = fd_to_file(fd);
+    if (!fp) { vm->regs[1] = 0xFFFFFFFF; return; }
+    long cur = ftell(fp);
+    fseek(fp, 0, SEEK_END);
+    long sz = ftell(fp);
+    fseek(fp, cur, SEEK_SET);
+    vm->regs[1] = (uint32_t)sz;
+}
+
+/* === P13: 二进制工具 syscall === */
+
+static void sys_pack_u32_be(IChingVM2 *vm) {
+    uint32_t val = vm->regs[1];
+    uint32_t addr = vm->regs[2];
+    if (addr + 3 >= ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0xFFFFFFFF; return; }
+    vm->heap[addr]   = (val >> 24) & 0xFF;
+    vm->heap[addr+1] = (val >> 16) & 0xFF;
+    vm->heap[addr+2] = (val >> 8) & 0xFF;
+    vm->heap[addr+3] = val & 0xFF;
+    vm->regs[1] = addr + 4;  /* return next addr */
+}
+
+static void sys_unpack_u32_be(IChingVM2 *vm) {
+    uint32_t addr = vm->regs[1];
+    if (addr + 3 >= ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0; return; }
+    vm->regs[1] = ((uint32_t)vm->heap[addr] << 24) |
+                  ((uint32_t)vm->heap[addr+1] << 16) |
+                  ((uint32_t)vm->heap[addr+2] << 8) |
+                  (uint32_t)vm->heap[addr+3];
+}
+
+static void sys_pack_u16_be(IChingVM2 *vm) {
+    uint32_t val = vm->regs[1] & 0xFFFF;
+    uint32_t addr = vm->regs[2];
+    if (addr + 1 >= ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0xFFFFFFFF; return; }
+    vm->heap[addr]   = (val >> 8) & 0xFF;
+    vm->heap[addr+1] = val & 0xFF;
+    vm->regs[1] = addr + 2;
+}
+
+static void sys_unpack_u16_be(IChingVM2 *vm) {
+    uint32_t addr = vm->regs[1];
+    if (addr + 1 >= ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0; return; }
+    vm->regs[1] = ((uint32_t)vm->heap[addr] << 8) |
+                  (uint32_t)vm->heap[addr+1];
+}
+
+static void sys_pack_u8(IChingVM2 *vm) {
+    uint8_t val = vm->regs[1] & 0xFF;
+    uint32_t addr = vm->regs[2];
+    if (addr >= ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0xFFFFFFFF; return; }
+    vm->heap[addr] = val;
+    vm->regs[1] = addr + 1;
+}
+
+static void sys_unpack_u8(IChingVM2 *vm) {
+    uint32_t addr = vm->regs[1];
+    if (addr >= ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0; return; }
+    vm->regs[1] = (uint32_t)vm->heap[addr];
+}
+
+static void sys_djb2_hash(IChingVM2 *vm) {
+    uint32_t addr = vm->regs[1];
+    uint32_t hash = 5381;
+    while (addr < ICHINGVM2_HEAP_SIZE && vm->heap[addr] != 0) {
+        hash = ((hash << 5) + hash) + vm->heap[addr];
+        addr++;
+    }
+    vm->regs[1] = hash;
+}
+
+static void sys_memcpy(IChingVM2 *vm) {
+    uint32_t dst = vm->regs[1];
+    uint32_t src = vm->regs[2];
+    uint32_t n = vm->regs[3];
+    if (dst + n > ICHINGVM2_HEAP_SIZE || src + n > ICHINGVM2_HEAP_SIZE) {
+        vm->regs[1] = 0xFFFFFFFF; return;
+    }
+    memmove(vm->heap + dst, vm->heap + src, n);
+    vm->regs[1] = dst + n;
+}
+
+static void sys_memset(IChingVM2 *vm) {
+    uint32_t dst = vm->regs[1];
+    uint8_t val = vm->regs[2] & 0xFF;
+    uint32_t n = vm->regs[3];
+    if (dst + n > ICHINGVM2_HEAP_SIZE) { vm->regs[1] = 0xFFFFFFFF; return; }
+    memset(vm->heap + dst, val, n);
+    vm->regs[1] = dst + n;
+}
+
+static void sys_strlen(IChingVM2 *vm) {
+    uint32_t addr = vm->regs[1];
+    uint32_t len = 0;
+    while (addr + len < ICHINGVM2_HEAP_SIZE && vm->heap[addr + len] != 0)
+        len++;
+    vm->regs[1] = len;
+}
+
+static void sys_strcmp(IChingVM2 *vm) {
+    uint32_t a1 = vm->regs[1];
+    uint32_t a2 = vm->regs[2];
+    const char *s1 = (const char *)(vm->heap + a1);
+    const char *s2 = (const char *)(vm->heap + a2);
+    if (a1 >= ICHINGVM2_HEAP_SIZE || a2 >= ICHINGVM2_HEAP_SIZE) {
+        vm->regs[1] = 0xFFFFFFFF; return;
+    }
+    int cmp = strcmp(s1, s2);
+    vm->regs[1] = (cmp == 0) ? 1 : 0;
+}
 
 static void init_default_syscalls(void) {
     static int initialized = 0;
@@ -59,14 +249,27 @@ static void init_default_syscalls(void) {
     memset(g_syscalls, 0, sizeof(g_syscalls));
     g_syscalls[0] = sys_print_char;
     g_syscalls[1] = sys_print_string;
-    g_syscalls[2] = sys_read_char;
+    g_syscalls[2] = sys_get_time;
     g_syscalls[3] = sys_open_file;
     g_syscalls[4] = sys_read_file;
     g_syscalls[5] = sys_write_file;
     g_syscalls[6] = sys_close_file;
     g_syscalls[7] = sys_exit;
-    g_syscalls[8] = sys_get_time;
-    g_syscalls[9] = sys_heap_alloc;
+    g_syscalls[8] = sys_heap_alloc;
+    g_syscalls[9] = sys_seek_file;
+    /* 10-19: 二进制工具 */
+    g_syscalls[10] = sys_pack_u32_be;
+    g_syscalls[11] = sys_unpack_u32_be;
+    g_syscalls[12] = sys_pack_u16_be;
+    g_syscalls[13] = sys_unpack_u16_be;
+    g_syscalls[14] = sys_pack_u8;
+    g_syscalls[15] = sys_unpack_u8;
+    g_syscalls[16] = sys_djb2_hash;
+    g_syscalls[17] = sys_memcpy;
+    g_syscalls[18] = sys_memset;
+    g_syscalls[19] = sys_strlen;
+    g_syscalls[20] = sys_strcmp;
+    g_syscalls[21] = sys_file_size;
     initialized = 1;
 }
 
@@ -808,6 +1011,8 @@ uint32_t ichingvm2_assemble(IChingVM2 *vm, const char *asm_source) {
             strncpy(pl->ops, o, 255); pl->ops[255] = 0;
             char *cmt = strchr(pl->ops, ';');
             if (cmt) *cmt = 0;
+            /* trim trailing spaces (P13 fix: @label with inline comment) */
+            { char *e = pl->ops + strlen(pl->ops); while (e > pl->ops && isspace(*(e-1))) *--e = 0; }
         } else {
             strncpy(pl->mnem, line, 63); pl->mnem[63] = 0;
         }

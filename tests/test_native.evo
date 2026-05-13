@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "原生编译器测试 — 验证 IChing EVB 编译器原生路径"
+}
+
+@locus test_native.compile {
+    mut_rate   = 0.005
+    cross_pool = "test"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

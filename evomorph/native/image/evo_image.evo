@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@xiangci {
+    "映像之封：EVB 字节码打包为可分发 EVOI 映像。EVB-native: packer.evo"
+}
+
+@locus evo_image.pack {
+    mut_rate   = 0.01
+    cross_pool = "packer"
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x800
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evo_image.unpack {
+    mut_rate   = 0.01
+    cross_pool = "packer"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

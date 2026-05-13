@@ -1,0 +1,174 @@
+; bytecode_utils.evoasm — EVB-native 字节码工具
+; 替代: evomorph/native/bytecode_utils.py (55 行 Python)
+;
+; 关键语义:
+;   MUT.1 R5, Rx, #N  → R5 = R5 << N  (Rx 被 imm 覆盖!)
+;   MUT.2 R5, Rx, #N  → R5 = R5 >> N
+;   所以移位前需要先 CAST.0 复制值
+;
+; 所有带操作数的 IChing 指令必须带 .N 扩展, 否则 ext_mode=0 只能用 R0-R15
+; IChing 指令只支持 2 操作数 (dst, src), 3-op 会丢弃第 3 个!
+;
+; Syscall: R0=syscall_num, SHOCK.1 #0x80
+
+; === 入口: 跳转到 main ===
+    BRANCH.1 @main
+
+; === operand_to_byte(val) -> u8 ===
+; 输入: R1 = val
+; 输出: R1 = val & 0xFF
+operand_to_byte:
+    MATE.1 R1, R1, #255
+    RETURN
+
+; === encode_instruction(opcode, modifier, op1, op2) -> packed_u32 ===
+; 输入: R1=opcode, R2=modifier, R3=op1, R4=op2
+; 输出: R1 = byte1 | (byte2<<8) | (op1<<16) | (op2<<24)
+encode_instruction:
+    ; byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+    CAST.0 R5, R1             ; R5 = opcode
+    MATE.1 R5, R5, #63        ; R5 = opcode & 0x3F
+    MUT.1 R5, R5, #2          ; R5 = R5 << 2
+    CAST.0 R6, R2             ; R6 = modifier
+    MUT.2 R6, R6, #4          ; R6 = modifier >> 4
+    MATE.1 R6, R6, #3         ; R6 = (modifier>>4) & 3
+    MATE.3 R5, R6             ; R5 = R5 | R6 = byte1
+    ; byte2 = modifier & 0x0F
+    CAST.0 R6, R2             ; R6 = modifier
+    MATE.1 R6, R6, #15        ; byte2 in R6
+    ; pack: byte1 | (byte2<<8) | (op1<<16) | (op2<<24)
+    CAST.0 R1, R5             ; R1 = byte1
+    CAST.0 R7, R6             ; R7 = byte2
+    MUT.1 R7, R7, #8          ; R7 = byte2 << 8
+    MATE.3 R1, R7             ; R1 |= R7
+    CAST.0 R7, R3             ; R7 = op1
+    MUT.1 R7, R7, #16         ; R7 = op1 << 16
+    MATE.3 R1, R7             ; R1 |= R7
+    CAST.0 R7, R4             ; R7 = op2
+    MUT.1 R7, R7, #24         ; R7 = op2 << 24
+    MATE.3 R1, R7             ; R1 |= R7
+    RETURN
+
+; === locus_to_bytecode(heap_addr, instr_count) -> (bytecode_len, bytecode_addr) ===
+; 输入: R1 = heap 中指令数据起始地址
+;       R2 = 指令数量
+;       每条指令: 4 字节 [opcode, modifier, op1, op2]
+; 输出: R1 = 字节码长度
+;       R2 = 字节码在 heap 中的起始地址
+locus_to_bytecode:
+    CAST.0 R5, R1             ; R5 = 源指针
+    CAST.0 R6, R2             ; R6 = 剩余计数
+    ; 输出起始地址 = 输入地址 + count*4 + 16 (padding)
+    CAST.0 R7, R2             ; R7 = count
+    MUT.1 R7, R7, #2          ; R7 = count * 4 (SHL 2)
+    GATHER.0 R7, R7, R1       ; R7 = addr + count*4
+    GATHER.0 R7, R7, #16      ; R7 += 16 (padding)
+    CAST.0 R8, R7             ; R8 = 输出指针
+    CAST.0 R9, R7             ; R9 = 输出起始地址 (返回值)
+    CREA.1 R10, #0            ; R10 = 字节码长度
+
+bt_loop:
+    ; 检查是否还有指令 (R6 == 0?)
+    FELLOWSHIP.1 R6, #0
+    BRANCH.2 @bt_done
+    ; 读 opcode (byte from heap[R5])
+    RECV.2 R0, R5
+    GATHER.0 R5, R5, #1
+    ; 读 modifier
+    RECV.2 R1, R5
+    GATHER.0 R5, R5, #1
+    ; 读 op1
+    RECV.2 R2, R5
+    GATHER.0 R5, R5, #1
+    ; 读 op2
+    RECV.2 R3, R5
+    GATHER.0 R5, R5, #1
+    ; byte1 = ((opcode & 0x3F) << 2) | ((modifier >> 4) & 0x03)
+    CAST.0 R11, R0            ; R11 = opcode
+    MATE.1 R11, R11, #63      ; R11 = opcode & 0x3F
+    MUT.1 R11, R11, #2        ; R11 = (opcode&0x3F) << 2
+    CAST.0 R12, R1            ; R12 = modifier
+    MUT.2 R12, R12, #4        ; R12 = modifier >> 4
+    MATE.1 R12, R12, #3       ; R12 = (modifier>>4) & 3
+    MATE.3 R11, R12           ; byte1 in R11
+    ; 写 byte1 到 heap[R8]
+    ALLOC.2 R8, R11
+    GATHER.0 R8, R8, #1
+    GATHER.0 R10, R10, #1
+    ; byte2 = modifier & 0x0F
+    CAST.0 R11, R1            ; R11 = modifier
+    MATE.1 R11, R11, #15      ; byte2 in R11
+    ALLOC.2 R8, R11
+    GATHER.0 R8, R8, #1
+    GATHER.0 R10, R10, #1
+    ; 写 op1
+    ALLOC.2 R8, R2
+    GATHER.0 R8, R8, #1
+    GATHER.0 R10, R10, #1
+    ; 写 op2
+    ALLOC.2 R8, R3
+    GATHER.0 R8, R8, #1
+    GATHER.0 R10, R10, #1
+    ; 递减计数
+    GATHER.1 R6, R6, #1
+    BRANCH.1 @bt_loop
+
+bt_done:
+    CAST.0 R1, R10
+    CAST.0 R2, R9
+    RETURN
+
+; === 自测试入口 ===
+main:
+    ;--- Test 1: operand_to_byte(0x1FF) -> 0xFF ---
+    CREA.1 R1, #511
+    ABUNDANCE.1 @operand_to_byte
+    FELLOWSHIP.1 R1, #255   ; CMP R1, 255
+    BRANCH.2 @test1_ok      ; JZ -> test1_ok
+    CREA.1 R0, #1           ; fail code
+    RETURN.1                ; HLT
+test1_ok:
+
+    ;--- Test 2: encode_instruction(63, 0x12, 0x34, 0x56) -> 0x563402FD ---
+    CREA.1 R1, #63          ; opcode
+    CREA.1 R2, #18          ; modifier = 0x12
+    CREA.1 R3, #52          ; op1 = 0x34
+    CREA.1 R4, #86          ; op2 = 0x56
+    ABUNDANCE.1 @encode_instruction
+    ; check byte0: R1 & 0xFF == 0xFD (253)
+    MATE.1 R5, R1, #255
+    FELLOWSHIP.1 R5, #253
+    BRANCH.2 @t2_byte1_ok
+    CREA.1 R0, #2
+    RETURN.1
+t2_byte1_ok:
+    ; check byte1: (R1>>8) & 0xFF == 0x02
+    CAST.0 R5, R1
+    MUT.2 R5, R5, #8
+    MATE.1 R5, R5, #255
+    FELLOWSHIP.1 R5, #2
+    BRANCH.2 @t2_byte2_ok
+    CREA.1 R0, #2
+    RETURN.1
+t2_byte2_ok:
+    ; check op1: (R1>>16) & 0xFF == 0x34
+    CAST.0 R5, R1
+    MUT.2 R5, R5, #16
+    MATE.1 R5, R5, #255
+    FELLOWSHIP.1 R5, #52
+    BRANCH.2 @t2_byte3_ok
+    CREA.1 R0, #2
+    RETURN.1
+t2_byte3_ok:
+    ; check op2: (R1>>24) & 0xFF == 0x56
+    CAST.0 R5, R1
+    MUT.2 R5, R5, #24
+    MATE.1 R5, R5, #255
+    FELLOWSHIP.1 R5, #86
+    BRANCH.2 @all_pass
+    CREA.1 R0, #2
+    RETURN.1
+
+all_pass:
+    CREA.1 R0, #0           ; success
+    RETURN.1                ; HLT

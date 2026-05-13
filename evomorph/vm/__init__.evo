@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "虚拟机入口 — IChingVM, ExtendedIChingVM2, CBridgeVM"
+}
+
+@locus vm.init {
+    mut_rate   = 0.001
+    cross_pool = "vm_core"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

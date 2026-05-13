@@ -1,0 +1,46 @@
+@evolang "3.0"
+
+@xiangci {
+    "基因库之枢：藏万象之形，收万化之果。包发布、检索、适应度归集。"
+}
+
+@locus evohub.publish {
+    mut_rate   = 0.01
+    cross_pool = "hub"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x100
+        ䷍ ABUNDANCE R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evohub.pull {
+    mut_rate   = 0.01
+    cross_pool = "hub"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evohub.search {
+    mut_rate   = 0.02
+    cross_pool = "hub"
+    fitness    = max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

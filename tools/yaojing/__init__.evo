@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "妖精调试器入口 — IChingVM 原生调试, 支持单步/断点/寄存器/内存查看"
+}
+
+@locus yaojing.entry {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

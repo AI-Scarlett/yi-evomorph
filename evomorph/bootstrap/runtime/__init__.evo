@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "增强运行时入口 — EVB 编译、执行、进化一体化运行时"
+}
+
+@locus runtime.init {
+    mut_rate   = 0.005
+    cross_pool = "runtime"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x", "android-14"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

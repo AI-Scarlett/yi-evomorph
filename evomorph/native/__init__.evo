@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "原生后端入口 — EVB 加载器、链接器、映像打包器、字节码工具"
+}
+
+@locus native.init {
+    mut_rate   = 0.001
+    cross_pool = "native"
+    fitness    = min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

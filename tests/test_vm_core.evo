@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "VM 核心测试 — 指令执行、寄存器操作、内存访问正确性"
+}
+
+@locus test_vm_core.instruction {
+    mut_rate   = 0.005
+    cross_pool = "test"
+    fitness    = max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷀ CREA R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

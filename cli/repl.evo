@@ -1,0 +1,46 @@
+@evolang "3.0"
+
+@xiangci {
+    "易衍交互式 REPL — 卦象编程环境, 支持逐条编译/执行/进化"
+}
+
+@locus repl.session {
+    mut_rate   = 0.005
+    cross_pool = "cli"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus repl.compile_line {
+    mut_rate   = 0.01
+    cross_pool = "cli"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus repl.execute {
+    mut_rate   = 0.01
+    cross_pool = "cli"
+    fitness    = max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷀ CREA R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,33 @@
+@evolang "3.0"
+
+@xiangci {
+    "Evoasm 汇编器 v2 — 增强版汇编器, 支持 label 解析和立即数编码"
+}
+
+@locus evoasm.assemble_v2 {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x10000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus evoasm.resolve_labels {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

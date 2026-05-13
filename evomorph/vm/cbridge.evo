@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@xiangci {
+    "C 桥之接：通过 ctypes 调用 libichingvm2.dylib，替代 Python VM 执行路径。"
+}
+
+@locus cbridge.create_vm {
+    mut_rate   = 0.005
+    cross_pool = "vm_core"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷂ ALLOC R0, 0x4000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus cbridge.run_program {
+    mut_rate   = 0.01
+    cross_pool = "vm_core"
+    fitness    = max_throughput + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷀ CREA R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

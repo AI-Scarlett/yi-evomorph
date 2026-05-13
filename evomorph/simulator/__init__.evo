@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "平台模拟器入口 — 多平台性能模拟、适应度评估"
+}
+
+@locus simulator.init {
+    mut_rate   = 0.01
+    cross_pool = "simulator"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x", "android-14", "ios-18", "win-11", "harmony-5"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

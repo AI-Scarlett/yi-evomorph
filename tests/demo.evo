@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "Evomorph 演示用例 — 展示基本编译/执行/进化流程"
+}
+
+@locus demo.hello {
+    mut_rate   = 0.005
+    cross_pool = "test"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

@@ -1,0 +1,19 @@
+@evolang "3.0"
+
+@xiangci {
+    "自举汇编器构建脚本 — 组合 asm_core.evoasm + asm_main.evoasm → assembler.evob"
+}
+
+@locus build_assembler.combine_modules {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷂ ALLOC R0, 0x10000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

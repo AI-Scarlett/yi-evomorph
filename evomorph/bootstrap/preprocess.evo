@@ -1,0 +1,32 @@
+@evolang "3.0"
+
+@xiangci {
+    "预处理之源：Unicode 规范化、GUAXU 标签解析、元数据提取。Stage-0 Python 桥接。"
+}
+
+@locus preprocess.normalize {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 255
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus preprocess.extract_meta {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

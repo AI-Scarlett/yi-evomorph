@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "自举引导层入口 — 编译器、汇编器、运行时引导组件"
+}
+
+@locus bootstrap.init {
+    mut_rate   = 0.005
+    cross_pool = "bootstrap"
+    fitness    = min_size + min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

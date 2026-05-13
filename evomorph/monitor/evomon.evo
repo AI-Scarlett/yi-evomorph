@@ -1,65 +1,32 @@
 @evolang "3.0"
 
-@meta_locus evomon_runtime {
-    description = "易衍·Evomorph 运行时性能监控基因座"
-    purpose = "VM内性能采样、热点分析、进化建议生成 — 全部在 .evo 层面完成"
-    version = "0.0.6"
-}
-
 @xiangci {
-    性能监控系统的 .evo 实现，替代 Python EvoMon 类。
-    提供: 周期计数 | 热点路径检测 | 进化触发 | 性能报告生成
-
-    小模型友好: 可通过本文件了解 Evomorph 的性能监控模型，
-    在生成代码时可考虑性能优化方向。
+    "监控之眼：采运行时之样，析热点之径，追踪适应度之变。"
 }
 
-@locus record_sample {
-    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
-    GUAXU: {
-        // record_sample(locus_name_ptr, latency_ms, energy_mj, memory_bytes, cpu_cycles)
-        // 输入: R0=locus名ptr, R1=延迟ms, R2=能耗mj, R3=内存字节, R4=CPU周期
-        // 将采样数据写入监控缓冲区(heap)
-        // 输出: R5 = 是否触发进化 (1=触发, 0=正常)
-        // 简化: 桩实现
-        HALT.1 R0, R0
+@locus evomon.collect {
+    mut_rate   = 0.01
+    cross_pool = "monitor"
+    fitness    = min_latency + min_energy
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷾ SYNC
+        ䷋ HALT
     }
 }
 
-@locus get_hot_paths {
-    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
-    GUAXU: {
-        // 获取热点路径列表
-        // 输出: R0 = 热点数量, R1 = heap中数据偏移
-        HALT.1 R0, R0
-    }
-}
+@locus evomon.analyze {
+    mut_rate   = 0.01
+    cross_pool = "monitor"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x"]
 
-@locus suggest_evolution {
-    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
-    GUAXU: {
-        // 分析监控数据，建议需要进化的基因座
-        // 输出: R0 = 建议数量, R1 = heap中建议数据偏移
-        HALT.1 R0, R0
-    }
-}
-
-@locus generate_report {
-    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
-    GUAXU: {
-        // 生成监控报告
-        // 输出: R0 = 报告json在heap的偏移
-        HALT.1 R0, R0
-    }
-}
-
-@locus monitor_loop {
-    mut_rate = 0.0; cross_pool = "stdlib"; fitness = correctness; env_target = ["evomorph-vm"]
-    GUAXU: {
-        // 监控主循环: SENSE → CONTEMPLATE → SUGGEST → EVOLVE
-        CREA.1 R0, R0, #28       // SENSE: 感知性能事件
-        CREA.1 R1, R1, #48       // CONTEMPLATE: 观测
-        CREA.1 R2, R2, #1        // RETURN: (实际会触发进化引擎)
-        RETURN.1 R0, R0
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
     }
 }

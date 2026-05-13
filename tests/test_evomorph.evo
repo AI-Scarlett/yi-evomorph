@@ -1,0 +1,34 @@
+@evolang "3.0"
+
+@xiangci {
+    "Evomorph 核心测试 — 编译链路、指令集、进化引擎集成测试"
+}
+
+@locus test_evomorph.compile_chain {
+    mut_rate   = 0.005
+    cross_pool = "test"
+    fitness    = min_latency + min_size
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷂ ALLOC R0, 0x1000
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus test_evomorph.evolution {
+    mut_rate   = 0.01
+    cross_pool = "test"
+    fitness    = max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷑ MUT R0, R1
+        ䷓ CONTEMPLATE R0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

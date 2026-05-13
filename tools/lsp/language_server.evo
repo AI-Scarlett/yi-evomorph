@@ -1,0 +1,59 @@
+@evolang "3.0"
+
+@xiangci {
+    "LSP 语言服务器实现 — 六十四卦指令集语法分析、补全、诊断、高亮"
+}
+
+@locus lsp.initialize {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 64
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus lsp.completion {
+    mut_rate   = 0.01
+    cross_pool = "tools"
+    fitness    = max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷆ BRANCH R0, R1
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus lsp.diagnostic {
+    mut_rate   = 0.01
+    cross_pool = "tools"
+    fitness    = min_latency + max_throughput
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 128
+        ䷓ CONTEMPLATE R0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
+
+@locus lsp.hover {
+    mut_rate   = 0.005
+    cross_pool = "tools"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 32
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

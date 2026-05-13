@@ -1,0 +1,17 @@
+@evolang "3.0"
+
+@xiangci {
+    "SDK 入口 — 象辞翻译、模板匹配、模型能力管理"
+}
+
+@locus sdk.init {
+    mut_rate   = 0.01
+    cross_pool = "sdk"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}

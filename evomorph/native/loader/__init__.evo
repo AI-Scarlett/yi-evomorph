@@ -1,0 +1,18 @@
+@evolang "3.0"
+
+@xiangci {
+    "EVB 加载器入口 — 从字节码文件加载基因座到 VM 内存"
+}
+
+@locus loader.entry {
+    mut_rate   = 0.005
+    cross_pool = "loader"
+    fitness    = min_latency
+    env_target = ["linux-6.x"]
+
+    卦序: {
+        ䷁ RECV R0, 0
+        ䷾ SYNC
+        ䷋ HALT
+    }
+}
