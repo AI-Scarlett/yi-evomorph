@@ -1,0 +1,107 @@
+; Test far jump (>255) on C VM
+; Ensure R2=1 before far jump, then jump to FAR_TARGET at addr >255
+START:
+    ABOUND R2, 1           ; R2 = 1 (always non-zero → jump taken)
+    ABOUND R10, 0          ; R10 = 0 (marker)
+    
+    ; Far jump to FAR_TARGET at address > 255
+    BRANCH R2, FAR_TARGET
+    
+    ; Should NOT reach here
+    HALT
+
+    ; Padding to push FAR_TARGET past 255
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+
+FAR_TARGET:
+    ; Success marker
+    ABOUND R10, 42         ; R10 = 42 (success!)
+    
+    ; Print "OK\n" using SYS_PRINT (40)
+    ALLOC R0, 0
+    FELLOWSHIP R5, R0
+    ABOUND R1, 79          ; 'O'
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 75          ; 'K'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 10          ; '\n'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ZERO                    ; R1=0, R2=16
+    DISPERSE R5, R1        ; null terminator
+    
+    ; ALLOC returned buffer addr in R0, now use it for print
+    ABOUND R0, 40          ; SYS_PRINT
+    RECV R0, 0
+    
+    ; Exit
+    ABOUND R0, 255         ; SYS_EXIT
+    RECV R0, 0

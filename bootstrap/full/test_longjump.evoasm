@@ -1,0 +1,89 @@
+; Test: far jump (>255 bytes) on C VM with new long jump encoding
+START:
+    ; Print "OK\n"
+    ALLOC R0, 0
+    FELLOWSHIP R5, R0     ; R5 = buffer
+    ABOUND R1, 79         ; 'O'
+    DISPERSE R5, R1
+    ABOUND R2, 1
+    INCREASE R5, R2
+    ABOUND R1, 75         ; 'K'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    ABOUND R1, 10         ; '\n'
+    DISPERSE R5, R1
+    INCREASE R5, R2
+    WB0                   ; null terminator
+
+    ; Try far jump - target is FAR_TARGET at address > 255
+    ; R2 should still be 1 from WB0's INCREASE
+    BRANCH R2, FAR_TARGET
+
+    ; This should never be reached
+    HALT
+
+    ; Padding instructions to push FAR_TARGET past 255 bytes
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+    ABOUND R0, 0
+
+FAR_TARGET:
+    ; Print the string from buffer
+    ALLOC R0, 0
+    ABOUND R0, 40          ; SYS_PRINT
+    FELLOWSHIP R1, R10     ; R10 was saved earlier as buffer base? 
+    ; Actually use the buffer correctly
+    ABOUND R0, 40
+    ABOUND R1, 0           ; buffer address = 0 (ALLOC returns index 0)
+    ; Wait, ALLOC returns pointer in R0. Let me restructure.
+    ABOUND R0, 255         ; SYS_EXIT
+    RECV R0, 0

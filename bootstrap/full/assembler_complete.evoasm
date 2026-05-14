@@ -204,6 +204,7 @@ P1_CHK_CONT:
 
 P1_NOT_NL:
     ; Comment -> skip line
+    LOADB R1, R4             ; re-read byte (clobbered by newline XOR)
     ABOUND R2, CHAR_SEMI
     XOR R1, R2
     BRANCH R1, P1_NOT_COMMENT
@@ -269,17 +270,23 @@ P1_HASH_BYTE:
     INCREASE R2, R1           ; R2++
     BRANCH R2, P1_HASH_LOOP
 P1_HASH_DONE:
-    ; R14 = hash. Store 4-byte entry: addr, hash, name_start, name_end
-    DISPERSE R8, R7           ; byte0: addr
-    ABOUND R2, 1
+    ; R14 = hash. Store 5-byte entry: addr_lo, addr_hi, hash, name_start, name_end
+    DISPERSE R8, R7           ; byte0: addr_lo
+    ; Compute addr_hi = R7 >> 8
+    FELLOWSHIP R0, R7         ; R0 = addr
+    ABOUND R2, 8              ; R2 = 8 (shift amount)
+    SHR R0, R2                ; R0 = addr >> 8 (addr_hi)
+    ABOUND R2, 1              ; R2 = 1 (restore)
+    INCREASE R8, R2           ; R8++ (past addr_lo)
+    DISPERSE R8, R0           ; byte1: addr_hi
+    INCREASE R8, R2           ; R8++ (past addr_hi)
+    DISPERSE R8, R14          ; byte2: hash
     INCREASE R8, R2
-    DISPERSE R8, R14          ; byte1: hash
-    INCREASE R8, R2
-    DISPERSE R8, R4           ; byte2: name_start
+    DISPERSE R8, R4           ; byte3: name_start
     INCREASE R8, R2
     FELLOWSHIP R14, R15
     REDUCE R14, R2            ; R14 = R15 - 1 = name_end (last char)
-    DISPERSE R8, R14          ; byte3: name_end
+    DISPERSE R8, R14          ; byte4: name_end
     INCREASE R8, R2
     INCREASE R13, R2          ; label_count++
     FELLOWSHIP R4, R14        ; R4 = name_end
@@ -307,6 +314,14 @@ P1_IS_INSN:
 P1_END:
     ; Save label count for Pass 2 label lookup (R10 will be preserved through Pass 2)
     FELLOWSHIP R10, R13      ; R10 = label count
+    ; Debug: print label count
+    ABOUND R0, 39              ; SYSCALL_PRINT_NUM
+    FELLOWSHIP R1, R10         ; label count
+    RECV R0, 0
+    ABOUND R0, 41              ; SYSCALL_PRINTLN
+    ZERO
+    FELLOWSHIP R1, R1          ; null -> just newline
+    RECV R0, 0
     ; Pass 1 complete, continue to Pass 2
 
     ; ===== PASS 2: Encode instructions =====
@@ -348,6 +363,7 @@ P2_CHK_CONT:
 
 P2_NOT_NL:
     ; Comment
+    LOADB R1, R4             ; re-read byte (clobbered by newline XOR)
     ABOUND R2, CHAR_SEMI
     XOR R1, R2
     BRANCH R1, P2_NOT_CMT
@@ -435,6 +451,7 @@ P2_ENCODE:
     LOADB R1, R4
     ABOUND R2, 68
     XOR R1, R2
+    BRANCH R1, NOT_ABOUND
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_ABOUND
@@ -470,6 +487,7 @@ NOT_ABOUND:
     LOADB R1, R4
     ABOUND R2, 67
     XOR R1, R2
+    BRANCH R1, NOT_ALLOC
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_ALLOC
@@ -511,6 +529,7 @@ NOT_ALLOC:
     LOADB R1, R4
     ABOUND R2, 72
     XOR R1, R2
+    BRANCH R1, NOT_BRANCH
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_BRANCH
@@ -540,6 +559,7 @@ NOT_BRANCH:
     LOADB R1, R4
     ABOUND R2, 65
     XOR R1, R2
+    BRANCH R1, NOT_CREA
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_CREA
@@ -593,6 +613,7 @@ NOT_CREA:
     LOADB R1, R4
     ABOUND R2, 69
     XOR R1, R2
+    BRANCH R1, NOT_DISPERSE
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_DISPERSE
@@ -658,6 +679,7 @@ NOT_DISPERSE:
     LOADB R1, R4
     ABOUND R2, 80
     XOR R1, R2
+    BRANCH R1, NOT_FELLOWSHIP
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_FELLOWSHIP
@@ -699,6 +721,7 @@ NOT_FELLOWSHIP:
     LOADB R1, R4
     ABOUND R2, 82
     XOR R1, R2
+    BRANCH R1, NOT_GATHER
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_GATHER
@@ -728,6 +751,7 @@ NOT_GATHER:
     LOADB R1, R4
     ABOUND R2, 84
     XOR R1, R2
+    BRANCH R1, NOT_HALT
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_HALT
@@ -781,6 +805,7 @@ NOT_HALT:
     LOADB R1, R4
     ABOUND R2, 69
     XOR R1, R2
+    BRANCH R1, NOT_INCREASE
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_INCREASE
@@ -816,6 +841,7 @@ NOT_INCREASE:
     LOADB R1, R4
     ABOUND R2, 69
     XOR R1, R2
+    BRANCH R1, NOT_MERGE
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_MERGE
@@ -851,6 +877,7 @@ NOT_MERGE:
     LOADB R1, R4
     ABOUND R2, 79
     XOR R1, R2
+    BRANCH R1, NOT_MICRO
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_MICRO
@@ -910,6 +937,7 @@ NOT_MICRO:
     LOADB R1, R4
     ABOUND R2, 69
     XOR R1, R2
+    BRANCH R1, NOT_PENETRATE
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_PENETRATE
@@ -957,6 +985,7 @@ NOT_PENETRATE:
     LOADB R1, R4
     ABOUND R2, 80
     XOR R1, R2
+    BRANCH R1, NOT_PUSH_UP
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_PUSH_UP
@@ -986,6 +1015,7 @@ NOT_PUSH_UP:
     LOADB R1, R4
     ABOUND R2, 86
     XOR R1, R2
+    BRANCH R1, NOT_RECV
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_RECV
@@ -1027,6 +1057,7 @@ NOT_RECV:
     LOADB R1, R4
     ABOUND R2, 69
     XOR R1, R2
+    BRANCH R1, NOT_REDUCE
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_REDUCE
@@ -1074,6 +1105,7 @@ NOT_REDUCE:
     LOADB R1, R4
     ABOUND R2, 69
     XOR R1, R2
+    BRANCH R1, NOT_REPLACE
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_REPLACE
@@ -1115,6 +1147,7 @@ NOT_REPLACE:
     LOADB R1, R4
     ABOUND R2, 78
     XOR R1, R2
+    BRANCH R1, NOT_RETURN
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_RETURN
@@ -1138,6 +1171,7 @@ NOT_RETURN:
     LOADB R1, R4
     ABOUND R2, 76
     XOR R1, R2
+    BRANCH R1, NOT_SHL
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_SHL
@@ -1161,6 +1195,7 @@ NOT_SHL:
     LOADB R1, R4
     ABOUND R2, 82
     XOR R1, R2
+    BRANCH R1, NOT_SHR
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_SHR
@@ -1190,6 +1225,7 @@ NOT_SHR:
     LOADB R1, R4
     ABOUND R2, 84
     XOR R1, R2
+    BRANCH R1, NOT_SPRT
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_SPRT
@@ -1219,6 +1255,7 @@ NOT_SPRT:
     LOADB R1, R4
     ABOUND R2, 80
     XOR R1, R2
+    BRANCH R1, NOT_STEP
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_STEP
@@ -1242,6 +1279,7 @@ NOT_STEP:
     LOADB R1, R4
     ABOUND R2, 82
     XOR R1, R2
+    BRANCH R1, NOT_XOR
     ABOUND R2, 1
     INCREASE R4, R2
     ABOUND R11, OP_XOR
@@ -1506,7 +1544,7 @@ P2_PO_N2_NL:
     ; --- Label operand2 lookup ---
 P2_PO_OP2LABEL:
     ; R15 = operand start, R10 = label count, R8 = label table
-    ; Table entry format (4 bytes): addr, hash, name_start, name_end
+    ; Table entry format (5 bytes): addr_lo, addr_hi, hash, name_start, name_end
     ; Step 1: Scan forward to find end of operand (space or newline)
     FELLOWSHIP R4, R15      ; R4 = scan = operand start
 P2_LB_FINDEND:
@@ -1542,7 +1580,7 @@ P2_LB_HASH_BYTE:
     INCREASE R12, R1          ; R12++
     BRANCH R2, P2_LB_HASH_LOOP
 P2_LB_HASH_DONE:
-    ; R14 = operand hash. Search label table (4-byte entries)
+    ; R14 = operand hash. Search label table (5-byte entries)
     FELLOWSHIP R12, R8        ; R12 = table ptr
     ZERO
     FELLOWSHIP R3, R1         ; R3 = 0 (entry counter)
@@ -1554,13 +1592,23 @@ P2_LB_SRCH_LOOP:
 P2_LB_NEXT_ENT:
     ; Save counter before ZERO clobbers it
     FELLOWSHIP R0, R3         ; R0 = counter (temp save)
-    ; Read addr byte (byte0 of entry)
+    ; Read addr_lo (byte0 of 5-byte entry)
     ZERO
-    PENETRATE R12, R1         ; R1 = addr byte
-    FELLOWSHIP R15, R1        ; R15 = addr (reuse R15, no longer needed)
+    PENETRATE R12, R1         ; R1 = addr_lo
+    FELLOWSHIP R15, R1        ; R15 = addr_lo
     ABOUND R1, 1
-    INCREASE R12, R1          ; R12++ (skip addr)
-    ; Read hash byte (byte1 of entry)
+    INCREASE R12, R1          ; R12++ (past addr_lo)
+    ; Read addr_hi (byte1 of 5-byte entry)
+    ZERO
+    PENETRATE R12, R1         ; R1 = addr_hi
+    ; Compose 16-bit addr: (addr_hi << 8) | addr_lo
+    ABOUND R2, 8              ; R2 = 8 (shift amount)
+    SHL R1, R2                ; R1 = addr_hi << 8
+    MERGE R1, R15             ; R1 = (addr_hi << 8) | addr_lo
+    FELLOWSHIP R15, R1        ; R15 = full 16-bit addr
+    ABOUND R1, 1
+    INCREASE R12, R1          ; R12++ (past addr_hi)
+    ; Read hash byte (byte2 of 5-byte entry)
     ZERO
     PENETRATE R12, R1         ; R1 = hash byte
     XOR R1, R14               ; compare with operand hash
@@ -1585,6 +1633,18 @@ P2_LB_NOTFOUND:
 
     ; ===== Emit 4-byte instruction =====
 P2_EMIT:
+    ; Check for BRANCH with long jump target
+    ABOUND R2, OP_BRANCH       ; R2 = 2
+    FELLOWSHIP R1, R11         ; R1 = opcode
+    REDUCE R1, R2              ; R1 = opcode - 2
+    BRANCH R1, P2_EMIT_NORMAL  ; not BRANCH -> normal emit
+    ; It is BRANCH. Check if target addr > 255
+    FELLOWSHIP R1, R14         ; R1 = target addr
+    ABOUND R2, 8               ; R2 = 8 (shift amount)
+    SHR R1, R2                 ; R1 = target >> 8 (high byte)
+    ABOUND R2, 1               ; restore R2 = 1
+    BRANCH R1, P2_EMIT_LONGJMP ; high byte != 0 -> target >= 256
+P2_EMIT_NORMAL:
     ; byte1 = opcode << 2
     ABOUND R3, 1
     FELLOWSHIP R1, R11
@@ -1595,6 +1655,7 @@ P2_EMIT:
     INCREASE R5, R2
     ; byte2 = 0  (modifier byte)
     ZERO
+    ABOUND R2, 1              ; Fix: ZERO leaves R2=16, must reset to 1
     DISPERSE R5, R1
     INCREASE R5, R2
     ; byte3 = operand1 (from R13)
@@ -1605,6 +1666,34 @@ P2_EMIT:
     FELLOWSHIP R1, R14
     DISPERSE R5, R1
     INCREASE R5, R2
+    BRANCH R2, P2_EMIT_DONE
+P2_EMIT_LONGJMP:
+    ; Long jump: byte1=(opcode<<2)|0x01, byte2=addr_hi, byte3=cond_reg, byte4=addr_lo
+    ; byte1 = (opcode << 2) | 0x01
+    FELLOWSHIP R1, R11
+    ABOUND R3, 1
+    SHL R1, R3
+    SHL R1, R3                ; R1 = opcode << 2
+    ABOUND R2, 1
+    MERGE R1, R2              ; R1 = (opcode << 2) | 0x01
+    DISPERSE R5, R1           ; byte1
+    INCREASE R5, R2           ; R5++
+    ; byte2 = target >> 8 (addr_hi)
+    FELLOWSHIP R1, R14        ; R1 = target addr
+    ABOUND R2, 8              ; R2 = 8
+    SHR R1, R2                ; R1 = target >> 8
+    ABOUND R2, 1              ; R2 = 1
+    DISPERSE R5, R1           ; byte2
+    INCREASE R5, R2           ; R5++
+    ; byte3 = cond_reg (R13)
+    FELLOWSHIP R1, R13
+    DISPERSE R5, R1           ; byte3
+    INCREASE R5, R2           ; R5++
+    ; byte4 = target & 0xFF (addr_lo, DISPERSE stores low 8 bits)
+    FELLOWSHIP R1, R14        ; R1 = target addr
+    DISPERSE R5, R1           ; byte4
+    INCREASE R5, R2           ; R5++
+P2_EMIT_DONE:
     ; addr += 4
     ABOUND R2, 4
     INCREASE R7, R2
@@ -1624,6 +1713,14 @@ P2_TNL_CONT:
 
 P2_END:
     ; Pass 2 complete
+    ; Debug: print R7 (address counter)
+    ABOUND R0, 39              ; SYSCALL_PRINT_NUM
+    FELLOWSHIP R1, R7
+    RECV R0, 0
+    ABOUND R0, 41              ; SYSCALL_PRINTLN (newline)
+    ZERO
+    FELLOWSHIP R1, R1          ; R1 = 0 (print just newline)
+    RECV R0, 0
 
 DONE:
     ; Calculate output size: R5 - R9
@@ -1688,11 +1785,11 @@ DONE:
     RECV R0, 0
     FELLOWSHIP R12, R0
 
-    ; Write bytecode
+    ; Write bytecode (code size saved in R13 at P2_END)
     ABOUND R0, SYS_WRITE
     FELLOWSHIP R1, R12
     FELLOWSHIP R2, R9
-    FELLOWSHIP R3, R13
+    FELLOWSHIP R3, R13       ; R3 = code size (saved before filename construction)
     RECV R0, 0
 
     ; Close & exit

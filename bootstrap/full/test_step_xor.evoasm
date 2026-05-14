@@ -1,0 +1,7 @@
+; Test STEP and XOR mnemonic recognition
+START:
+    ABOUND R1, 42        ; R1 = 42
+    ABOUND R2, 85        ; R2 = 85
+    XOR R1, R2            ; R1 = 42 XOR 85 = 127
+    STEP R1, R2           ; STEP test
+    HALT
